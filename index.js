@@ -2,7 +2,7 @@ module.exports = function(md, options) {
   options = options || {};
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
 
-  output = md;
+  var output = md;
   try {
     if (options.stripListLeaders) {
       output = output.replace(/^([\s\t]*)([\*\-\+]|\d\.)\s+/gm, '$1');
