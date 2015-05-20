@@ -18,7 +18,7 @@ module.exports = function(md, options) {
                    .replace(/([\*_]{1,2})(\S.*?\S)\1/g, '$2')
                    .replace(/(`{3,})(.*?)\1/gm, '$2')
                    .replace(/^-{3,}\s*$/g, '')
-                   .replace(/`(.+)`/g, '$1')
+                   .replace(/`(.+?)`/g, '$1')
                    .replace(/\n{2,}/g, '\n\n');
   } catch(e) {
     console.error(e);
