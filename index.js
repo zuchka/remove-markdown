@@ -7,19 +7,27 @@ module.exports = function(md, options) {
     if (options.stripListLeaders) {
       output = output.replace(/^([\s\t]*)([\*\-\+]|\d\.)\s+/gm, '$1');
     }
-    output = output.replace(/<(.*?)>/g, '$1')
-                   .replace(/^[=\-]{2,}\s*$/g, '')
-                   .replace(/\[\^.+?\](\: .*?$)?/g, '')
-                   .replace(/\s{0,2}\[.*?\]: .*?$/g, '')
-                   .replace(/\!\[.*?\][\[\(].*?[\]\)]/g, '')
-                   .replace(/\[(.*?)\][\[\(].*?[\]\)]/g, '$1')
-                   .replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')
-                   .replace(/^\#{1,6}\s*([^#]*)\s*(\#{1,6})?/g, '$1')
-                   .replace(/([\*_]{1,2})(\S.*?\S)\1/g, '$2')
-                   .replace(/(`{3,})(.*?)\1/gm, '$2')
-                   .replace(/^-{3,}\s*$/g, '')
-                   .replace(/`(.+?)`/g, '$1')
-                   .replace(/\n{2,}/g, '\n\n');
+    output = output
+      // Remove HTML tags
+      .replace(/<(.*?)>/g, '$1')
+      // Remove setext-style headers
+      .replace(/^[=\-]{2,}\s*$/g, '')
+      // Remove footnotes?
+      .replace(/\[\^.+?\](\: .*?$)?/g, '')
+      .replace(/\s{0,2}\[.*?\]: .*?$/g, '')
+      // Remove images
+      .replace(/\!\[.*?\][\[\(].*?[\]\)]/g, '')
+      // Remove inline links
+      .replace(/\[(.*?)\][\[\(].*?[\]\)]/g, '$1')
+      // Remove reference-style links?
+      .replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')
+      // Remove atx-style headers
+      .replace(/^\#{1,6}\s*([^#]*)\s*(\#{1,6})?/gm, '$1')
+      .replace(/([\*_]{1,2})(\S.*?\S)\1/g, '$2')
+      .replace(/(`{3,})(.*?)\1/gm, '$2')
+      .replace(/^-{3,}\s*$/g, '')
+      .replace(/`(.+?)`/g, '$1')
+      .replace(/\n{2,}/g, '\n\n');
   } catch(e) {
     console.error(e);
     return md;    
