@@ -1,11 +1,21 @@
 module.exports = function(md, options) {
   options = options || {};
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
+  options.gfm = options.hasOwnProperty('gfm') ? options.gfm : true;
 
   var output = md;
   try {
     if (options.stripListLeaders) {
       output = output.replace(/^([\s\t]*)([\*\-\+]|\d\.)\s+/gm, '$1');
+    }
+    if (options.gfm){
+      output = output
+        // Header
+        .replace(/\n={2,}/g, '\n')
+        // Strikethrough
+        .replace(/~~/g, '')
+        // Fenced codeblocks
+        .replace(/`{3}.*\n/g, '');
     }
     output = output
       // Remove HTML tags
@@ -19,6 +29,8 @@ module.exports = function(md, options) {
       .replace(/\!\[.*?\][\[\(].*?[\]\)]/g, '')
       // Remove inline links
       .replace(/\[(.*?)\][\[\(].*?[\]\)]/g, '$1')
+      // Remove Blockquotes
+      .replace(/>/g, '')
       // Remove reference-style links?
       .replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')
       // Remove atx-style headers
@@ -30,7 +42,7 @@ module.exports = function(md, options) {
       .replace(/\n{2,}/g, '\n\n');
   } catch(e) {
     console.error(e);
-    return md;    
+    return md;
   }
   return output;
-}
+};
