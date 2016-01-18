@@ -1,5 +1,5 @@
 ## What is it?
-**remove-markdown** is a node.js/io.js module that will remove (strip) Markdown formatting from a text. "Markdown formatting" means pretty much anything that doesn’t look like regular text, like square brackets, asterisks etc.
+**remove-markdown** is a node.js module that will remove (strip) Markdown formatting from a text. "Markdown formatting" means pretty much anything that doesn’t look like regular text, like square brackets, asterisks etc.
 
 ## When do I need it?
 The typical use case is to display an excerpt of a Markdown text, without the actual Markdown (or rendered HTML, for that matter), for example in a list of posts.
