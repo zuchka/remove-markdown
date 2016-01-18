@@ -17,13 +17,16 @@ var markdown = '# This is a heading\n\nThis is a paragraph with [a link](http://
 var plainText = removeMd(markdown); // plainText is now 'This is a heading\n\nThis is a paragraph with a link in it.'
 ```
 
-You can also supply an options object to the function. Currently, the only option you can set is whether to strip list leaders:
+You can also supply an options object to the function. Currently, the only two options are for stripping list headers and supporting Github Flavored Markdown:
 
 ```js
-var plainText = removeMd(markdown, {stripListLeaders: false}); // The default is true
+var plainText = removeMd(markdown, {
+  stripListLeaders: false,
+  gfm: false
+}); // The default for both is true
 ```
 
-This will retain any list characters (`*, -, +, (digit).`).
+Stripping list headers will retain any list characters (`*, -, +, (digit).`).
 
 ## Credits
 The code is based on [Markdown Service Tools - Strip Markdown](http://brettterpstra.com/2013/10/18/a-markdown-service-to-strip-markdown/) by Brett Terpstra.
