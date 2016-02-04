@@ -1,6 +1,6 @@
 This is a heading 
 
-This is a bbold/b paragraph with a link.
+This is a &lt;b&gt;bold&lt;/b&gt; paragraph with a link.
 
 This is another heading
 
