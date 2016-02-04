@@ -1,6 +1,6 @@
 ## This is a heading ##
 
-This is a paragraph with [a link](http://www.disney.com/).
+This is a <b>bold</b> paragraph with [a link](http://www.disney.com/).
 
 ### This is another heading
 

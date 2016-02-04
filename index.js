@@ -2,6 +2,7 @@ module.exports = function(md, options) {
   options = options || {};
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
   options.gfm = options.hasOwnProperty('gfm') ? options.gfm : true;
+  options.escapeHtml = options.hasOwnProperty('escapeHtml') ? options.escapeHtml : false;
 
   var output = md;
   try {
@@ -17,9 +18,12 @@ module.exports = function(md, options) {
         // Fenced codeblocks
         .replace(/`{3}.*\n/g, '');
     }
+    if (options.escapeHtml) {
+      output = output.replace(/<(.*?)>/g, '&lt;$1&gt;');
+    } else {
+      output = output.replace(/<(.*?)>/g, '$1');
+    }
     output = output
-      // Remove HTML tags
-      .replace(/<(.*?)>/g, '$1')
       // Remove setext-style headers
       .replace(/^[=\-]{2,}\s*$/g, '')
       // Remove footnotes?
