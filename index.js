@@ -5,6 +5,8 @@ module.exports = function(md, options) {
 
   var output = md;
   try {
+    // Horizontal rule
+    output = output.replace(/^(-\s*?|\*\s*?|_\s*?){3,}\s*$/gm, '')
     if (options.stripListLeaders) {
       output = output.replace(/^([\s\t]*)([\*\-\+]|\d\.)\s+/gm, '$1');
     }
@@ -37,7 +39,6 @@ module.exports = function(md, options) {
       .replace(/^\#{1,6}\s*([^#]*)\s*(\#{1,6})?/gm, '$1')
       .replace(/([\*_]{1,3})(\S.*?\S)\1/g, '$2')
       .replace(/(`{3,})(.*?)\1/gm, '$2')
-      .replace(/^-{3,}\s*$/g, '')
       .replace(/`(.+?)`/g, '$1')
       .replace(/\n{2,}/g, '\n\n');
   } catch(e) {
