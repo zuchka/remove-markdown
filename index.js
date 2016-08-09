@@ -36,7 +36,8 @@ module.exports = function(md, options) {
       // Remove reference-style links?
       .replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')
       // Remove atx-style headers
-      .replace(/^\#{1,6}\s*([^#]*)\s*(\#{1,6})?/gm, '$1')
+      .replace(/^\#{1,6}\s*(.*?)\s*(\#+\s*$)/gm, '$1')
+      .replace(/^\#{1,6}\s*/gm, '')
       .replace(/([\*_]{1,3})(\S.*?\S)\1/g, '$2')
       .replace(/(`{3,})(.*?)\1/gm, '$2')
       .replace(/`(.+?)`/g, '$1')
