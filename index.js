@@ -8,7 +8,7 @@ module.exports = function(md, options) {
     // Horizontal rule
     output = output.replace(/^(-\s*?|\*\s*?|_\s*?){3,}\s*$/gm, '')
     if (options.stripListLeaders) {
-      output = output.replace(/^([\s\t]*)([\*\-\+]|\d\.)\s+/gm, '$1');
+      output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, '$1');
     }
     if (options.gfm){
       output = output
