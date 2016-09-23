@@ -6,6 +6,8 @@ This is another heading
 
 In Getting Started we set up something foo.
 
+I italicized an I and it made me sad.
+
 Some list
 With items
   Even indented
