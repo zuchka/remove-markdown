@@ -11,3 +11,6 @@ With items
   Even indented
 
 This #heading contains #hashtags
+
+Heading with surrounding whitespace
+Another heading with surrounding whitespace

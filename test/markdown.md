@@ -11,3 +11,6 @@ In `Getting Started` we set up `something` foo.
   * Even indented
 
 ## This #heading contains #hashtags
+
+   # Heading with surrounding whitespace   ###    
+     #   Another heading with surrounding whitespace     
