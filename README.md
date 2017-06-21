@@ -12,12 +12,12 @@ npm install remove-markdown
 
 ## Usage
 ```js
-var removeMd = require('remove-markdown');
-var markdown = '# This is a heading\n\nThis is a paragraph with [a link](http://www.disney.com/) in it.';
-var plainText = removeMd(markdown); // plainText is now 'This is a heading\n\nThis is a paragraph with a link in it.'
+const removeMd = require('remove-markdown');
+const markdown = '# This is a heading\n\nThis is a paragraph with [a link](http://www.disney.com/) in it.';
+const plainText = removeMd(markdown); // plainText is now 'This is a heading\n\nThis is a paragraph with a link in it.'
 ```
 
-You can also supply an options object to the function. Currently, the only two options are for stripping list headers and supporting Github Flavored Markdown:
+You can also supply an options object to the function. Currently, the only two options are for stripping list leaders and supporting Github Flavored Markdown:
 
 ```js
 var plainText = removeMd(markdown, {
@@ -26,7 +26,13 @@ var plainText = removeMd(markdown, {
 }); // The default for both is true
 ```
 
-Stripping list headers will retain any list characters (`*, -, +, (digit).`).
+Settings `stripListLeaders` to false will retain any list characters (`*, -, +, (digit).`).
+
+## TODO
+PRs are very much welcome.
+* Allow the RegEx expressions to be customized per rule
+* Make the rules more robust, support more edge cases
+* Add more (comprehensive) tests
 
 ## Credits
 The code is based on [Markdown Service Tools - Strip Markdown](http://brettterpstra.com/2013/10/18/a-markdown-service-to-strip-markdown/) by Brett Terpstra.
