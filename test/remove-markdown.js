@@ -57,6 +57,12 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should remove double emphasis', function () {
+      const string = '**this sentence has __double styling__**';
+      const expected = 'this sentence has double styling';
+      expect(removeMd(string)).to.equal(expected);
+    });    
+
     it('should remove horizontal rules', function () {
       const string = 'Some text on a line\n\n---\n\nA line below';
       const expected = 'Some text on a line\n\nA line below';
