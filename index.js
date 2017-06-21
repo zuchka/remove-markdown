@@ -4,9 +4,13 @@ module.exports = function(md, options) {
   options.gfm = options.hasOwnProperty('gfm') ? options.gfm : true;
 
   var output = md;
+
+  // Remove horizontal rules (stripListHeaders conflict with this rule, which is why it has been moved to the top)
+  output = output.replace(/^(-\s*?|\*\s*?|_\s*?){3,}\s*$/gm, '');
+
   try {
     if (options.stripListLeaders) {
-      output = output.replace(/^([\s\t]*)([\*\-\+]|\d\.)\s+/gm, '$1');
+      output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, '$1');
     }
     if (options.gfm){
       output = output
@@ -39,8 +43,6 @@ module.exports = function(md, options) {
       .replace(/([\*_]{1,3})(\S.*?\S{0,1})\1/g, '$2')
       // Remove code blocks
       .replace(/(`{3,})(.*?)\1/gm, '$2')
-      // Remove hard rules
-      .replace(/^-{3,}\s*$/g, '')
       // Remove inline code
       .replace(/`(.+?)`/g, '$1')
       // Replace two or more newlines with exactly two? Not entirely sure this belongs here...

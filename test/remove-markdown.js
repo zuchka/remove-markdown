@@ -21,7 +21,7 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
-    it('should leave non-matching markdown markdown, but strip empty anchors', function () {
+    it('should leave non-matching markdown, but strip empty anchors', function () {
       const string = '*Javascript* [developers]()* are the _best_.';
       const expected = 'Javascript developers* are the best.';
       expect(removeMd(string)).to.equal(expected);
@@ -52,12 +52,36 @@ describe('remove Markdown', function () {
     });
 
     it('should remove emphasis', function () {
-      const string = 'I italicized an *I* and it made me *sad*.';
+      const string = 'I italicized an *I* and it _made_ me *sad*.';
       const expected = 'I italicized an I and it made me sad.';
       expect(removeMd(string)).to.equal(expected);
     });
 
-    it('should handle paragrahs with markdown', function () {
+    it('should remove horizontal rules', function () {
+      const string = 'Some text on a line\n\n---\n\nA line below';
+      const expected = 'Some text on a line\n\nA line below';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
+    it('should remove horizontal rules with space-separated asterisks', function () {
+      const string = 'Some text on a line\n\n* * *\n\nA line below';
+      const expected = 'Some text on a line\n\nA line below';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
+    it('should strip unordered list leaders', function () {
+      const string = 'Some text on a line\n\n* A list Item\n* Another list item';
+      const expected = 'Some text on a line\n\nA list Item\nAnother list item';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
+    it('should strip ordered list leaders', function () {
+      const string = 'Some text on a line\n\n9. A list Item\n10. Another list item';
+      const expected = 'Some text on a line\n\nA list Item\nAnother list item';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
+    it('should handle paragraphs with markdown', function () {
       const paragraph = '\n## This is a heading ##\n\nThis is a paragraph with [a link](http://www.disney.com/).\n\n### This is another heading\n\nIn `Getting Started` we set up `something` foo.\n\n  * Some list\n  * With items\n    * Even indented';
       const expected = '\nThis is a heading\n\nThis is a paragraph with a link.\n\nThis is another heading\n\nIn Getting Started we set up something foo.\n\n  Some list\n  With items\n    Even indented';
       expect(removeMd(paragraph)).to.equal(expected);
