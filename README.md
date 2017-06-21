@@ -26,7 +26,7 @@ var plainText = removeMd(markdown, {
 }); // The default for both is true
 ```
 
-Settings `stripListLeaders` to false will retain any list characters (`*, -, +, (digit).`).
+Setting `stripListLeaders` to false will retain any list characters (`*, -, +, (digit).`).
 
 ## TODO
 PRs are very much welcome.
