@@ -51,6 +51,12 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should remove emphasis', function () {
+      const string = 'I italicized an *I* and it made me *sad*.';
+      const expected = 'I italicized an I and it made me sad.';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
     it('should handle paragrahs with markdown', function () {
       const paragraph = '\n## This is a heading ##\n\nThis is a paragraph with [a link](http://www.disney.com/).\n\n### This is another heading\n\nIn `Getting Started` we set up `something` foo.\n\n  * Some list\n  * With items\n    * Even indented';
       const expected = '\nThis is a heading\n\nThis is a paragraph with a link.\n\nThis is another heading\n\nIn Getting Started we set up something foo.\n\n  Some list\n  With items\n    Even indented';
