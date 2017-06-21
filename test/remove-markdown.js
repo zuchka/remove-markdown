@@ -45,9 +45,15 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should leave hashtags in headings', function () {
+      const string = '## This #heading contains #hashtags';
+      const expected = 'This #heading contains #hashtags';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
     it('should handle paragrahs with markdown', function () {
-      const paragraph = '##This is a heading##\n\nThis is a paragraph with [a link](http://www.disney.com/).\n\n### This is another heading\n\nIn `Getting Started` we set up `something` foo.\n\n  * Some list\n  * With items\n    * Even indented';
-      const expected = 'This is a heading\n\nThis is a paragraph with a link.\n\nThis is another heading\n\nIn Getting Started we set up something foo.\n\n  Some list\n  With items\n    Even indented';
+      const paragraph = '\n## This is a heading ##\n\nThis is a paragraph with [a link](http://www.disney.com/).\n\n### This is another heading\n\nIn `Getting Started` we set up `something` foo.\n\n  * Some list\n  * With items\n    * Even indented';
+      const expected = '\nThis is a heading\n\nThis is a paragraph with a link.\n\nThis is another heading\n\nIn Getting Started we set up something foo.\n\n  Some list\n  With items\n    Even indented';
       expect(removeMd(paragraph)).to.equal(expected);
     });
   });
