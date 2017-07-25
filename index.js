@@ -1,5 +1,6 @@
 module.exports = function(md, options) {
   options = options || {};
+  options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
   options.gfm = options.hasOwnProperty('gfm') ? options.gfm : true;
 
@@ -9,10 +10,14 @@ module.exports = function(md, options) {
   output = output.replace(/^(-\s*?|\*\s*?|_\s*?){3,}\s*$/gm, '');
 
   try {
-    if (options.stripListLeaders) {
-      output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, '$1');
+  let { stripListLeaders, listUnicodeChar, gfm } = options;
+    if (stripListLeaders) {
+      if (listUnicodeChar)
+        output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, `${listUnicodeChar} $1`);
+      else
+        output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, '$1');
     }
-    if (options.gfm){
+    if (gfm){
       output = output
         // Header
         .replace(/\n={2,}/g, '\n')
