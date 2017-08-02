@@ -6,7 +6,7 @@ module.exports = function(md, options) {
   var output = md;
 
   // Remove horizontal rules (stripListHeaders conflict with this rule, which is why it has been moved to the top)
-  output = output.replace(/^(-\s*?|\*\s*?|_\s*?){3,}\s*$/gm, '');
+  output = (output !== undefined) ? output.replace(/^(-\s*?|\*\s*?|_\s*?){3,}\s*$/gm, '') : '';
 
   try {
     if (options.stripListLeaders) {
