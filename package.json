@@ -1,6 +1,6 @@
 {
   "name": "remove-markdown",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Remove Markdown formatting from text",
   "main": "index.js",
   "scripts": {

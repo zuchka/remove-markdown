@@ -4,20 +4,19 @@ module.exports = function(md, options) {
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
   options.gfm = options.hasOwnProperty('gfm') ? options.gfm : true;
 
-  var output = md;
+  var output = md || '';
 
   // Remove horizontal rules (stripListHeaders conflict with this rule, which is why it has been moved to the top)
-  output = (output !== undefined) ? output.replace(/^(-\s*?|\*\s*?|_\s*?){3,}\s*$/gm, '') : '';
+  output = output.replace(/^(-\s*?|\*\s*?|_\s*?){3,}\s*$/gm, '');
 
   try {
-  let { stripListLeaders, listUnicodeChar, gfm } = options;
-    if (stripListLeaders) {
-      if (listUnicodeChar)
-        output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, `${listUnicodeChar} $1`);
+    if (options.stripListLeaders) {
+      if (options.listUnicodeChar)
+        output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, options.listUnicodeChar + ' $1');
       else
         output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, '$1');
     }
-    if (gfm){
+    if (options.gfm) {
       output = output
         // Header
         .replace(/\n={2,}/g, '\n')
