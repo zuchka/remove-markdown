@@ -19,13 +19,14 @@ const markdown = '# This is a heading\n\nThis is a paragraph with [a link](http:
 const plainText = removeMd(markdown); // plainText is now 'This is a heading\n\nThis is a paragraph with a link in it.'
 ```
 
-You can also supply an options object to the function. Currently, the only two options are for stripping list leaders and supporting Github Flavored Markdown:
+You can also supply an options object to the function. Currently, the following options are supported:
 
 ```js
 var plainText = removeMd(markdown, {
-  stripListLeaders: false,
-  gfm: false
-}); // The default for both is true
+  stripListLeaders: true , // strip list leaders (default: true)
+  listUnicodeChar: '',     // char to insert instead of stripped list leaders (default: '')
+  gfm: true                // support GitHub-Flavored Markdown (default: true)
+});
 ```
 
 Setting `stripListLeaders` to false will retain any list characters (`*, -, +, (digit).`).
