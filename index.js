@@ -37,8 +37,8 @@ module.exports = function(md, options) {
       .replace(/\!\[.*?\][\[\(].*?[\]\)]/g, '')
       // Remove inline links
       .replace(/\[(.*?)\][\[\(].*?[\]\)]/g, '$1')
-      // Remove Blockquotes
-      .replace(/>/g, '')
+      // Remove blockquotes
+      .replace(/^\s{0,3}>\s?/g, '')
       // Remove reference-style links?
       .replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')
       // Remove atx-style headers
