@@ -67,7 +67,7 @@ describe('remove Markdown', function () {
       const string = '**this sentence has __double styling__**';
       const expected = 'this sentence has double styling';
       expect(removeMd(string)).to.equal(expected);
-    });    
+    });
 
     it('should remove horizontal rules', function () {
       const string = 'Some text on a line\n\n---\n\nA line below';
@@ -79,6 +79,43 @@ describe('remove Markdown', function () {
       const string = 'Some text on a line\n\n* * *\n\nA line below';
       const expected = 'Some text on a line\n\nA line below';
       expect(removeMd(string)).to.equal(expected);
+    });
+
+    it('should remove blockquotes', function () {
+      const string = '>I am a blockquote';
+      const expected = 'I am a blockquote';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
+    it('should remove blockquotes with spaces', function () {
+      const string = '> I am a blockquote';
+      const expected = 'I am a blockquote';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
+    it('should remove indented blockquotes', function () {
+        var tests = [
+            { string: ' > I am a blockquote', expected: 'I am a blockquote' },
+            { string: '  > I am a blockquote', expected: 'I am a blockquote' },
+            { string: '   > I am a blockquote', expected: 'I am a blockquote' },
+        ];
+        tests.forEach(function (test) {
+            expect(removeMd(test.string)).to.equal(test.expected);
+        });
+    });
+
+    it('should not remove greater than signs', function () {
+      var tests = [
+          { string: '100 > 0', expected: '100 > 0' },
+          { string: '100 >= 0', expected: '100 >= 0' },
+          { string: '100>0', expected: '100>0' },
+          { string: '> 100 > 0', expected: '100 > 0' },
+          { string: '1 < 100', expected: '1 < 100' },
+          { string: '1 <= 100', expected: '1 <= 100' },
+      ];
+      tests.forEach(function (test) {
+          expect(removeMd(test.string)).to.equal(test.expected);
+      });
     });
 
     it('should strip unordered list leaders', function () {
