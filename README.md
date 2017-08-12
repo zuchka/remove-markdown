@@ -1,10 +1,11 @@
 [![CircleCI](https://circleci.com/gh/stiang/remove-markdown.svg?style=svg&circle-token=cac2feef7dc90e6b8578aec361be369412be1c6a)](https://circleci.com/gh/stiang/remove-markdown)
 
 ## What is it?
-**remove-markdown** is a node.js module that will remove (strip) Markdown formatting from a text. "Markdown formatting" means pretty much anything that doesn’t look like regular text, like square brackets, asterisks etc.
+**remove-markdown** is a node.js module that will remove (strip) Markdown formatting from text.
+*Markdown formatting* means pretty much anything that doesn’t look like regular text, like square brackets, asterisks etc.
 
 ## When do I need it?
-The typical use case is to display an excerpt of a Markdown text, without the actual Markdown (or rendered HTML, for that matter), for example in a list of posts.
+The typical use case is to display an excerpt from some Markdown text, without any of the actual Markdown syntax - for example in a list of posts.
 
 ## Installation
 
@@ -22,7 +23,7 @@ const plainText = removeMd(markdown); // plainText is now 'This is a heading\n\n
 You can also supply an options object to the function. Currently, the following options are supported:
 
 ```js
-var plainText = removeMd(markdown, {
+const plainText = removeMd(markdown, {
   stripListLeaders: true , // strip list leaders (default: true)
   listUnicodeChar: '',     // char to insert instead of stripped list leaders (default: '')
   gfm: true                // support GitHub-Flavored Markdown (default: true)
@@ -32,7 +33,8 @@ var plainText = removeMd(markdown, {
 Setting `stripListLeaders` to false will retain any list characters (`*, -, +, (digit).`).
 
 ## TODO
-PRs are very much welcome.
+PRs are very much welcome. Here are some ideas for future enhancements:
+
 * Allow the RegEx expressions to be customized per rule
 * Make the rules more robust, support more edge cases
 * Add more (comprehensive) tests
