@@ -26,7 +26,6 @@ module.exports = function(md, options) {
         .replace(/~~/g, '')
         // Fenced codeblocks
         .replace(/`{3}.*\n/g, '')
-
     }
     output = output
       // Remove HTML tags
