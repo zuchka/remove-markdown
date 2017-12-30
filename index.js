@@ -25,7 +25,7 @@ module.exports = function(md, options) {
         // Strikethrough
         .replace(/~~/g, '')
         // Fenced codeblocks
-        .replace(/`{3}.*\n/g, '')
+        .replace(/`{3}.*\n/g, '');
     }
     output = output
       // Remove HTML tags
