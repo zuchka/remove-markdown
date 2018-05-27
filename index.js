@@ -20,6 +20,8 @@ module.exports = function(md, options) {
       output = output
         // Header
         .replace(/\n={2,}/g, '\n')
+        // Fenced codeblocks
+        .replace(/~{3}.*\n/g, '')
         // Strikethrough
         .replace(/~~/g, '')
         // Fenced codeblocks
