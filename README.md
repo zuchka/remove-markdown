@@ -27,6 +27,7 @@ const plainText = removeMd(markdown, {
   stripListLeaders: true , // strip list leaders (default: true)
   listUnicodeChar: '',     // char to insert instead of stripped list leaders (default: '')
   gfm: true                // support GitHub-Flavored Markdown (default: true)
+  useImgAltText: true      // replace images with alt-text, if present (default: true)
 });
 ```
 
