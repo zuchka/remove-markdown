@@ -40,8 +40,14 @@ describe('remove Markdown', function () {
     });
 
     it('should strip img tags', function () {
-      const string = '![bear](https://placebear.com/640/480)*Javascript* developers are the _best_.';
+      const string = '![](https://placebear.com/640/480)*Javascript* developers are the _best_.';
       const expected = 'Javascript developers are the best.';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
+    it('should use the alt-text of an image, if it is provided', function () {
+      const string = '![This is the alt-text](https://www.example.com/images/logo.png)';
+      const expected = 'This is the alt-text';
       expect(removeMd(string)).to.equal(expected);
     });
 
