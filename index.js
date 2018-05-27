@@ -3,6 +3,7 @@ module.exports = function(md, options) {
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
   options.gfm = options.hasOwnProperty('gfm') ? options.gfm : true;
+  options.useImgAltText = options.hasOwnProperty('useImgAltText') ? options.useImgAltText : true;
 
   var output = md || '';
 
@@ -36,7 +37,7 @@ module.exports = function(md, options) {
       .replace(/\[\^.+?\](\: .*?$)?/g, '')
       .replace(/\s{0,2}\[.*?\]: .*?$/g, '')
       // Remove images
-      .replace(/\!\[.*?\][\[\(].*?[\]\)]/g, '')
+      .replace(/\!\[(.*?)\][\[\(].*?[\]\)]/g, options.useImgAltText ? '$1' : '')
       // Remove inline links
       .replace(/\[(.*?)\][\[\(].*?[\]\)]/g, '$1')
       // Remove blockquotes
