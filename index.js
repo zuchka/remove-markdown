@@ -29,7 +29,7 @@ module.exports = function(md, options) {
         // Fenced codeblocks
         .replace(/`{3}.*\n/g, '');
     }
-    var htmlReplaceRegex = new RegExp(/<[^>]*>/, 'g');
+    var htmlReplaceRegex = new RegExp('<[^>]*>', 'g');
     if (options.htmlTagsToSkip.length > 0) {
       // Using negative lookahead. Eg. (?!sup|sub) will not match 'sup' and 'sub' tags.
       var joinedHtmlTagsToSkip = '(?!' + options.htmlTagsToSkip.join("|") + ')';
