@@ -4,6 +4,7 @@ module.exports = function(md, options) {
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
   options.gfm = options.hasOwnProperty('gfm') ? options.gfm : true;
   options.useImgAltText = options.hasOwnProperty('useImgAltText') ? options.useImgAltText : true;
+  options.htmlTagsToSkip = options.hasOwnProperty('htmlTagsToSkip') ? options.htmlTagsToSkip : [];
 
   var output = md || '';
 
@@ -28,9 +29,23 @@ module.exports = function(md, options) {
         // Fenced codeblocks
         .replace(/`{3}.*\n/g, '');
     }
+    var htmlReplaceRegex = new RegExp(/<[^>]*>/, 'g');
+    if (options.htmlTagsToSkip.length > 0) {
+      // Using negative lookahead. Eg. (?!sup|sub) will not match 'sup' and 'sub' tags.
+      var joinedHtmlTagsToSkip = '(?!' + options.htmlTagsToSkip.join("|") + ')';
+
+      // Adding the lookahead literal with the default regex for html. Eg./<(?!sup|sub)[^>]*>/ig
+      htmlReplaceRegex = new RegExp(
+          '<' +
+          joinedHtmlTagsToSkip +
+          '[^>]*>', 
+          'ig'
+      );
+    }
+
     output = output
       // Remove HTML tags
-      .replace(/<[^>]*>/g, '')
+      .replace(htmlReplaceRegex, '')
       // Remove setext-style headers
       .replace(/^[=\-]{2,}\s*$/g, '')
       // Remove footnotes?
