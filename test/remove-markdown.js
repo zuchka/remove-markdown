@@ -33,6 +33,11 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should not strip HTML if stripHTML=false', function () {
+      const string = '<p>Hello World</p>';
+      expect(removeMd(string, { stripHTML: false })).to.equal(string);
+    });
+
     it('should strip anchors', function () {
       const string = '*Javascript* [developers](https://engineering.condenast.io/)* are the _best_.';
       const expected = 'Javascript developers* are the best.';

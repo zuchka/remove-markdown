@@ -2,6 +2,7 @@ module.exports = function(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
+  options.stripHTML = options.hasOwnProperty('stripHTML') ? options.stripHTML : true;
   options.gfm = options.hasOwnProperty('gfm') ? options.gfm : true;
   options.useImgAltText = options.hasOwnProperty('useImgAltText') ? options.useImgAltText : true;
 
@@ -28,9 +29,11 @@ module.exports = function(md, options) {
         // Fenced codeblocks
         .replace(/`{3}.*\n/g, '');
     }
+    if (options.stripHTML) {
+      output = output.replace(/<[^>]*>/g, '')
+    }
+
     output = output
-      // Remove HTML tags
-      .replace(/<[^>]*>/g, '')
       // Remove setext-style headers
       .replace(/^[=\-]{2,}\s*$/g, '')
       // Remove footnotes?
