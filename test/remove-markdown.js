@@ -69,6 +69,18 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should remove emphasis only if there is no space between word and emphasis characters.', function () {
+      const string = 'There should be no _space_, *before* *closing * _ephasis character _.';
+      const expected = 'There should be no space, before *closing * _ephasis character _.';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
+    it('should remove "_" emphasis only if there is space before opening and after closing emphasis characters.', function () {
+      const string = '._Spaces_ _ before_ and _after _ emphasised character results in no emphasis.';
+      const expected = '.Spaces _ before_ and _after _ emphasised character results in no emphasis.';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
     it('should remove double emphasis', function () {
       const string = '**this sentence has __double styling__**';
       const expected = 'this sentence has double styling';

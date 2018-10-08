@@ -46,9 +46,12 @@ module.exports = function(md, options) {
       .replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')
       // Remove atx-style headers
       .replace(/^(\n)?\s{0,}#{1,6}\s+| {0,}(\n)?\s{0,}#{0,} {0,}(\n)?\s{0,}$/gm, '$1$2$3')
-      // Remove emphasis (repeat the line to remove double emphasis)
-      .replace(/([\*_]{1,3})(\S.*?\S{0,1})\1/g, '$2')
-      .replace(/([\*_]{1,3})(\S.*?\S{0,1})\1/g, '$2')
+      // Remove * emphasis
+      .replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3')
+      // Remove _ emphasis. Unlike *, _ emphasis gets rendered only if 
+      //   1. Either there is a whitespace character before opening _ and after closing _.
+      //   2. Or _ is at the start/end of the string.
+      .replace(/(^|[\s\W])([_]+)(\S)(.*?\S)??\2($|[\s\W])/g, '$1$3$4$5')
       // Remove code blocks
       .replace(/(`{3,})(.*?)\1/gm, '$2')
       // Remove inline code
