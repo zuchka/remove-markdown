@@ -4,6 +4,7 @@ module.exports = function(md, options) {
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
   options.gfm = options.hasOwnProperty('gfm') ? options.gfm : true;
   options.useImgAltText = options.hasOwnProperty('useImgAltText') ? options.useImgAltText : true;
+  options.abbr = options.hasOwnProperty('abbr') ? options.abbr : false;
 
   var output = md || '';
 
@@ -19,7 +20,7 @@ module.exports = function(md, options) {
     }
     if (options.gfm) {
       output = output
-        // Header
+      // Header
         .replace(/\n={2,}/g, '\n')
         // Fenced codeblocks
         .replace(/~{3}.*\n/g, '')
@@ -28,8 +29,12 @@ module.exports = function(md, options) {
         // Fenced codeblocks
         .replace(/`{3}.*\n/g, '');
     }
+    if (options.abbr) {
+      // Remove abbreviations
+      output = output.replace(/\*\[.*\]:.*\n/, '');
+    }
     output = output
-      // Remove HTML tags
+    // Remove HTML tags
       .replace(/<[^>]*>/g, '')
       // Remove setext-style headers
       .replace(/^[=\-]{2,}\s*$/g, '')
