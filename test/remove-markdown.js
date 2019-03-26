@@ -141,5 +141,16 @@ describe('remove Markdown', function () {
       const expected = '\nThis is a heading\n\nThis is a paragraph with a link.\n\nThis is another heading\n\nIn Getting Started we set up something foo.\n\n  Some list\n  With items\n    Even indented';
       expect(removeMd(paragraph)).to.equal(expected);
     });
+
+    it('should not trigger ReDoS with atx-headers', function () {
+      const start = Date.now();
+
+      const paragraph = '\n## This is a long "'+' '.repeat(200)+'" heading ##\n';
+      const expected = /\nThis is a long " {200}" heading\n/;
+      expect(removeMd(paragraph)).to.match(expected);
+
+      const duration = Date.now()-start;
+      expect(duration).to.be.lt(500);
+    });
   });
 });
