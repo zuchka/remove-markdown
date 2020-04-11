@@ -54,7 +54,7 @@ module.exports = function(md, options) {
       // Remove inline code
       .replace(/`(.+?)`/g, '$1')
       // Replace two or more newlines with exactly two? Not entirely sure this belongs here...
-      .replace(/\n{2,}/g, '\n\n');
+      .replace(/\n{2,}/g, '\n\n')
       // Remove newlines in a paragraph
       .replace(/(\S+)\n\s*(\S+)/g, '$1 $2');
   } catch(e) {
