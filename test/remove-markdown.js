@@ -110,6 +110,13 @@ describe('remove Markdown', function () {
         });
     });
 
+    it('should remove blockquotes following other content', function () {
+      const string = '## A headline\n\nA paragraph of text\n\n> I am a blockquote';
+      const expected = 'A headline\n\nA paragraph of text\n\nI am a blockquote';
+
+      expect(removeMd(string)).to.equal(expected);
+    });
+
     it('should not remove greater than signs', function () {
       var tests = [
           { string: '100 > 0', expected: '100 > 0' },
