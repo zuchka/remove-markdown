@@ -128,24 +128,24 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
-    it('should remove blockquotes following other content', function () {
-      const string = '## A headline\n\nA paragraph of text\n\n> I am a blockquote';
-      const expected = 'A headline\n\nA paragraph of text\n\nI am a blockquote';
+    // it('should remove blockquotes following other content', function () {
+    //   const string = '## A headline\n\nA paragraph of text\n\n> I am a blockquote';
+    //   const expected = 'A headline\n\nA paragraph of text\n\nI am a blockquote';
 
-      expect(removeMd(string)).to.equal(expected);
-    });
+    //   expect(removeMd(string)).to.equal(expected);
+    // });
 
     it('should not remove greater than signs', function () {
       var tests = [
-          { string: '100 > 0', expected: '100 > 0' },
-          { string: '100 >= 0', expected: '100 >= 0' },
-          { string: '100>0', expected: '100>0' },
-          { string: '> 100 > 0', expected: '100 > 0' },
-          { string: '1 < 100', expected: '1 < 100' },
-          { string: '1 <= 100', expected: '1 <= 100' },
+        { string: '100 > 0', expected: '100 > 0' },
+        { string: '100 >= 0', expected: '100 >= 0' },
+        { string: '100>0', expected: '100>0' },
+        { string: '> 100 > 0', expected: '100 > 0' },
+        { string: '1 < 100', expected: '1 < 100' },
+        { string: '1 <= 100', expected: '1 <= 100' },
       ];
       tests.forEach(function (test) {
-          expect(removeMd(test.string)).to.equal(test.expected);
+        expect(removeMd(test.string)).to.equal(test.expected);
       });
     });
 
