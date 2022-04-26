@@ -4,6 +4,7 @@ module.exports = function(md, options) {
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
   options.gfm = options.hasOwnProperty('gfm') ? options.gfm : true;
   options.useImgAltText = options.hasOwnProperty('useImgAltText') ? options.useImgAltText : true;
+  options.abbr = options.hasOwnProperty('abbr') ? options.abbr : false;
   options.replaceLinksWithURL = options.hasOwnProperty('replaceLinksWithURL') ? options.replaceLinksWithURL : false;
   options.htmlTagsToSkip = options.hasOwnProperty('htmlTagsToSkip') ? options.htmlTagsToSkip : [];
 
@@ -21,7 +22,7 @@ module.exports = function(md, options) {
     }
     if (options.gfm) {
       output = output
-        // Header
+      // Header
         .replace(/\n={2,}/g, '\n')
         // Fenced codeblocks
         .replace(/~{3}.*\n/g, '')
@@ -30,6 +31,14 @@ module.exports = function(md, options) {
         // Fenced codeblocks
         .replace(/`{3}.*\n/g, '');
     }
+    if (options.abbr) {
+      // Remove abbreviations
+      output = output.replace(/\*\[.*\]:.*\n/, '');
+    }
+    output = output
+    // Remove HTML tags
+      .replace(/<[^>]*>/g, '')
+
     var htmlReplaceRegex = new RegExp('<[^>]*>', 'g');
     if (options.htmlTagsToSkip.length > 0) {
       // Using negative lookahead. Eg. (?!sup|sub) will not match 'sup' and 'sub' tags.
