@@ -121,6 +121,12 @@ describe('remove Markdown', function () {
             expect(removeMd(test.string)).to.equal(test.expected);
         });
     });
+    
+    it('should remove blockquotes over multiple lines', function () {
+      const string = '> I am a blockquote firstline  \n>I am a blockquote secondline';
+      const expected = 'I am a blockquote firstline\nI am a blockquote secondline';
+      expect(removeMd(string)).to.equal(expected);
+    });
 
     it('should not remove greater than signs', function () {
       var tests = [
