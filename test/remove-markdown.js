@@ -167,6 +167,12 @@ describe('remove Markdown', function () {
       expect(removeMd(paragraph)).to.equal(expected);
     });
 
+    it('should not strip paragraphs without content', function() {
+      const paragraph = '\n#This paragraph\n##This paragraph#';
+      const expected = paragraph;
+      expect(removeMd(paragraph)).to.equal(expected);
+    });
+
     it('should not trigger ReDoS with atx-headers', function () {
       const start = Date.now();
 
