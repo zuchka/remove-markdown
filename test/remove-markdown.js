@@ -69,6 +69,18 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should remove emphasis only if there is no space between word and emphasis characters.', function () {
+      const string = 'There should be no _space_, *before* *closing * _ephasis character _.';
+      const expected = 'There should be no space, before *closing * _ephasis character _.';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
+    it('should remove "_" emphasis only if there is space before opening and after closing emphasis characters.', function () {
+      const string = '._Spaces_ _ before_ and _after _ emphasised character results in no emphasis.';
+      const expected = '.Spaces _ before_ and _after _ emphasised character results in no emphasis.';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
     it('should remove double emphasis', function () {
       const string = '**this sentence has __double styling__**';
       const expected = 'this sentence has double styling';
@@ -109,6 +121,19 @@ describe('remove Markdown', function () {
             expect(removeMd(test.string)).to.equal(test.expected);
         });
     });
+    
+    it('should remove blockquotes over multiple lines', function () {
+      const string = '> I am a blockquote firstline  \n>I am a blockquote secondline';
+      const expected = 'I am a blockquote firstline\nI am a blockquote secondline';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
+    it('should remove blockquotes following other content', function () {
+      const string = '## A headline\n\nA paragraph of text\n\n> I am a blockquote';
+      const expected = 'A headline\n\nA paragraph of text\n\nI am a blockquote';
+
+      expect(removeMd(string)).to.equal(expected);
+    });
 
     it('should not remove greater than signs', function () {
       var tests = [
@@ -146,6 +171,17 @@ describe('remove Markdown', function () {
       const paragraph = '\n#This paragraph\n##This paragraph#';
       const expected = paragraph;
       expect(removeMd(paragraph)).to.equal(expected);
+    });
+
+    it('should not trigger ReDoS with atx-headers', function () {
+      const start = Date.now();
+
+      const paragraph = '\n## This is a long "'+' '.repeat(200)+'" heading ##\n';
+      const expected = /\nThis is a long " {200}" heading\n/;
+      expect(removeMd(paragraph)).to.match(expected);
+
+      const duration = Date.now()-start;
+      expect(duration).to.be.lt(500);
     });
   });
 });
