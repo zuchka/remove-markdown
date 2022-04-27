@@ -10,7 +10,7 @@ version: 2.1
 orbs:
   node: circleci/node@4.7.0
 jobs:
-  build_and_test: # this can be any name you choose
+  test: # this can be any name you choose
     docker:
       - image: cimg/node:17.2.0
     steps:
@@ -23,4 +23,4 @@ jobs:
 workflows:
   test_app:
     jobs:
-      - build_and_test
+      - test
