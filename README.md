@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/stiang/remove-markdown.svg?style=svg&circle-token=cac2feef7dc90e6b8578aec361be369412be1c6a)](https://circleci.com/gh/stiang/remove-markdown)
+[![CircleCI](https://circleci.com/gh/stiang/remove-markdown/tree/master.svg?style=svg)](https://circleci.com/gh/stiang/remove-markdown/tree/master)
 
 ## What is it?
 **remove-markdown** is a node.js module that will remove (strip) Markdown formatting from text.
