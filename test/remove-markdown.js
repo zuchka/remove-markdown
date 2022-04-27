@@ -181,7 +181,7 @@ describe('remove Markdown', function () {
       expect(removeMd(paragraph)).to.match(expected);
 
       const duration = Date.now()-start;
-      expect(duration).to.be.lt(500);
+      expect(duration).to.be.lt(1000);
     });
   });
 });
