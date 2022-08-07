@@ -124,16 +124,16 @@ describe('remove Markdown', function () {
     
     it('should remove blockquotes over multiple lines', function () {
       const string = '> I am a blockquote firstline  \n>I am a blockquote secondline';
-      const expected = 'I am a blockquote firstline\nI am a blockquote secondline';
+      const expected = 'I am a blockquote firstline  \nI am a blockquote secondline';
       expect(removeMd(string)).to.equal(expected);
     });
 
-    // it('should remove blockquotes following other content', function () {
-    //   const string = '## A headline\n\nA paragraph of text\n\n> I am a blockquote';
-    //   const expected = 'A headline\n\nA paragraph of text\n\nI am a blockquote';
+    it('should remove blockquotes following other content', function () {
+      const string = '## A headline\n\nA paragraph of text\n\n> I am a blockquote';
+      const expected = 'A headline\n\nA paragraph of text\n\nI am a blockquote';
 
-    //   expect(removeMd(string)).to.equal(expected);
-    // });
+      expect(removeMd(string)).to.equal(expected);
+    });
 
     it('should not remove greater than signs', function () {
       var tests = [
@@ -182,6 +182,12 @@ describe('remove Markdown', function () {
 
       const duration = Date.now()-start;
       expect(duration).to.be.lt(1000);
+    });
+
+    it('should work fast even with lots of whitespace', function () {
+      const string = 'Some text with lots of                                                                                                                                                                                                       whitespace';
+      const expected = 'Some text with lots of                                                                                                                                                                                                       whitespace';
+      expect(removeMd(string)).to.equal(expected);
     });
   });
 });
