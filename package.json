@@ -21,7 +21,7 @@
   "homepage": "https://github.com/stiang/remove-markdown",
   "devDependencies": {
     "chai": "^4.0.2",
-    "mocha": "^2.1.0",
+    "mocha": "^10.1.0",
     "should": "^5.0.0"
   }
 }
