@@ -167,6 +167,20 @@ describe('remove Markdown', function () {
       expect(removeMd(paragraph)).to.equal(expected);
     });
 
+    it('should remove inline links', function () {
+      const link = '[Link](https://www.example.com)';
+      const expected = 'Link';
+
+      expect(removeMd(link)).to.equal(expected);
+    });
+
+    it('should remove inline links with parentheses', function () {
+      const link = '[Link (parentheses) - Link](https://www.example.com/(parentheses))';
+      const expected = 'Link (parentheses) - Link';
+
+      expect(removeMd(link)).to.equal(expected);
+    });
+
     it('should not strip paragraphs without content', function() {
       const paragraph = '\n#This paragraph\n##This paragraph#';
       const expected = paragraph;
