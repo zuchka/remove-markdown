@@ -9,7 +9,6 @@ module.exports = function(md, options) {
   options.htmlTagsToSkip = options.hasOwnProperty('htmlTagsToSkip') ? options.htmlTagsToSkip : [];
 
   var output = md || '';
-  let htmlTags = [];
 
   // Remove horizontal rules (stripListHeaders conflict with this rule, which is why it has been moved to the top)
   output = output.replace(/^(-\s*?|\*\s*?|_\s*?){3,}\s*/gm, '');
@@ -55,15 +54,10 @@ module.exports = function(md, options) {
     if (htmlPossibleTags) {
       htmlPossibleTags.forEach(function(string) {
         if (isHtmlTag(string)) {
-          htmlTags.push(string);
+          output = removeHtmltagIfNotInsideCodeblock(md, output, string);
         }
       });
-
     }
-
-    htmlTags.map(function(htmlTag) {
-      output = output.replace(htmlTag, '');
-    });
 
     output = output
       // Remove setext-style headers
@@ -109,4 +103,16 @@ function isHtmlTag(string) {
   const splittedString = string.split(' ');
 
   return !(Boolean( string.match(/\d/) ) && (!isNaN(splittedString[1]) || !isNaN(splittedString.reverse()[1])));
+}
+
+function removeHtmltagIfNotInsideCodeblock(md, output, tag, codeMark = '`') {
+  const re = new RegExp(tag,'gi');
+
+  while (exec = re.exec(output)){
+    if (md[exec.index - 1] !== codeMark || md[re.lastIndex] !== codeMark) {
+      output = output.substring(0, exec.index) + output.substring(re.lastIndex);
+    }
+  }
+
+  return output;
 }

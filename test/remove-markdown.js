@@ -39,6 +39,12 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should not strip html inside code element', function() {
+      const string = 'HTML tags look like this: `<div>`.';
+      const expected = 'HTML tags look like this: <div>.';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
     it('should strip anchors', function () {
       const string = '*Javascript* [developers](https://engineering.condenast.io/)* are the _best_.';
       const expected = 'Javascript developers* are the best.';
