@@ -195,5 +195,11 @@ describe('remove Markdown', function () {
       const duration = Date.now()-start;
       expect(duration).to.be.lt(1000);
     });
+
+    it('should not strip not HTML corner braces', function () {
+      const string = 'You can write to John Doe <john.doe AT example DOT com>';
+      const expected = 'You can write to John Doe <john.doe AT example DOT com>';
+      expect(removeMd(string)).to.equal(expected);
+    });
   });
 });

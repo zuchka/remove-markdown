@@ -100,9 +100,12 @@ module.exports = function(md, options) {
 };
 
 function isHtmlTag(string) {
-  const splittedString = string.split(' ');
+  const splittedString = string.replace('/', '').split(' ');
+  const htmlTags = require('./html_tags.json');
 
-  return !(Boolean( string.match(/\d/) ) && (!isNaN(splittedString[1]) || !isNaN(splittedString.reverse()[1])));
+  string = string.replace('<', '').replace('>', '').replace('/', '');
+
+  return !(Boolean( string.match(/\d/) ) && (!isNaN(splittedString[1]) || !isNaN(splittedString.reverse()[1]))) && htmlTags.includes(string[0]);
 }
 
 function removeHtmltagIfNotInsideCodeblock(md, output, tag, codeMark = '`') {
