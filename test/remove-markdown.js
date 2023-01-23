@@ -33,6 +33,12 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should not strip arithmetic signs', function() {
+      const string = '`<p class="class1 class2" id="id1">The equations 2 < 3 and 3 > 1 are both true</p>`';
+      const expected = 'The equations 2 < 3 and 3 > 1 are both true';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
     it('should strip anchors', function () {
       const string = '*Javascript* [developers](https://engineering.condenast.io/)* are the _best_.';
       const expected = 'Javascript developers* are the best.';

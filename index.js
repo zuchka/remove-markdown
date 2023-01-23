@@ -9,6 +9,7 @@ module.exports = function(md, options) {
   options.htmlTagsToSkip = options.hasOwnProperty('htmlTagsToSkip') ? options.htmlTagsToSkip : [];
 
   var output = md || '';
+  let htmlTags = [];
 
   // Remove horizontal rules (stripListHeaders conflict with this rule, which is why it has been moved to the top)
   output = output.replace(/^(-\s*?|\*\s*?|_\s*?){3,}\s*/gm, '');
@@ -35,9 +36,6 @@ module.exports = function(md, options) {
       // Remove abbreviations
       output = output.replace(/\*\[.*\]:.*\n/, '');
     }
-    output = output
-    // Remove HTML tags
-      .replace(/<[^>]*>/g, '')
 
     var htmlReplaceRegex = new RegExp('<[^>]*>', 'g');
     if (options.htmlTagsToSkip.length > 0) {
@@ -53,9 +51,21 @@ module.exports = function(md, options) {
       );
     }
 
+    const htmlPossibleTags = output.match(htmlReplaceRegex);
+    if (htmlPossibleTags) {
+      htmlPossibleTags.forEach(function(string) {
+        if (isHtmlTag(string)) {
+          htmlTags.push(string);
+        }
+      });
+
+    }
+
+    htmlTags.map(function(htmlTag) {
+      output = output.replace(htmlTag, '');
+    });
+
     output = output
-      // Remove HTML tags
-      .replace(htmlReplaceRegex, '')
       // Remove setext-style headers
       .replace(/^[=\-]{2,}\s*$/g, '')
       // Remove footnotes?
@@ -94,3 +104,9 @@ module.exports = function(md, options) {
   }
   return output;
 };
+
+function isHtmlTag(string) {
+  const splittedString = string.split(' ');
+
+  return !(Boolean( string.match(/\d/) ) && (!isNaN(splittedString[1]) || !isNaN(splittedString.reverse()[1])));
+}
