@@ -66,12 +66,12 @@ module.exports = function(md, options) {
       // Remove inline links
       .replace(/\[([^\]]*?)\][\[\(].*?[\]\)]/g, options.replaceLinksWithURL ? '$2' : '$1')
       // Remove blockquotes
-      .replace(/^\s{0,3}>\s?/gm, '')
+      .replace(/^(\n)?\s{0,3}>\s?/gm, '$1')
       // .replace(/(^|\n)\s{0,3}>\s?/g, '\n\n')
       // Remove reference-style links?
       .replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')
       // Remove atx-style headers
-      .replace(/^(\n)?\s{0,}#{1,6}\s+| {0,}(\n)?\s{0,}#{0,} #{0,}(\n)?\s{0,}$/gm, '$1$2$3')
+      .replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6')
       // Remove * emphasis
       .replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3')
       // Remove _ emphasis. Unlike *, _ emphasis gets rendered only if 
