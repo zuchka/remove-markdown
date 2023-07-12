@@ -189,5 +189,11 @@ describe('remove Markdown', function () {
       const expected = 'Some text with lots of                                                                                                                                                                                                       whitespace';
       expect(removeMd(string)).to.equal(expected);
     });
+
+    it('should still remove escaped markdown syntax', function () {
+      const string = '\# Heading in _italic_';
+      const expected = 'Heading in italic';
+      expect(removeMd(string)).to.equal(expected);
+    });
   });
 });
