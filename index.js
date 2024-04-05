@@ -89,7 +89,7 @@ module.exports = function(md, options) {
       // Replace strike through
       .replace(/~(.*?)~/g, '$1');
   } catch(e) {
-    console.error(e);
+    console.error("remove-markdown encountered error: %s", e);
     return md;
   }
   return output;
