@@ -1,12 +1,5 @@
 ![default workflow](https://github.com/stiang/remove-markdown/actions/workflows/default.yaml/badge.svg)
 
-## *** 2022-10-18: Important message about the future of this package ***
-Hello all, I don’t use this package in my own projects any longer and I have come to the realization that I basically don’t have the bandwidth to maintain the package. 
-
-However, the package is used quite a bit and I don’t want to just abandon it. So I’m looking for suggestions on how to move forward with someone else in charge of maintaining the package on a day-to-day basis. I’m open to adding collaborators to this repo or moving the entire repo to a more fitting home.
-
-Please contact me directly or post a comment on [the issue I created about this](https://github.com/stiang/remove-markdown/issues/61) (#61).
-
 ## What is it?
 **remove-markdown** is a node.js module that will remove (strip) Markdown formatting from text.
 *Markdown formatting* means pretty much anything that doesn’t look like regular text, like square brackets, asterisks etc.
@@ -50,5 +43,6 @@ PRs are very much welcome. Here are some ideas for future enhancements:
 ## Credits
 The code is based on [Markdown Service Tools - Strip Markdown](http://brettterpstra.com/2013/10/18/a-markdown-service-to-strip-markdown/) by Brett Terpstra.
 
-## Author
-Stian Grytøyr
+## Authors
+Stian Grytøyr (original creator)
+zuchka (maintainer since 2023)
