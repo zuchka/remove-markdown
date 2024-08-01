@@ -45,3 +45,6 @@ The code is based on [Markdown Service Tools - Strip Markdown](http://brettterps
 
 ## Author
 Stian Grytøyr
+
+## Maintainer
+[zuchka](https://github.com/zuchka)
