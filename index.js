@@ -7,6 +7,7 @@ module.exports = function(md, options) {
   options.abbr = options.hasOwnProperty('abbr') ? options.abbr : false;
   options.replaceLinksWithURL = options.hasOwnProperty('replaceLinksWithURL') ? options.replaceLinksWithURL : false;
   options.htmlTagsToSkip = options.hasOwnProperty('htmlTagsToSkip') ? options.htmlTagsToSkip : [];
+  options.throwError = options.hasOwnProperty('throwError') ? options.throwError : false;
 
   var output = md || '';
 
@@ -89,7 +90,9 @@ module.exports = function(md, options) {
       // Replace strike through
       .replace(/~(.*?)~/g, '$1');
   } catch(e) {
-    console.error(e);
+    if (options.throwError) throw e;
+
+    console.error("remove-markdown encountered error: %s", e);
     return md;
   }
   return output;
