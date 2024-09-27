@@ -195,5 +195,16 @@ describe('remove Markdown', function () {
       const expected = 'Heading in italic';
       expect(removeMd(string)).to.equal(expected);
     });
+
+    it('should skip specified HTML tags when htmlTagsToSkip option is provided', () => {
+      const markdown =
+        '<div>HTML content <sub>Superscript</sub> <span>span text</span></div>'
+      const result = removeMd(markdown, {htmlTagsToSkip: ['sub']})
+      expect(result).to.equal('HTML content <sub>Superscript</sub> span text')
+      const result2 = removeMd(markdown, {htmlTagsToSkip: ['sub', 'span']})
+      expect(result2).to.equal(
+        'HTML content <sub>Superscript</sub> <span>span text</span>',
+      )
+    })
   });
 });
