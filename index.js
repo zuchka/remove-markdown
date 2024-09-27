@@ -36,22 +36,15 @@ module.exports = function(md, options) {
       // Remove abbreviations
       output = output.replace(/\*\[.*\]:.*\n/, '');
     }
-    output = output
-    // Remove HTML tags
-      .replace(/<[^>]*>/g, '')
-
-    var htmlReplaceRegex = new RegExp('<[^>]*>', 'g');
-    if (options.htmlTagsToSkip.length > 0) {
-      // Using negative lookahead. Eg. (?!sup|sub) will not match 'sup' and 'sub' tags.
-      var joinedHtmlTagsToSkip = '(?!' + options.htmlTagsToSkip.join("|") + ')';
-
-      // Adding the lookahead literal with the default regex for html. Eg./<(?!sup|sub)[^>]*>/ig
+    
+    let htmlReplaceRegex = /<[^>]*>/g
+    if (options.htmlTagsToSkip && options.htmlTagsToSkip.length > 0) {
+      // Create a regex that matches tags not in htmlTagsToSkip
+      const joinedHtmlTagsToSkip = options.htmlTagsToSkip.join('|')
       htmlReplaceRegex = new RegExp(
-          '<' +
-          joinedHtmlTagsToSkip +
-          '[^>]*>', 
-          'ig'
-      );
+        `<(?!\/?(${joinedHtmlTagsToSkip})(?=>|\s[^>]*>))[^>]*>`,
+        'g',
+      )
     }
 
     output = output
