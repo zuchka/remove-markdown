@@ -33,6 +33,12 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should remove emphasis with space markdown', function () {
+      const string = '* Javascript * developers * are the _ best _.';
+      const expected = 'Javascript developers are the best.';
+      expect(removeMd(string)).to.equal(expected);
+    });
+    
     it('should strip anchors', function () {
       const string = '*Javascript* [developers](https://engineering.condenast.io/)* are the _best_.';
       const expected = 'Javascript developers* are the best.';
