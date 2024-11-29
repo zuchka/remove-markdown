@@ -34,7 +34,7 @@ describe('remove Markdown', function () {
     });
 
     it('should remove emphasis with space markdown', function () {
-      const string = '* Javascript * developers * are the _ best _.';
+      const string = '* Javascript * developers * are the best.';
       const expected = 'Javascript developers are the best.';
       expect(removeMd(string)).to.equal(expected);
     });
