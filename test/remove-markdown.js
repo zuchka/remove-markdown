@@ -87,6 +87,12 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should not mistake a horizontal rule when symbols are mixed ', function () {
+      const string = 'Some text on a line\n\n--*\n\nA line below';
+      const expected = 'Some text on a line\n\n--*\n\nA line below';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
     it('should remove horizontal rules', function () {
       const string = 'Some text on a line\n\n---\n\nA line below';
       const expected = 'Some text on a line\n\nA line below';
@@ -157,6 +163,12 @@ describe('remove Markdown', function () {
 
     it('should strip ordered list leaders', function () {
       const string = 'Some text on a line\n\n9. A list Item\n10. Another list item';
+      const expected = 'Some text on a line\n\nA list Item\nAnother list item';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
+    it('should strip list items with bold word in the beginning', function () {
+      const string = 'Some text on a line\n\n- **A** list Item\n- **Another** list item';
       const expected = 'Some text on a line\n\nA list Item\nAnother list item';
       expect(removeMd(string)).to.equal(expected);
     });
