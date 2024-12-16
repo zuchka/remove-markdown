@@ -1,5 +1,3 @@
-- ![default workflow](https://github.com/stiang/remove-markdown/actions/workflows/default.yaml/badge.svg)
-
 ## What is it?
 **remove-markdown** is a node.js module that will remove (strip) Markdown formatting from text.
 *Markdown formatting* means pretty much anything that doesn’t look like regular text, like square brackets, asterisks etc.
