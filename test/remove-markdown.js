@@ -179,6 +179,18 @@ describe('remove Markdown', function () {
       expect(removeMd(paragraph)).to.equal(expected);
     });
 
+    it('should remove links', function () {
+      const string = 'This is a [link](http://www.disney.com/).';
+      const expected = 'This is a link.';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
+    it('should remove links with square brackets', function () {
+      const string = 'This is a [link [with brackets]](http://www.disney.com/).';
+      const expected = 'This is a link [with brackets].';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
     it('should not strip paragraphs without content', function() {
       const paragraph = '\n#This paragraph\n##This paragraph#';
       const expected = paragraph;
