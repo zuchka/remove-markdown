@@ -1,3 +1,7 @@
+[![npm version](https://img.shields.io/npm/v/remove-markdown.svg)](https://www.npmjs.com/package/remove-markdown)
+[![npm downloads](https://img.shields.io/npm/dm/remove-markdown.svg)](https://npm-compare.com/remove-markdown/#timeRange=THREE_YEARS)
+[![GitHub Actions Build Status](https://github.com/zuchka/remove-markdown/actions/workflows/default.yaml/badge.svg)](https://github.com/zuchka/remove-markdown/actions/workflows/default.yaml)
+
 ## What is it?
 **remove-markdown** is a node.js module that will remove (strip) Markdown formatting from text.
 *Markdown formatting* means pretty much anything that doesn’t look like regular text, like square brackets, asterisks etc.
