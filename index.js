@@ -29,8 +29,8 @@ module.exports = function(md, options) {
         .replace(/~{3}.*\n/g, '')
         // Strikethrough
         .replace(/~~/g, '')
-        // Fenced codeblocks
-        .replace(/`{3}.*\n/g, '');
+        // Fenced codeblocks with backticks
+        .replace(/```(?:.*)\n([\s\S]*?)```/g, (_, code) => code.trim());
     }
     if (options.abbr) {
       // Remove abbreviations
@@ -72,7 +72,7 @@ module.exports = function(md, options) {
       //   1. Either there is a whitespace character before opening _ and after closing _.
       //   2. Or _ is at the start/end of the string.
       .replace(/(^|\W)([_]+)(\S)(.*?\S)??\2($|\W)/g, '$1$3$4$5')
-      // Remove code blocks
+      // Remove single-line code blocks (already handled multiline above in gfm section)
       .replace(/(`{3,})(.*?)\1/gm, '$2')
       // Remove inline code
       .replace(/`(.+?)`/g, '$1')
