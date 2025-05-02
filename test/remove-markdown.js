@@ -57,6 +57,24 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should strip simple multiline code tags', function () {
+      const string = '```\ncode\n```';
+      const expected = 'code';
+      expect(removeMd(string)).to.equal(expected);
+    });
+    
+    it('should strip complex multiline code blocks with language specified', function () {
+      const string = '```javascript\nconst x = 1;\nconst y = 2;\nconsole.log(x + y);\n```';
+      const expected = 'const x = 1;\nconst y = 2;\nconsole.log(x + y);';
+      expect(removeMd(string)).to.equal(expected);
+    });
+    
+    it('should strip multiline code blocks with multiple paragraphs', function () {
+      const string = 'Text before\n\n```\ncode line 1\n\ncode line 2\n```\n\nText after';
+      const expected = 'Text before\n\ncode line 1\n\ncode line 2\n\nText after';
+      expect(removeMd(string)).to.equal(expected);
+    });
+
     it('should leave hashtags in headings', function () {
       const string = '## This #heading contains #hashtags';
       const expected = 'This #heading contains #hashtags';
