@@ -5,6 +5,7 @@ declare function removeMd(md: string, options?: {
   useImgAltText: boolean;
   abbr?: boolean;
   replaceLinksWithURL?: boolean;
+  separateLinksAndTexts?: string;
   htmlTagsToSkip?: string[];
 }): string;
 

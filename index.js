@@ -6,6 +6,7 @@ module.exports = function(md, options) {
   options.useImgAltText = options.hasOwnProperty('useImgAltText') ? options.useImgAltText : true;
   options.abbr = options.hasOwnProperty('abbr') ? options.abbr : false;
   options.replaceLinksWithURL = options.hasOwnProperty('replaceLinksWithURL') ? options.replaceLinksWithURL : false;
+  options.separateLinksAndTexts = options.hasOwnProperty('separateLinksAndTexts') ? options.separateLinksAndTexts : null;
   options.htmlTagsToSkip = options.hasOwnProperty('htmlTagsToSkip') ? options.htmlTagsToSkip : [];
   options.throwError = options.hasOwnProperty('throwError') ? options.throwError : false;
 
@@ -36,7 +37,7 @@ module.exports = function(md, options) {
       // Remove abbreviations
       output = output.replace(/\*\[.*\]:.*\n/, '');
     }
-    
+
     let htmlReplaceRegex = /<[^>]*>/g
     if (options.htmlTagsToSkip && options.htmlTagsToSkip.length > 0) {
       // Create a regex that matches tags not in htmlTagsToSkip
@@ -45,6 +46,10 @@ module.exports = function(md, options) {
         `<(?!\/?(${joinedHtmlTagsToSkip})(?=>|\s[^>]*>))[^>]*>`,
         'g',
       )
+    }
+
+    if (options.separateLinksAndTexts) {
+      output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
     }
 
     output = output
@@ -68,7 +73,7 @@ module.exports = function(md, options) {
       .replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6')
       // Remove * emphasis
       .replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3')
-      // Remove _ emphasis. Unlike *, _ emphasis gets rendered only if 
+      // Remove _ emphasis. Unlike *, _ emphasis gets rendered only if
       //   1. Either there is a whitespace character before opening _ and after closing _.
       //   2. Or _ is at the start/end of the string.
       .replace(/(^|\W)([_]+)(\S)(.*?\S)??\2($|\W)/g, '$1$3$4$5')

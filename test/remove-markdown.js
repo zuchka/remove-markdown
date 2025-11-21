@@ -62,13 +62,13 @@ describe('remove Markdown', function () {
       const expected = 'code';
       expect(removeMd(string)).to.equal(expected);
     });
-    
+
     it('should strip complex multiline code blocks with language specified', function () {
       const string = '```javascript\nconst x = 1;\nconst y = 2;\nconsole.log(x + y);\n```';
       const expected = 'const x = 1;\nconst y = 2;\nconsole.log(x + y);';
       expect(removeMd(string)).to.equal(expected);
     });
-    
+
     it('should strip multiline code blocks with multiple paragraphs', function () {
       const string = 'Text before\n\n```\ncode line 1\n\ncode line 2\n```\n\nText after';
       const expected = 'Text before\n\ncode line 1\n\ncode line 2\n\nText after';
@@ -145,7 +145,7 @@ describe('remove Markdown', function () {
             expect(removeMd(test.string)).to.equal(test.expected);
         });
     });
-    
+
     it('should remove blockquotes over multiple lines', function () {
       const string = '> I am a blockquote firstline  \n>I am a blockquote secondline';
       const expected = 'I am a blockquote firstline  \nI am a blockquote secondline';
@@ -248,5 +248,11 @@ describe('remove Markdown', function () {
         'HTML content <sub>Superscript</sub> <span>span text</span>',
       )
     })
+
+    it('should replace inline link with text and link, with separator', function () {
+      const string = 'some [inline link](http://www.disney.com/).';
+      const expected = 'some inline link: http://www.disney.com/.';
+      expect(removeMd(string, {separateLinksAndTexts: ': '})).to.equal(expected);
+    });
   });
 });
