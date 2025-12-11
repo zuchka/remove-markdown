@@ -58,7 +58,7 @@ module.exports = function(md, options) {
       // Remove images
       .replace(/\!\[(.*?)\][\[\(].*?[\]\)]/g, options.useImgAltText ? '$1' : '')
       // Remove inline links
-      .replace(/\[([\s\S]*?)\]\s*[\(\[].*?[\)\]]/g, options.replaceLinksWithURL ? '$2' : '$1')
+      .replace(/\[([\s\S]*?)\]\s*[\(\[](.*?)[\)\]]/g, options.replaceLinksWithURL ? '$2' : '$1')
       // Remove blockquotes
       .replace(/^(\n)?\s{0,3}>\s?/gm, '$1')
       // .replace(/(^|\n)\s{0,3}>\s?/g, '\n\n')
