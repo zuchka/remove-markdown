@@ -26,10 +26,14 @@ You can also supply an options object to the function. Currently, the following 
 
 ```js
 const plainText = removeMd(markdown, {
-  stripListLeaders: true , // strip list leaders (default: true)
-  listUnicodeChar: '',     // char to insert instead of stripped list leaders (default: '')
-  gfm: true                // support GitHub-Flavored Markdown (default: true)
-  useImgAltText: true      // replace images with alt-text, if present (default: true)
+  stripListLeaders: true ,     // strip list leaders (default: true)
+  listUnicodeChar: '',         // char to insert instead of stripped list leaders (default: '')
+  gfm: true,                   // support GitHub-Flavored Markdown (default: true)
+  useImgAltText: true,         // replace images with alt-text, if present (default: true)
+  abbr: true,                  // remove abbreviations, if present (default: false)
+  replaceLinksWithURL: true,   // remove inline links, if present (default: false)
+  separateLinksAndTexts: ': ', // replace inline links with text, separator and link, if present (default: null)
+  htmlTagsToSkip: ['a', 'b']   // HTML tags to skip, if present (default: [])
 });
 ```
 
