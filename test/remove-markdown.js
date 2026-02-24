@@ -209,6 +209,12 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should keep url instead of text when replaceLinksWithURL is enabled', function () {
+      const string = 'This is a [link](http://www.disney.com/).';
+      const expected = 'This is a http://www.disney.com/.';
+      expect(removeMd(string, { replaceLinksWithURL: true })).to.equal(expected);
+    });
+
     it('should not strip paragraphs without content', function() {
       const paragraph = '\n#This paragraph\n##This paragraph#';
       const expected = paragraph;
