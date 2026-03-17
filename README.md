@@ -33,7 +33,8 @@ const plainText = removeMd(markdown, {
   abbr: true,                  // remove abbreviations, if present (default: false)
   replaceLinksWithURL: true,   // remove inline links, if present (default: false)
   separateLinksAndTexts: ': ', // replace inline links with text, separator and link, if present (default: null)
-  htmlTagsToSkip: ['a', 'b']   // HTML tags to skip, if present (default: [])
+  htmlTagsToSkip: ['a', 'b'],  // HTML tags to skip, if present (default: []),
+  throwError: false,           // If an error occurs throw it instead of catching and logging (default: false)
 });
 ```
 
