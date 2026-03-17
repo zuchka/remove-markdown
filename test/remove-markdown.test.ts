@@ -135,7 +135,7 @@ describe('remove Markdown', function () {
     });
 
     it('should remove indented blockquotes', function () {
-        var tests = [
+        const tests = [
             { string: ' > I am a blockquote', expected: 'I am a blockquote' },
             { string: '  > I am a blockquote', expected: 'I am a blockquote' },
             { string: '   > I am a blockquote', expected: 'I am a blockquote' },
@@ -159,7 +159,7 @@ describe('remove Markdown', function () {
     });
 
     it('should not remove greater than signs', function () {
-      var tests = [
+      const tests = [
         { string: '100 > 0', expected: '100 > 0' },
         { string: '100 >= 0', expected: '100 >= 0' },
         { string: '100>0', expected: '100>0' },
