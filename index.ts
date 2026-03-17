@@ -1,16 +1,19 @@
-module.exports = function(md, options) {
-  options = options || {};
-  options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
-  options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
-  options.gfm = options.hasOwnProperty('gfm') ? options.gfm : true;
-  options.useImgAltText = options.hasOwnProperty('useImgAltText') ? options.useImgAltText : true;
-  options.abbr = options.hasOwnProperty('abbr') ? options.abbr : false;
-  options.replaceLinksWithURL = options.hasOwnProperty('replaceLinksWithURL') ? options.replaceLinksWithURL : false;
-  options.separateLinksAndTexts = options.hasOwnProperty('separateLinksAndTexts') ? options.separateLinksAndTexts : null;
-  options.htmlTagsToSkip = options.hasOwnProperty('htmlTagsToSkip') ? options.htmlTagsToSkip : [];
-  options.throwError = options.hasOwnProperty('throwError') ? options.throwError : false;
+import type { RemoveMarkdownOptions, NotUndefined } from './types';
 
-  var output = md || '';
+function removeMarkdown(md: string, rawOptions: RemoveMarkdownOptions = {}) {
+  const options = {
+    listUnicodeChar: defaultProperty(rawOptions, 'listUnicodeChar', false),
+    stripListLeaders: defaultProperty(rawOptions, 'stripListLeaders', true),
+    gfm: defaultProperty(rawOptions, 'gfm', true),
+    useImgAltText: defaultProperty(rawOptions, 'useImgAltText', true),
+    abbr: defaultProperty(rawOptions, 'abbr', false),
+    replaceLinksWithURL: defaultProperty(rawOptions, 'replaceLinksWithURL', false),
+    separateLinksAndTexts: defaultProperty(rawOptions, 'separateLinksAndTexts', null),
+    htmlTagsToSkip: defaultProperty(rawOptions, 'htmlTagsToSkip', []),
+    throwError: defaultProperty(rawOptions, 'throwError', false)
+  }
+
+  let output = md || '';
 
   // Remove horizontal rules (stripListHeaders conflict with this rule, which is why it has been moved to the top)
   output = output.replace(/^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/gm, '');
@@ -39,7 +42,7 @@ module.exports = function(md, options) {
     }
 
     let htmlReplaceRegex = /<[^>]*>/g
-    if (options.htmlTagsToSkip && options.htmlTagsToSkip.length > 0) {
+    if (options.htmlTagsToSkip?.length > 0) {
       // Create a regex that matches tags not in htmlTagsToSkip
       const joinedHtmlTagsToSkip = options.htmlTagsToSkip.join('|')
       htmlReplaceRegex = new RegExp(
@@ -52,7 +55,7 @@ module.exports = function(md, options) {
       output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
     }
 
-    output = output
+    return output
       // Remove HTML tags
       .replace(htmlReplaceRegex, '')
       // Remove setext-style headers
@@ -93,5 +96,13 @@ module.exports = function(md, options) {
     console.error("remove-markdown encountered error: %s", e);
     return md;
   }
-  return output;
 };
+
+/**
+ * Returns the value of the specified key in the given object if it exists, otherwise returns the provided default value.
+ */
+const defaultProperty = <T extends Record<string, any>, K extends keyof T, U>(obj: T, key: K, defaultValue: U): NotUndefined<T[K]> | U => {
+  return obj.hasOwnProperty(key) ? obj[key] : defaultValue;
+};
+
+export = removeMarkdown;

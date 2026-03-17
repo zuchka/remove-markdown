@@ -2,9 +2,14 @@
   "name": "remove-markdown",
   "version": "0.6.3",
   "description": "Remove Markdown formatting from text",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test": "./node_modules/.bin/mocha -R spec test/remove-markdown.js"
+    "build": "tsc",
+    "prepare": "npm run build",
+    "test": "mocha 'test/**/*.test.ts'"
   },
   "repository": {
     "type": "git",
@@ -20,8 +25,12 @@
   },
   "homepage": "https://github.com/zuchka/remove-markdown",
   "devDependencies": {
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
     "chai": "^4.0.2",
     "mocha": "^10.2.0",
-    "should": "^5.0.0"
+    "should": "^5.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   }
 }

@@ -1,6 +1,5 @@
-'use strict';
-const expect = require('chai').expect;
-const removeMd = require('../');
+import { expect } from 'chai';
+import removeMd from '../index';
 
 describe('remove Markdown', function () {
   describe('removeMd', function () {

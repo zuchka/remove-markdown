@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "outDir": "dist",
+        // Target ES2018. Rewrites optional chaining.
+        "target": "es2018",
+        // Generate .d.ts
+        "declaration": true,
+        // Generate a sourcemap file
+        "sourceMap": true,
+        // Enable es module interop so tests can use import statements instead of require.
+        // Only needed due to export = function syntax
+        "esModuleInterop": true,
+        "strict": true
+    },
+    "include": ["index.ts"]
+}
