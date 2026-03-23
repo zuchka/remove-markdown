@@ -7,6 +7,7 @@ declare function removeMd(md: string, options?: {
   replaceLinksWithURL?: boolean;
   separateLinksAndTexts?: string;
   htmlTagsToSkip?: string[];
+  throwError?: boolean;
 }): string;
 
 export = removeMd;

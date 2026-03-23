@@ -3,6 +3,12 @@
   "version": "0.6.3",
   "description": "Remove Markdown formatting from text",
   "main": "index.js",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "./node_modules/.bin/mocha -R spec test/remove-markdown.js"
   },
