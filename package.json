@@ -29,5 +29,8 @@
     "chai": "^4.0.2",
     "mocha": "^10.2.0",
     "should": "^5.0.0"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.5"
   }
 }
