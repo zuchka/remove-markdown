@@ -33,6 +33,18 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should strip MDX import statements', function () {
+      const tests = [
+        { string: 'import page404 from "@/assets/images/404.png"\n\nHere is some text', expected: 'Here is some text' },
+        { string: 'import "mycomponent.astro";\nWelcome back!', expected: 'Welcome back!' },
+        { string: "import { Validator as val } from '../util.js'\nSuper imports?", expected: 'Super imports?' },
+        { string: 'import page404 from "@/assets/images/404.png";\nimport page403 from "@/assets/images/403.png";\n\nSome errors, huh', expected: 'Some errors, huh' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    })
+
     it('should strip anchors', function () {
       const string = '*Javascript* [developers](https://engineering.condenast.io/)* are the _best_.';
       const expected = 'Javascript developers* are the best.';
