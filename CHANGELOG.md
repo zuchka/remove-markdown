@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2026-08-18
+
+### Converted
+- Converted from Common to pure JS module
+- Deno compatibility
+
 ## [0.6.3] - 2026-01-14
 
 ### Added

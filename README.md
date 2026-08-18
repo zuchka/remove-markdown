@@ -3,21 +3,16 @@
 [![GitHub Actions Build Status](https://github.com/zuchka/remove-markdown/actions/workflows/default.yaml/badge.svg)](https://github.com/zuchka/remove-markdown/actions/workflows/default.yaml)
 
 ## What is it?
-**remove-markdown** is a node.js module that will remove (strip) Markdown formatting from text.
+**remove-markdown** is a JS module that will remove (strip) Markdown formatting from text.
 *Markdown formatting* means pretty much anything that doesn’t look like regular text, like square brackets, asterisks etc.
 
 ## When do I need it?
 The typical use case is to display an excerpt from some Markdown text, without any of the actual Markdown syntax - for example in a list of posts.
 
-## Installation
-
-```
-npm install remove-markdown
-```
-
 ## Usage
 ```js
-const removeMd = require('remove-markdown');
+import removeMd from '../index.js'
+
 const markdown = '# This is a heading\n\nThis is a paragraph with [a link](http://www.disney.com/) in it.';
 const plainText = removeMd(markdown); // plainText is now 'This is a heading\n\nThis is a paragraph with a link in it.'
 ```

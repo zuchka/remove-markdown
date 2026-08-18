@@ -1,4 +1,4 @@
-module.exports = function(md, options) {
+export default function removeMarkdown(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
@@ -94,4 +94,4 @@ module.exports = function(md, options) {
     return md;
   }
   return output;
-};
+}
