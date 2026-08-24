@@ -2,15 +2,47 @@
   "name": "remove-markdown",
   "version": "0.6.4",
   "description": "Remove Markdown formatting from text",
-  "main": "index.js",
+  "type": "commonjs",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./index.d.mts",
+        "default": "./index.mjs"
+      },
+      "require": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "default": "./index.js"
+    },
+    "./index": "./index.js",
+    "./index.js": "./index.js",
+    "./index.d.mts": "./index.d.mts",
+    "./index.d.ts": "./index.d.ts",
+    "./LICENSE": "./LICENSE",
+    "./README.md": "./README.md",
+    "./package.json": "./package.json"
+  },
   "files": [
     "index.js",
+    "index.mjs",
     "index.d.ts",
+    "index.d.mts",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "test": "./node_modules/.bin/mocha -R spec test/remove-markdown.js"
+    "test": "mocha -R spec test/remove-markdown.js",
+    "test:modules": "node --test test/modules.test.mjs",
+    "test:package": "node --test test/package.test.mjs",
+    "test:types": "node --test test/types.test.mjs && attw --pack . --entrypoints . ./index ./index.js ./package.json",
+    "test:differential": "node --test test/differential.test.mjs",
+    "test:bundlers": "node --test test/bundlers.test.mjs",
+    "test:deno": "deno test test/deno.test.mjs",
+    "test:deno:package": "node --test test/deno-package.test.mjs",
+    "prepublishOnly": "npm test && npm run test:modules && npm run test:package && npm run test:types"
   },
   "repository": {
     "type": "git",
@@ -26,9 +58,15 @@
   },
   "homepage": "https://github.com/zuchka/remove-markdown",
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@rollup/plugin-commonjs": "^29.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "chai": "^4.0.2",
-    "mocha": "^10.2.0",
-    "should": "^5.0.0"
+    "esbuild": "^0.28.2",
+    "mocha": "11.3.0",
+    "rollup": "^4.62.5",
+    "should": "^5.0.0",
+    "typescript": "^7.0.2"
   },
   "overrides": {
     "serialize-javascript": "^7.0.5"
