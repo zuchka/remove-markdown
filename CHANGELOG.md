@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - Unreleased
+
+### Added
+
+- Added a native ES module entry point while preserving the existing CommonJS API.
+- Added Deno 2.x support through the npm package.
+- Added module-specific TypeScript declarations and package-level compatibility tests.
+
+### Changed
+
+- Added conditional package exports for CommonJS, ES modules, and their matching type declarations.
+
+ESM and Deno support was originally proposed in [#116](https://github.com/zuchka/remove-markdown/pull/116) by [@tukkek](https://github.com/tukkek).
+
 ## [0.6.3] - 2026-01-14
 
 ### Added
