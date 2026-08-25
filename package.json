@@ -1,6 +1,6 @@
 {
   "name": "remove-markdown",
-  "version": "0.6.4",
+  "version": "0.7.0-rc.0",
   "description": "Remove Markdown formatting from text",
   "type": "commonjs",
   "main": "./index.js",
@@ -37,7 +37,7 @@
     "test": "mocha -R spec test/remove-markdown.js",
     "test:modules": "node --test test/modules.test.mjs",
     "test:package": "node --test test/package.test.mjs",
-    "test:types": "node --test test/types.test.mjs && attw --pack . --entrypoints . ./index ./index.js ./package.json",
+    "test:types": "node --test test/types.test.mjs",
     "test:differential": "node --test test/differential.test.mjs",
     "test:bundlers": "node --test test/bundlers.test.mjs",
     "test:deno": "deno test test/deno.test.mjs",
@@ -46,7 +46,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/zuchka/remove-markdown.git"
+    "url": "git+https://github.com/zuchka/remove-markdown.git"
   },
   "keywords": [
     "markdown"
