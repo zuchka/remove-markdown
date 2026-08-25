@@ -6,6 +6,8 @@ import test from 'node:test';
 import {
   installPackedPackage,
   packProject,
+  projectRoot,
+  runAttw,
   runTypeScript,
   writeJson,
   writeText,
@@ -110,4 +112,8 @@ removeMd('text', { htmlTagsToSkip: [1] });
   } finally {
     rmSync(temporaryDirectory, { recursive: true, force: true });
   }
+});
+
+test('the package entry points pass Are the Types Wrong validation', () => {
+  runAttw(projectRoot);
 });

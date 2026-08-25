@@ -1,0 +1,71 @@
+name: Publish package
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.release.tag_name }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Use a trusted-publishing-compatible npm version
+        run: npm install --global npm@11.9.0
+
+      - name: Validate release source and select the npm dist-tag
+        env:
+          RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          node <<'NODE'
+            const { appendFileSync } = require('node:fs');
+            const { version } = require('./package.json');
+            const isPrerelease = version.includes('-');
+            if (version !== process.env.RELEASE_TAG) {
+              throw new Error(
+                'Release tag ' + process.env.RELEASE_TAG +
+                ' does not match package version ' + version,
+              );
+            }
+            if (isPrerelease !== (process.env.RELEASE_PRERELEASE === 'true')) {
+              throw new Error('GitHub release prerelease status does not match the package version');
+            }
+            const distTag = isPrerelease ? 'next' : 'latest';
+            appendFileSync(process.env.GITHUB_ENV, 'NPM_DIST_TAG=' + distTag + '\n');
+          NODE
+
+      - run: npm ci
+      - run: npm run prepublishOnly
+      - run: npm run test:differential
+      - run: npm run test:bundlers
+      - run: npm run test:deno
+      - run: npm run test:deno:package
+      - run: npm publish --tag "${NPM_DIST_TAG}" --access public

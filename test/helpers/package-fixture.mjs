@@ -54,8 +54,34 @@ export function installRegistryPackage(consumer, specifier) {
   );
 }
 
-export function run(command, args, cwd) {
-  execFileSync(command, args, { cwd, stdio: 'pipe' });
+export function run(command, args, cwd, options = {}) {
+  execFileSync(command, args, { cwd, stdio: 'pipe', ...options });
+}
+
+export function runAttw(cwd) {
+  const attwRoot = dirname(require.resolve('@arethetypeswrong/cli/package.json'));
+  run(
+    process.execPath,
+    [
+      join(attwRoot, 'dist', 'index.js'),
+      '--pack',
+      '.',
+      '--entrypoints',
+      '.',
+      './index',
+      './index.js',
+      './package.json',
+    ],
+    cwd,
+    {
+      env: {
+        ...process.env,
+        npm_config_dry_run: 'false',
+        npm_config_json: 'false',
+      },
+      stdio: 'inherit',
+    },
+  );
 }
 
 export function runNode(filename, cwd) {
@@ -70,6 +96,11 @@ function runNpm(args, cwd, options = {}) {
 
   return execFileSync(command[0], command[1], {
     cwd,
+    env: {
+      ...process.env,
+      npm_config_dry_run: 'false',
+      npm_config_json: 'false',
+    },
     stdio: options.encoding ? ['ignore', 'pipe', 'pipe'] : 'pipe',
     ...options,
   });
