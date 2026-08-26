@@ -9,6 +9,8 @@
     ".": {
       "import": {
         "types": "./index.d.mts",
+        "browser": "./index.mjs",
+        "node": "./index.node.mjs",
         "default": "./index.mjs"
       },
       "require": {
@@ -19,6 +21,10 @@
     },
     "./index": "./index.js",
     "./index.js": "./index.js",
+    "./index.mjs": {
+      "types": "./index.d.mts",
+      "default": "./index.mjs"
+    },
     "./index.d.mts": "./index.d.mts",
     "./index.d.ts": "./index.d.ts",
     "./LICENSE": "./LICENSE",
@@ -28,21 +34,24 @@
   "files": [
     "index.js",
     "index.mjs",
+    "index.node.mjs",
     "index.d.ts",
     "index.d.mts",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
+    "build:esm": "node scripts/build-esm.mjs",
+    "check:esm": "node scripts/build-esm.mjs --check",
     "test": "mocha -R spec test/remove-markdown.js",
     "test:modules": "node --test test/modules.test.mjs",
     "test:package": "node --test test/package.test.mjs",
     "test:types": "node --test test/types.test.mjs",
     "test:differential": "node --test test/differential.test.mjs",
     "test:bundlers": "node --test test/bundlers.test.mjs",
-    "test:deno": "deno test test/deno.test.mjs",
+    "test:deno": "deno test --no-lock --allow-import=127.0.0.1 --allow-net=127.0.0.1 --allow-read test/deno.test.mjs",
     "test:deno:package": "node --test test/deno-package.test.mjs",
-    "prepublishOnly": "npm test && npm run test:modules && npm run test:package && npm run test:types"
+    "prepublishOnly": "npm run check:esm && npm test && npm run test:modules && npm run test:package && npm run test:types"
   },
   "repository": {
     "type": "git",

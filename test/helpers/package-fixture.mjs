@@ -15,6 +15,7 @@ export const expectedPackageFiles = [
   'index.d.ts',
   'index.js',
   'index.mjs',
+  'index.node.mjs',
   'package.json',
 ];
 
@@ -60,10 +61,20 @@ export function run(command, args, cwd, options = {}) {
 
 export function runAttw(cwd) {
   const attwRoot = dirname(require.resolve('@arethetypeswrong/cli/package.json'));
+  const attwEntry = join(attwRoot, 'dist', 'index.js');
+  const options = {
+    env: {
+      ...process.env,
+      npm_config_dry_run: 'false',
+      npm_config_json: 'false',
+    },
+    stdio: 'inherit',
+  };
+
   run(
     process.execPath,
     [
-      join(attwRoot, 'dist', 'index.js'),
+      attwEntry,
       '--pack',
       '.',
       '--entrypoints',
@@ -73,14 +84,21 @@ export function runAttw(cwd) {
       './package.json',
     ],
     cwd,
-    {
-      env: {
-        ...process.env,
-        npm_config_dry_run: 'false',
-        npm_config_json: 'false',
-      },
-      stdio: 'inherit',
-    },
+    options,
+  );
+  run(
+    process.execPath,
+    [
+      attwEntry,
+      '--pack',
+      '.',
+      '--profile',
+      'esm-only',
+      '--entrypoints',
+      './index.mjs',
+    ],
+    cwd,
+    options,
   );
 }
 

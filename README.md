@@ -34,6 +34,20 @@ const markdown = '# This is a heading\n\nThis is a paragraph with [a link](http:
 const plainText = removeMd(markdown);
 ```
 
+### Browser ES modules
+
+The ESM entry is self-contained and can be loaded directly from a CDN that
+serves JavaScript with the correct MIME type. Pin the URL to the version you
+have tested:
+
+```html
+<script type="module">
+  import removeMd from 'https://unpkg.com/remove-markdown@0.7.0/index.mjs';
+
+  const plainText = removeMd('# This is a heading');
+</script>
+```
+
 ### Deno
 
 ```js
@@ -43,7 +57,7 @@ const markdown = '# This is a heading\n\nThis is a paragraph with [a link](http:
 const plainText = removeMd(markdown);
 ```
 
-Deno support is provided through the npm package; there is no separate JSR package. The package exposes one callable default export in every runtime. Named exports and direct imports from raw GitHub URLs are not supported.
+Deno support is provided through the npm package; there is no separate JSR package. The package exposes one callable default export in every runtime. Named exports and direct imports from raw GitHub URLs, which do not reliably serve the correct JavaScript MIME type, are not supported.
 
 You can also supply an options object to the function. Currently, the following options are supported:
 
