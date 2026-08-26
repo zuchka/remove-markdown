@@ -14,6 +14,10 @@ All notable changes to this project will be documented in this file.
 
 - Added conditional package exports for CommonJS, ES modules, and their matching type declarations.
 
+### Fixed
+
+- Made the ES module entry self-contained so it works when loaded directly by browsers and URL-based module loaders without CommonJS interop.
+
 ESM and Deno support was originally proposed in [#116](https://github.com/zuchka/remove-markdown/pull/116) by [@tukkek](https://github.com/tukkek).
 
 ## [0.6.3] - 2026-01-14

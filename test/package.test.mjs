@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -38,6 +38,10 @@ const packageMetadata = require('remove-markdown/package.json');
 assert.strictEqual(removeMd, removeMdFromIndex);
 assert.strictEqual(removeMd, removeMdFromIndexJs);
 assert.equal(packageMetadata.name, 'remove-markdown');
+assert.deepEqual(packageMetadata.exports['./index.mjs'], {
+  types: './index.d.mts',
+  default: './index.mjs',
+});
 assert.equal(removeMd('# Heading'), 'Heading');
 assert.equal(
   removeMd('[link](https://example.com)', { separateLinksAndTexts: ': ' }),
@@ -64,6 +68,7 @@ import { createRequire } from 'node:module';
 import removeMd from 'remove-markdown';
 import removeMdFromIndex from 'remove-markdown/index';
 import removeMdFromIndexJs from 'remove-markdown/index.js';
+import removeMdFromIndexMjs from 'remove-markdown/index.mjs';
 
 const require = createRequire(import.meta.url);
 const commonJs = require('remove-markdown');
@@ -74,10 +79,32 @@ assert.strictEqual(dynamicImport.default, commonJs);
 assert.strictEqual(removeMdFromIndex, commonJs);
 assert.strictEqual(removeMdFromIndexJs, commonJs);
 assert.equal(removeMd('**bold**'), 'bold');
+assert.equal(removeMdFromIndexMjs('**bold**'), 'bold');
 assert.equal(removeMd('![alt](image.png)', { useImgAltText: false }), '');
 `,
     );
     runNode('consumer.mjs', esmConsumer);
+
+    const nativeUrlConsumer = join(temporaryDirectory, 'native-url-consumer');
+    mkdirSync(nativeUrlConsumer);
+    writeText(join(nativeUrlConsumer, 'package.json'), '{"type":"module"}\n');
+    copyFileSync(
+      join(esmConsumer, 'node_modules', 'remove-markdown', 'index.mjs'),
+      join(nativeUrlConsumer, 'index.mjs'),
+    );
+    copyFileSync(
+      join(esmConsumer, 'node_modules', 'remove-markdown', 'index.js'),
+      join(nativeUrlConsumer, 'index.js'),
+    );
+    writeText(
+      join(nativeUrlConsumer, 'consumer.mjs'),
+      `import assert from 'node:assert/strict';
+import removeMd from './index.mjs';
+
+assert.equal(removeMd('# Native **ESM**'), 'Native ESM');
+`,
+    );
+    runNode('consumer.mjs', nativeUrlConsumer);
   } finally {
     rmSync(temporaryDirectory, { recursive: true, force: true });
   }

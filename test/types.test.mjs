@@ -80,6 +80,7 @@ removeMd('text', { gfm: 'yes' });
       `import removeMd from 'remove-markdown';
 import removeMdFromIndex from 'remove-markdown/index';
 import removeMdFromIndexJs from 'remove-markdown/index.js';
+import removeMdFromIndexMjs from 'remove-markdown/index.mjs';
 
 const output: string = removeMd('[link](https://example.com)', {
   stripListLeaders: false,
@@ -94,9 +95,11 @@ const output: string = removeMd('[link](https://example.com)', {
 });
 const indexOutput: string = removeMdFromIndex('**bold**');
 const indexJsOutput: string = removeMdFromIndexJs('_italic_');
+const indexMjsOutput: string = removeMdFromIndexMjs('~~struck~~');
 void output;
 void indexOutput;
 void indexJsOutput;
+void indexMjsOutput;
 
 // @ts-expect-error Markdown input must be a string.
 removeMd({});

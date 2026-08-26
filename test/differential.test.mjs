@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 
+import candidateEsm from '../index.mjs';
+
 import {
   installPackedPackage,
   installRegistryPackage,
@@ -99,10 +101,17 @@ test('the candidate matches published 0.6.4 behavior', () => {
 
     for (const input of inputs) {
       for (const options of optionSets) {
+        const expected = baseline(input, cloneOptions(options));
+
         assert.equal(
           candidate(input, cloneOptions(options)),
-          baseline(input, cloneOptions(options)),
-          `Output differed for ${JSON.stringify({ input, options })}`,
+          expected,
+          `CommonJS output differed for ${JSON.stringify({ input, options })}`,
+        );
+        assert.equal(
+          candidateEsm(input, cloneOptions(options)),
+          expected,
+          `ESM output differed for ${JSON.stringify({ input, options })}`,
         );
       }
     }

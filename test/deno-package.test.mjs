@@ -24,6 +24,7 @@ test('Deno checks and executes the packed npm package', () => {
     writeText(
       join(consumer, 'consumer.test.mjs'),
       `import removeMd from 'remove-markdown';
+import removeMdFromIndexMjs from 'remove-markdown/index.mjs';
 
 Deno.test('the installed package works', () => {
   const actual = removeMd('**bold** and [link](https://example.com)');
@@ -31,6 +32,9 @@ Deno.test('the installed package works', () => {
 
   if (actual !== expected) {
     throw new Error(\`Expected \${JSON.stringify(expected)}, got \${JSON.stringify(actual)}\`);
+  }
+  if (removeMdFromIndexMjs('~~portable~~') !== 'portable') {
+    throw new Error('The explicit ESM entry returned unexpected output');
   }
 });
 `,

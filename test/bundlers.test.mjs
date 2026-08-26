@@ -1,6 +1,7 @@
+import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import test from 'node:test';
 
 import commonjs from '@rollup/plugin-commonjs';
@@ -38,13 +39,20 @@ if (actual !== 'Bundled output') {
 `,
     );
 
-    await build({
+    const esbuildResult = await build({
       bundle: true,
       entryPoints: [entry],
       format: 'esm',
+      metafile: true,
       outfile: join(consumer, 'esbuild-output.mjs'),
       platform: 'browser',
     });
+    const esbuildInputs = Object.keys(esbuildResult.metafile.inputs).map(
+      (path) => basename(path),
+    );
+    assert.ok(esbuildInputs.includes('index.mjs'));
+    assert.ok(!esbuildInputs.includes('index.node.mjs'));
+    assert.ok(!esbuildInputs.includes('index.js'));
     runNode('esbuild-output.mjs', consumer);
 
     const bundle = await rollup({
@@ -52,6 +60,10 @@ if (actual !== 'Bundled output') {
       plugins: [nodeResolve(), commonjs()],
     });
     try {
+      const rollupInputs = bundle.watchFiles.map((path) => basename(path));
+      assert.ok(rollupInputs.includes('index.mjs'));
+      assert.ok(!rollupInputs.includes('index.node.mjs'));
+      assert.ok(!rollupInputs.includes('index.js'));
       await bundle.write({
         file: join(consumer, 'rollup-output.mjs'),
         format: 'esm',
