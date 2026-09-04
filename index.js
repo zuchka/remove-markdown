@@ -48,6 +48,8 @@ module.exports = function(md, options) {
       )
     }
 
+    let importReplaceRegex = /^import\s+([a-zA-Z0-9{}\-_,* /]+from)?\s*["'][^'"]+["'];?$\n+/gm
+
     if (options.separateLinksAndTexts) {
       output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
     }
@@ -55,6 +57,8 @@ module.exports = function(md, options) {
     output = output
       // Remove HTML tags
       .replace(htmlReplaceRegex, '')
+      // Remove import statements
+      .replace(importReplaceRegex, '')
       // Remove setext-style headers
       .replace(/^[=\-]{2,}\s*$/g, '')
       // Remove footnotes?
