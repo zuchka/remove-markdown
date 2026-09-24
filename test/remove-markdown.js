@@ -255,6 +255,20 @@ describe('remove Markdown', function () {
       )
     })
 
+    it('should skip HTML tags with attributes when htmlTagsToSkip option is provided', () => {
+      const markdown = '<code class="language-js">const x = 1</code>'
+      const result = removeMd(markdown, {htmlTagsToSkip: ['code']})
+      expect(result).to.equal(
+        '<code class="language-js">const x = 1</code>',
+      )
+    })
+
+    it('should not skip HTML tags whose name merely starts with a skipped tag name', () => {
+      const markdown = '<codes>const x = 1</codes>'
+      const result = removeMd(markdown, {htmlTagsToSkip: ['code']})
+      expect(result).to.equal('const x = 1')
+    })
+
     it('should replace inline link with text and link, with separator', function () {
       const string = 'some [inline link](http://www.disney.com/).';
       const expected = 'some inline link: http://www.disney.com/.';
