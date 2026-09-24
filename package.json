@@ -48,10 +48,11 @@
     "test:package": "node --test test/package.test.mjs",
     "test:types": "node --test test/types.test.mjs",
     "test:differential": "node --test test/differential.test.mjs",
+    "test:performance": "node --test test/performance.test.mjs",
     "test:bundlers": "node --test test/bundlers.test.mjs",
     "test:deno": "deno test --no-lock --allow-import=127.0.0.1 --allow-net=127.0.0.1 --allow-read test/deno.test.mjs",
     "test:deno:package": "node --test test/deno-package.test.mjs",
-    "prepublishOnly": "npm run check:esm && npm test && npm run test:modules && npm run test:package && npm run test:types"
+    "prepublishOnly": "npm run check:esm && npm test && npm run test:performance && npm run test:modules && npm run test:package && npm run test:types"
   },
   "repository": {
     "type": "git",

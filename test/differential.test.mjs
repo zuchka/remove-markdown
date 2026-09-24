@@ -53,6 +53,9 @@ const optionSets = [
   },
 ];
 
+const malformedInputs = ['[', '*', '_', '`', '~', '<', '![', '[^', ' *[', ' \n']
+  .flatMap((token) => [64, 128, 256, 512].map((count) => token.repeat(count) + 'x'));
+
 function generatedInputs(count) {
   const tokens = [
     'text', ' ', '\n', '# ', '*bold*', '_italic_', '`code`',
@@ -78,7 +81,7 @@ function cloneOptions(options) {
   return options === undefined ? undefined : JSON.parse(JSON.stringify(options));
 }
 
-test('the candidate matches published 0.6.4 behavior', () => {
+test('the candidate matches published 0.7.0 behavior', () => {
   const temporaryDirectory = mkdtempSync(join(tmpdir(), 'remove-markdown-differential-'));
 
   try {
@@ -91,13 +94,13 @@ test('the candidate matches published 0.6.4 behavior', () => {
     );
     installRegistryPackage(
       consumer,
-      'remove-markdown-baseline@npm:remove-markdown@0.6.4',
+      'remove-markdown-baseline@npm:remove-markdown@0.7.0',
     );
 
     const consumerRequire = createRequire(join(consumer, 'consumer.cjs'));
     const baseline = consumerRequire('remove-markdown-baseline');
     const candidate = consumerRequire('remove-markdown');
-    const inputs = representativeInputs.concat(generatedInputs(1000));
+    const inputs = representativeInputs.concat(malformedInputs, generatedInputs(1000));
 
     for (const input of inputs) {
       for (const options of optionSets) {

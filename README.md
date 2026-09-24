@@ -9,6 +9,8 @@
 ## When do I need it?
 The typical use case is to display an excerpt from some Markdown text, without any of the actual Markdown syntax - for example in a list of posts.
 
+When processing untrusted Markdown, set an input-size limit appropriate to your application. This package strips formatting; it does not sanitize HTML or make the output safe to insert into a web page as HTML.
+
 ## Installation
 
 ```sh
