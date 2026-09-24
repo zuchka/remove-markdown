@@ -11,6 +11,8 @@ The typical use case is to display an excerpt from some Markdown text, without a
 
 When processing untrusted Markdown, set an input-size limit appropriate to your application. This package strips formatting; it does not sanitize HTML or make the output safe to insert into a web page as HTML.
 
+To avoid excessive backtracking, emphasis and code-delimiter stripping may leave an unusually delimiter-dense line unchanged for that pass (more than 512 `*`, `_`, or backtick characters on one line). Other lines and stripping passes continue normally.
+
 ## Installation
 
 ```sh

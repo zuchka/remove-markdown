@@ -19,6 +19,18 @@ const worker = `
     images: ['!['.repeat(50000) + 'x'],
     spacedAsterisks: [' *['.repeat(33333) + 'x', { abbr: true }],
     whitespace: [String.fromCharCode(32, 10).repeat(50000) + 'x'],
+    abbreviationAcrossLines: ['*['.repeat(50000) + '\\n]:\\n', { abbr: true }],
+    footnoteAcrossLines: ['[^'.repeat(50000) + '\\n]\\n'],
+    imageAcrossLines: ['!['.repeat(50000) + '\\n](x)\\n'],
+    referenceAcrossLines: ['['.repeat(100000) + '\\n]: x'],
+    separatedLinkAcrossLines: ['['.repeat(100000) + '\\n]()', { separateLinksAndTexts: ': ' }],
+    abbreviationManyLines: [(' *[x' + String.fromCharCode(10)).repeat(20000) + ']: x\\n', { abbr: true }],
+    separatedLinkNoCloser: ['[' + ']('.repeat(50000), { separateLinksAndTexts: ': ' }],
+    asterisksWithStrayCloser: ['*'.repeat(50000) + ' x *'],
+    asterisksWithCandidateCloser: ['*'.repeat(50000) + 'x*'],
+    underscoresWithCandidateCloser: ['_'.repeat(50000) + 'x_'],
+    backticksWithCandidateCloser: [String.fromCharCode(96).repeat(50000) + 'x' + String.fromCharCode(96)],
+    denseLines: [('_'.repeat(600) + 'x_\\n').repeat(500)],
   };
   const [input, options] = cases[name];
   const start = performance.now();
@@ -29,6 +41,12 @@ const worker = `
 for (const name of [
   'brackets', 'asterisks', 'underscores', 'backticks', 'html',
   'tildes', 'footnotes', 'images', 'spacedAsterisks', 'whitespace',
+  'abbreviationAcrossLines', 'footnoteAcrossLines', 'imageAcrossLines',
+  'referenceAcrossLines', 'separatedLinkAcrossLines',
+  'abbreviationManyLines', 'separatedLinkNoCloser',
+  'asterisksWithStrayCloser', 'asterisksWithCandidateCloser',
+  'underscoresWithCandidateCloser', 'backticksWithCandidateCloser',
+  'denseLines',
 ]) {
   test(`${name} completes within a bounded time`, () => {
     const result = spawnSync(process.execPath, ['-e', worker, entry, name], {

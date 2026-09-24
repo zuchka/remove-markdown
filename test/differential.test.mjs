@@ -29,6 +29,10 @@ const representativeInputs = [
   '~~struck~~ and `inline code`',
   '*[HTML]: Hyper Text Markup Language\nHTML',
   'Text with [nested [brackets]](https://example.com)',
+  '_first_\n_second_',
+  '_first_\r_second_',
+  '_first_\u2028_second_',
+  '_first_\u2029_second_',
 ];
 
 const optionSets = [
@@ -54,11 +58,21 @@ const optionSets = [
 ];
 
 const malformedInputs = ['[', '*', '_', '`', '~', '<', '![', '[^', ' *[', ' \n']
-  .flatMap((token) => [64, 128, 256, 512].map((count) => token.repeat(count) + 'x'));
+  .flatMap((token) => [64, 128, 256, 512].map((count) => token.repeat(count) + 'x'))
+  .concat([
+    '*['.repeat(512) + '\n]:\n',
+    '[^'.repeat(512) + '\n]\n',
+    '!['.repeat(512) + '\n](x)\n',
+    '['.repeat(512) + '\n]: x',
+    '['.repeat(512) + '\n]()',
+    '*'.repeat(256) + 'x*',
+    '_'.repeat(256) + 'x_',
+    '`'.repeat(256) + 'x`',
+  ]);
 
 function generatedInputs(count) {
   const tokens = [
-    'text', ' ', '\n', '# ', '*bold*', '_italic_', '`code`',
+    'text', ' ', '\n', '\r', '\u2028', '\u2029', '# ', '*bold*', '_italic_', '`code`',
     '[link](https://example.com)', '![alt](image.png)', '> quote',
     '- item', '1. item', '<em>html</em>', '~~strike~~', '\\*escaped\\*',
   ];
@@ -100,7 +114,7 @@ test('the candidate matches published 0.7.0 behavior', () => {
     const consumerRequire = createRequire(join(consumer, 'consumer.cjs'));
     const baseline = consumerRequire('remove-markdown-baseline');
     const candidate = consumerRequire('remove-markdown');
-    const inputs = representativeInputs.concat(malformedInputs, generatedInputs(1000));
+    const inputs = representativeInputs.concat(malformedInputs, generatedInputs(3000));
 
     for (const input of inputs) {
       for (const options of optionSets) {
