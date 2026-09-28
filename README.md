@@ -42,7 +42,7 @@ have tested:
 
 ```html
 <script type="module">
-  import removeMd from 'https://unpkg.com/remove-markdown@0.7.0/index.mjs';
+  import removeMd from 'https://unpkg.com/remove-markdown@0.7.1/index.mjs';
 
   const plainText = removeMd('# This is a heading');
 </script>
@@ -51,7 +51,7 @@ have tested:
 ### Deno
 
 ```js
-import removeMd from 'npm:remove-markdown@^0.7.0';
+import removeMd from 'npm:remove-markdown@^0.7.1';
 
 const markdown = '# This is a heading\n\nThis is a paragraph with [a link](http://www.disney.com/) in it.';
 const plainText = removeMd(markdown);

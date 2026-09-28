@@ -45,16 +45,17 @@ declare function removeMd(md: string, options?: {
   abbr?: boolean;
 
   /**
-   * Replace links with their URL instead of their link text.
-   * Ignored when `separateLinksAndTexts` is set.
+   * Replace inline link text with its URL.
+   * Ignored for inline links when `separateLinksAndTexts` is non-empty.
    * @default false
    */
   replaceLinksWithURL?: boolean;
 
   /**
-   * Keep both the link text and the URL, joined by this separator
+   * For inline links (`[text](url)`), keep both text and URL, joined by this separator
    * (e.g. `': '` turns `[text](url)` into `text: url`).
-   * Takes precedence over `replaceLinksWithURL` when set.
+   * A non-empty separator takes precedence over `replaceLinksWithURL`.
+   * An empty string disables this option.
    * @default null
    */
   separateLinksAndTexts?: string;
