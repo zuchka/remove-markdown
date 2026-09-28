@@ -43,7 +43,7 @@ module.exports = function(md, options) {
       // Create a regex that matches tags not in htmlTagsToSkip
       const joinedHtmlTagsToSkip = options.htmlTagsToSkip.join('|')
       htmlReplaceRegex = new RegExp(
-        `<(?!\/?(${joinedHtmlTagsToSkip})(?=>|\s[^>]*>))[^>]*>`,
+        `<(?!\/?(${joinedHtmlTagsToSkip})(?=>|\\s[^>]*>))[^>]*>`,
         'g',
       )
     }
