@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.1] - 2026-09-28
+
+### Fixed
+
+- Fixed `htmlTagsToSkip` so selected HTML tags with attributes are preserved and unrelated tag names such as `codes` are stripped when only `code` is selected ([#127](https://github.com/zuchka/remove-markdown/issues/127), [#128](https://github.com/zuchka/remove-markdown/pull/128) by [@endlacer](https://github.com/endlacer)).
+
+### Improved
+
+- Added function and option documentation to the CommonJS and ESM TypeScript declarations for editor hover help ([#129](https://github.com/zuchka/remove-markdown/pull/129) by [@endlacer](https://github.com/endlacer)).
+- Clarified that a non-empty `separateLinksAndTexts` separator takes precedence over `replaceLinksWithURL` for inline links.
+
+### Maintenance
+
+- Updated the development dependency `js-yaml` from 4.3.1 to 4.3.2 ([#125](https://github.com/zuchka/remove-markdown/pull/125)).
+
 ## [0.7.0] - 2026-08-31
 
 ### Added
