@@ -274,5 +274,23 @@ describe('remove Markdown', function () {
       const expected = 'some inline link: http://www.disney.com/.';
       expect(removeMd(string, {separateLinksAndTexts: ': '})).to.equal(expected);
     });
+
+    it('it should remove custom inline fences', function () {
+      const string = '++Inserted Text++ and ++Other inserted text++';
+      const expected = 'Inserted Text and Other inserted text';
+      expect(removeMd(string, {customInlineFences: ['++']})).to.equal(expected);
+    });
+
+    it('it should not remove lonely symbols that look like custom inline fences', function () {
+      const string = 'a + b === b + a, a * b === b * a';
+      const expected = 'a + b === b + a, a * b === b * a';
+      expect(removeMd(string, {customInlineFences: ['==']})).to.equal(expected);
+    });
+
+    it('it should remove different interleaved custom inline fences', function () {
+      const string = 'What --a §§neat-- little project§§!';
+      const expected = 'What a neat little project!';
+      expect(removeMd(string, {customInlineFences: ['--', '§§']})).to.equal(expected);
+    });
   });
 });

@@ -73,6 +73,7 @@ declare function removeMd(md: string, options?: {
    * @default false
    */
   throwError?: boolean;
+  customInlineFences?: string[];
 }): string;
 
 export = removeMd;

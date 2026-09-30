@@ -11,6 +11,7 @@ export default function removeMarkdown(md, options) {
   options.separateLinksAndTexts = options.hasOwnProperty('separateLinksAndTexts') ? options.separateLinksAndTexts : null;
   options.htmlTagsToSkip = options.hasOwnProperty('htmlTagsToSkip') ? options.htmlTagsToSkip : [];
   options.throwError = options.hasOwnProperty('throwError') ? options.throwError : false;
+  options.customInlineFences = options.hasOwnProperty('customInlineFences') ? options.customInlineFences : [];
 
   var output = md || '';
 
@@ -89,6 +90,13 @@ export default function removeMarkdown(md, options) {
       // .replace(/(\S+)\n\s*(\S+)/g, '$1 $2')
       // Replace strike through
       .replace(/~(.*?)~/g, '$1');
+
+    // Replace arbitrary inline fences around words
+    for (const customFence of options.customInlineFences) {
+      const escapedFence = RegExp.escape(customFence);
+      output = output.replace(new RegExp(`${escapedFence}\\b(.*?)\\b${escapedFence}`, 'g'), '$1');
+    }
+
   } catch(e) {
     if (options.throwError) throw e;
 
