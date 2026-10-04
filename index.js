@@ -24,9 +24,35 @@ module.exports = function(md, options) {
         output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, '$1');
     }
     if (options.stripMdxImports) {
-      let importReplaceRegex = /^import\s+([a-zA-Z0-9{}\-_,* /]+from)?\s*["'][^'"]+["'];?$\n+/gm
-      // Remove import statements
-      output = output.replace(importReplaceRegex, '')
+      // Reference for ESM imports: https://github.com/micromark/micromark-extension-mdxjs-esm#authoring
+      let identifierRegex = "([A-Za-z0-9-_]+)";
+      let singleElementRegex = '(' +
+         `${identifierRegex}|(\\*|${identifierRegex})\\s+as\\s+${identifierRegex}|` +
+        `\\{\\s*(${identifierRegex}|(\\*|${identifierRegex})\\s+as\\s+${identifierRegex})\\s*}`
+        + ')';
+      let elementsRegex = `(${singleElementRegex}(,\\s*${singleElementRegex})*\\s+from\\s+)?`;
+      let importRegex = `(\\r?\\n)*^import ${elementsRegex}((?<quote>['"]).+\\k<quote>);?(\\r?\\n)*`;
+
+      let compiledImportRegex = new RegExp(importRegex, "m");
+
+      // In MDX, imports can only appear at the start of the file. For this reason,
+      // we keep replacing one-by-one, until the next match is no longer at the start.
+      // It's probably part of the content in that case.
+      while (true) {
+        let nextMatch = output.match(compiledImportRegex);
+        if (nextMatch == null) {
+          // No more matches.
+          break;
+        }
+
+        if (nextMatch.index === 0) {
+          // Found a match right at the start of the file. Replace it and repeat.
+          output = output.substring(nextMatch[0].length);
+          continue;
+        }
+        // Invalid match, cancel replace logic.
+        break;
+      }
     }
     if (options.gfm) {
       output = output

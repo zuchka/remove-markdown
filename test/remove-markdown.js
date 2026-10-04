@@ -39,10 +39,26 @@ describe('remove Markdown', function () {
         { string: 'import "mycomponent.astro";\nWelcome back!', expected: 'Welcome back!' },
         { string: "import { Validator as val } from '../util.js'\nSuper imports?", expected: 'Super imports?' },
         { string: 'import page404 from "@/assets/images/404.png";\nimport page403 from "@/assets/images/403.png";\n\nSome errors, huh', expected: 'Some errors, huh' },
+        { string: `
+import a from 'b'
+import * as a from 'b'
+import {a} from 'b'
+import {a as b} from 'c'
+import a, {b as c} from 'd'
+import a, * as b from 'c'
+import 'a'`, expected: '' },
+        { string: 'import "with-carrier-return"\r\nA', expected: "A" },
+        { string: 'After text:\nimport "keep-it!"', expected: 'After text:\nimport "keep-it!"' }
       ];
       tests.forEach(function (test) {
         expect(removeMd(test.string, { stripMdxImports: true })).to.equal(test.expected);
       });
+    })
+
+    it('should not strip import statements from code blocks', function () {
+      const string = 'import test from "module";\n```\nimport test from "module";\ntest.run();```';
+      const expected = 'import test from "module";\ntest.run();';
+      expect(removeMd(string, { stripMdxImports: true })).to.equal(expected);
     })
 
     it('should not strip MDX imports by default', function () {
