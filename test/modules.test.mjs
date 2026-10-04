@@ -28,6 +28,9 @@ test('the portable ESM implementation matches the CommonJS implementation', () =
     ['[link](https://example.com)', { replaceLinksWithURL: true }],
     ['![alt](image.png)', { useImgAltText: false }],
     ['<span>kept</span><em>removed</em>', { htmlTagsToSkip: ['span'] }],
+    ['import { A, B as C, } from "pkg"; \t\r\n \r\n# Text', { stripMdxImports: true }],
+    ['import A from "pkg";\n\n- import "data"', { stripMdxImports: true }],
+    ['import { A, B } from "pkg";\n\n# Text', { stripMdxImports: false }],
   ];
 
   for (const [markdown, options] of cases) {

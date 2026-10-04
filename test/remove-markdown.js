@@ -66,6 +66,74 @@ import 'a'`, expected: '' },
       expect(removeMd(string)).to.equal(string)
     })
 
+    describe('MDX import regressions', function () {
+      const imports = [
+        'import { A, B } from "pkg";',
+        'import { A, B as C, } from "pkg";',
+        'import Default, { A, B as C } from "pkg";',
+        'import {\n  A,\n  B as C,\n} from "pkg";',
+        'import Default,\n{ A, B }\nfrom "pkg";',
+        'import {} from "pkg";',
+        'import $Component from "pkg";',
+        'import  Default from "pkg";',
+        'import Default, * as components from "pkg";',
+        String.raw`import Component from 'path/with\'quote';`,
+      ];
+
+      imports.forEach(function (statement) {
+        it('should strip ' + JSON.stringify(statement), function () {
+          const string = statement + '\nimport Next from "next";\n\n# Text';
+          expect(removeMd(string, { stripMdxImports: true })).to.equal('Text');
+          expect(removeMd(statement, { stripMdxImports: true })).to.equal('');
+          expect(removeMd(statement)).to.equal(statement);
+          expect(removeMd(statement, { stripMdxImports: false })).to.equal(statement);
+        });
+      });
+
+      ['\n', '\r\n'].forEach(function (newline) {
+        it('should consume trailing and blank-line whitespace with ' + JSON.stringify(newline), function () {
+          const string = ' \t' + newline +
+            'import A from "a"; \t' + newline +
+            ' \t' + newline +
+            'import { B, C } from "b" \t; \t' + newline +
+            '\t ' + newline + '# Text';
+          expect(removeMd(string, { stripMdxImports: true })).to.equal('Text');
+        });
+      });
+
+      it('should consume trailing whitespace at EOF', function () {
+        expect(removeMd('import A from "a"; \t', { stripMdxImports: true })).to.equal('');
+      });
+
+      const contentCases = [
+        ['a list item', '- import "data"\n\nText', 'import "data"\n\nText'],
+        ['an ordered list item', '1. import "data"\n\nText', 'import "data"\n\nText'],
+        ['quoted prose in a list', '- import "data" using the "Import" button.', 'import "data" using the "Import" button.'],
+        ['quoted prose', 'import "data" using the "Import" button.', 'import "data" using the "Import" button.'],
+        ['indented code', '    import A from "a";\n\nText', '    import A from "a";\n\nText'],
+        ['a horizontal rule', '---\nimport A from "a";\n\nText', 'import A from "a";\n\nText'],
+        ['a heading', '# Heading\n\nimport A from "a";\n\nText', 'Heading\n\nimport A from "a";\n\nText'],
+        ['a code fence', '```js\nimport A from "a";\n```', 'import A from "a";'],
+        ['a trailing comment', 'import A from "a"; // comment\n\nText', 'import A from "a"; // comment\n\nText'],
+        ['an unsupported import', 'import A from "a" with { type: "json" };\nimport B from "b";', 'import A from "a" with { type: "json" };\nimport B from "b";'],
+      ];
+
+      contentCases.forEach(function ([name, string, expected]) {
+        it('should preserve content after ' + name, function () {
+          expect(removeMd(string, { stripMdxImports: true })).to.equal(expected);
+          expect(removeMd('import First from "first";\n\n' + string, {
+            stripMdxImports: true,
+          })).to.equal(expected);
+        });
+      });
+
+      it('should preserve list options when stripping imports', function () {
+        const string = 'import First from "first";\n\n- import "data"';
+        expect(removeMd(string, { stripMdxImports: true, stripListLeaders: false })).to.equal('- import "data"');
+        expect(removeMd(string, { stripMdxImports: true, listUnicodeChar: '•' })).to.equal('• import "data"');
+      });
+    });
+
     it('should strip anchors', function () {
       const string = '*Javascript* [developers](https://engineering.condenast.io/)* are the _best_.';
       const expected = 'Javascript developers* are the best.';

@@ -42,6 +42,7 @@ import removeMdFromIndexJs = require('remove-markdown/index.js');
 
 const output: string = removeMd('# Heading', {
   stripListLeaders: true,
+  stripMdxImports: true,
   listUnicodeChar: '',
   gfm: true,
   useImgAltText: true,
@@ -61,6 +62,8 @@ void indexJsOutput;
 removeMd(42);
 // @ts-expect-error gfm must be a boolean.
 removeMd('text', { gfm: 'yes' });
+// @ts-expect-error stripMdxImports must be a boolean.
+removeMd('text', { stripMdxImports: 'yes' });
 `,
     );
     writeJson(join(commonJsConsumer, 'tsconfig.json'), {
@@ -84,6 +87,7 @@ import removeMdFromIndexMjs from 'remove-markdown/index.mjs';
 
 const output: string = removeMd('[link](https://example.com)', {
   stripListLeaders: false,
+  stripMdxImports: false,
   listUnicodeChar: '•',
   gfm: false,
   useImgAltText: false,
@@ -105,6 +109,8 @@ void indexMjsOutput;
 removeMd({});
 // @ts-expect-error htmlTagsToSkip must contain strings.
 removeMd('text', { htmlTagsToSkip: [1] });
+// @ts-expect-error stripMdxImports must be a boolean.
+removeMd('text', { stripMdxImports: 'yes' });
 `,
     );
     writeJson(join(esmConsumer, 'tsconfig.json'), {

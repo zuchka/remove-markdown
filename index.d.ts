@@ -17,7 +17,9 @@ declare function removeMd(md: string, options?: {
   stripListLeaders?: boolean;
 
   /**
-   * Strip imports in MDX files (e.g.: `import x from "pkg"`).
+   * Strip a leading block of MDX imports (e.g.: `import x from "pkg"`).
+   * Supports default, named, namespace, and side-effect imports. Stops at other
+   * content or unsupported syntax (including comments and import attributes).
    * Set to `true` to enable.
    * @default false
    */

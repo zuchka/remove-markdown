@@ -15,6 +15,27 @@ export default function removeMarkdown(md, options) {
 
   var output = md || '';
 
+  if (options.stripMdxImports) {
+    // Inspect the original structure before list markers, rules or fences are removed.
+    // This intentionally supports only a leading block of imports, not all MDX ESM.
+    const identifier = '[A-Za-z_$][\\w$]*';
+    const specifier = `${identifier}(?:\\s+as\\s+${identifier})?\\s*`;
+    const namedImports = `\\{\\s*(?:${specifier}(?:,\\s*${specifier})*(?:,\\s*)?)?\\}`;
+    const namespaceImport = `\\*\\s+as\\s+${identifier}`;
+    const bindings = `(?:${identifier}(?:\\s*,\\s*(?:${namedImports}|${namespaceImport}))?|${namedImports}|${namespaceImport})`;
+    const modulePath = String.raw`(?:"(?:\\[^\r\n]|[^"\\\r\n])*"|'(?:\\[^\r\n]|[^'\\\r\n])*')`;
+    const blankLines = '(?:[\\t ]*\\r?\\n)*';
+    const importRegex = new RegExp(
+      `^${blankLines}import[\\t ]+(?:${bindings}\\s+from\\s+)?${modulePath}` +
+      `[\\t ]*(?:;[\\t ]*)?(?:\\r?\\n|$)${blankLines}`
+    );
+
+    let match;
+    while ((match = output.match(importRegex))) {
+      output = output.substring(match[0].length);
+    }
+  }
+
   // Remove horizontal rules (stripListHeaders conflict with this rule, which is why it has been moved to the top)
   output = output.replace(/^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/gm, '');
 
@@ -24,37 +45,6 @@ export default function removeMarkdown(md, options) {
         output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, options.listUnicodeChar + ' $1');
       else
         output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, '$1');
-    }
-    if (options.stripMdxImports) {
-      // Reference for ESM imports: https://github.com/micromark/micromark-extension-mdxjs-esm#authoring
-      let identifierRegex = "([A-Za-z0-9-_]+)";
-      let singleElementRegex = '(' +
-         `${identifierRegex}|(\\*|${identifierRegex})\\s+as\\s+${identifierRegex}|` +
-        `\\{\\s*(${identifierRegex}|(\\*|${identifierRegex})\\s+as\\s+${identifierRegex})\\s*}`
-        + ')';
-      let elementsRegex = `(${singleElementRegex}(,\\s*${singleElementRegex})*\\s+from\\s+)?`;
-      let importRegex = `(\\r?\\n)*^import ${elementsRegex}((?<quote>['"]).+\\k<quote>);?(\\r?\\n)*`;
-
-      let compiledImportRegex = new RegExp(importRegex, "m");
-
-      // In MDX, imports can only appear at the start of the file. For this reason,
-      // we keep replacing one-by-one, until the next match is no longer at the start.
-      // It's probably part of the content in that case.
-      while (true) {
-        let nextMatch = output.match(compiledImportRegex);
-        if (nextMatch == null) {
-          // No more matches.
-          break;
-        }
-
-        if (nextMatch.index === 0) {
-          // Found a match right at the start of the file. Replace it and repeat.
-          output = output.substring(nextMatch[0].length);
-          continue;
-        }
-        // Invalid match, cancel replace logic.
-        break;
-      }
     }
     if (options.gfm) {
       output = output
