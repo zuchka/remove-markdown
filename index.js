@@ -2,6 +2,7 @@ module.exports = function(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
+  options.stripMdxImports = options.hasOwnProperty('stripMdxImports') ? options.stripMdxImports : false;
   options.gfm = options.hasOwnProperty('gfm') ? options.gfm : true;
   options.useImgAltText = options.hasOwnProperty('useImgAltText') ? options.useImgAltText : true;
   options.abbr = options.hasOwnProperty('abbr') ? options.abbr : false;
@@ -21,6 +22,11 @@ module.exports = function(md, options) {
         output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, options.listUnicodeChar + ' $1');
       else
         output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, '$1');
+    }
+    if (options.stripMdxImports) {
+      let importReplaceRegex = /^import\s+([a-zA-Z0-9{}\-_,* /]+from)?\s*["'][^'"]+["'];?$\n+/gm
+      // Remove import statements
+      output = output.replace(importReplaceRegex, '')
     }
     if (options.gfm) {
       output = output
@@ -48,8 +54,6 @@ module.exports = function(md, options) {
       )
     }
 
-    let importReplaceRegex = /^import\s+([a-zA-Z0-9{}\-_,* /]+from)?\s*["'][^'"]+["'];?$\n+/gm
-
     if (options.separateLinksAndTexts) {
       output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
     }
@@ -57,8 +61,6 @@ module.exports = function(md, options) {
     output = output
       // Remove HTML tags
       .replace(htmlReplaceRegex, '')
-      // Remove import statements
-      .replace(importReplaceRegex, '')
       // Remove setext-style headers
       .replace(/^[=\-]{2,}\s*$/g, '')
       // Remove footnotes?

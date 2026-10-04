@@ -1,5 +1,6 @@
 declare function removeMd(md: string, options?: {
   stripListLeaders?: boolean;
+  stripMdxImports?: boolean;
   listUnicodeChar?: string;
   gfm?: boolean;
   useImgAltText?: boolean;

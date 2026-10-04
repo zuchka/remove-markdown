@@ -41,8 +41,13 @@ describe('remove Markdown', function () {
         { string: 'import page404 from "@/assets/images/404.png";\nimport page403 from "@/assets/images/403.png";\n\nSome errors, huh', expected: 'Some errors, huh' },
       ];
       tests.forEach(function (test) {
-        expect(removeMd(test.string)).to.equal(test.expected);
+        expect(removeMd(test.string, { stripMdxImports: true })).to.equal(test.expected);
       });
+    })
+
+    it('should not strip MDX imports by default', function () {
+      const string = 'import test from "module";\n';
+      expect(removeMd(string)).to.equal(string)
     })
 
     it('should strip anchors', function () {
