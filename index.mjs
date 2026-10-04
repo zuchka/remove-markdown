@@ -1,4 +1,6 @@
-module.exports = function(md, options) {
+// Generated from index.js by scripts/build-esm.mjs. Do not edit directly.
+
+export default function removeMarkdown(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;

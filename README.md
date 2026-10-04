@@ -3,7 +3,7 @@
 [![GitHub Actions Build Status](https://github.com/zuchka/remove-markdown/actions/workflows/default.yaml/badge.svg)](https://github.com/zuchka/remove-markdown/actions/workflows/default.yaml)
 
 ## What is it?
-**remove-markdown** is a node.js module that will remove (strip) Markdown formatting from text.
+**remove-markdown** is a JavaScript module that removes (strips) Markdown formatting from text. It supports CommonJS and ES modules in Node.js, plus Deno through npm compatibility.
 *Markdown formatting* means pretty much anything that doesn’t look like regular text, like square brackets, asterisks etc.
 
 ## When do I need it?
@@ -11,16 +11,53 @@ The typical use case is to display an excerpt from some Markdown text, without a
 
 ## Installation
 
-```
+```sh
 npm install remove-markdown
 ```
 
 ## Usage
+
+### CommonJS
+
 ```js
 const removeMd = require('remove-markdown');
 const markdown = '# This is a heading\n\nThis is a paragraph with [a link](http://www.disney.com/) in it.';
 const plainText = removeMd(markdown); // plainText is now 'This is a heading\n\nThis is a paragraph with a link in it.'
 ```
+
+### Node.js ES modules
+
+```js
+import removeMd from 'remove-markdown';
+
+const markdown = '# This is a heading\n\nThis is a paragraph with [a link](http://www.disney.com/) in it.';
+const plainText = removeMd(markdown);
+```
+
+### Browser ES modules
+
+The ESM entry is self-contained and can be loaded directly from a CDN that
+serves JavaScript with the correct MIME type. Pin the URL to the version you
+have tested:
+
+```html
+<script type="module">
+  import removeMd from 'https://unpkg.com/remove-markdown@0.7.1/index.mjs';
+
+  const plainText = removeMd('# This is a heading');
+</script>
+```
+
+### Deno
+
+```js
+import removeMd from 'npm:remove-markdown@^0.7.1';
+
+const markdown = '# This is a heading\n\nThis is a paragraph with [a link](http://www.disney.com/) in it.';
+const plainText = removeMd(markdown);
+```
+
+Deno support is provided through the npm package; there is no separate JSR package. The package exposes one callable default export in every runtime. Named exports and direct imports from raw GitHub URLs, which do not reliably serve the correct JavaScript MIME type, are not supported.
 
 You can also supply an options object to the function. Currently, the following options are supported:
 

@@ -82,4 +82,4 @@ declare function removeMd(md: string, options?: {
   throwError?: boolean;
 }): string;
 
-export = removeMd;
+export default removeMd;
