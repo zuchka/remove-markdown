@@ -4,6 +4,7 @@ export default function removeMarkdown(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
   options.stripListLeaders = options.hasOwnProperty('stripListLeaders') ? options.stripListLeaders : true;
+  options.stripMdxImports = options.hasOwnProperty('stripMdxImports') ? options.stripMdxImports : false;
   options.gfm = options.hasOwnProperty('gfm') ? options.gfm : true;
   options.useImgAltText = options.hasOwnProperty('useImgAltText') ? options.useImgAltText : true;
   options.abbr = options.hasOwnProperty('abbr') ? options.abbr : false;
@@ -13,6 +14,27 @@ export default function removeMarkdown(md, options) {
   options.throwError = options.hasOwnProperty('throwError') ? options.throwError : false;
 
   var output = md || '';
+
+  if (options.stripMdxImports) {
+    // Inspect the original structure before list markers, rules or fences are removed.
+    // This intentionally supports only a leading block of imports, not all MDX ESM.
+    const identifier = '[A-Za-z_$][\\w$]*';
+    const specifier = `${identifier}(?:\\s+as\\s+${identifier})?\\s*`;
+    const namedImports = `\\{\\s*(?:${specifier}(?:,\\s*${specifier})*(?:,\\s*)?)?\\}`;
+    const namespaceImport = `\\*\\s+as\\s+${identifier}`;
+    const bindings = `(?:${identifier}(?:\\s*,\\s*(?:${namedImports}|${namespaceImport}))?|${namedImports}|${namespaceImport})`;
+    const modulePath = String.raw`(?:"(?:\\[^\r\n]|[^"\\\r\n])*"|'(?:\\[^\r\n]|[^'\\\r\n])*')`;
+    const blankLines = '(?:[\\t ]*\\r?\\n)*';
+    const importRegex = new RegExp(
+      `^${blankLines}import[\\t ]+(?:${bindings}\\s+from\\s+)?${modulePath}` +
+      `[\\t ]*(?:;[\\t ]*)?(?:\\r?\\n|$)${blankLines}`
+    );
+
+    let match;
+    while ((match = output.match(importRegex))) {
+      output = output.substring(match[0].length);
+    }
+  }
 
   // Remove horizontal rules (stripListHeaders conflict with this rule, which is why it has been moved to the top)
   output = output.replace(/^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/gm, '');

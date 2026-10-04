@@ -33,6 +33,107 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should strip MDX import statements', function () {
+      const tests = [
+        { string: 'import page404 from "@/assets/images/404.png"\n\nHere is some text', expected: 'Here is some text' },
+        { string: 'import "mycomponent.astro";\nWelcome back!', expected: 'Welcome back!' },
+        { string: "import { Validator as val } from '../util.js'\nSuper imports?", expected: 'Super imports?' },
+        { string: 'import page404 from "@/assets/images/404.png";\nimport page403 from "@/assets/images/403.png";\n\nSome errors, huh', expected: 'Some errors, huh' },
+        { string: `
+import a from 'b'
+import * as a from 'b'
+import {a} from 'b'
+import {a as b} from 'c'
+import a, {b as c} from 'd'
+import a, * as b from 'c'
+import 'a'`, expected: '' },
+        { string: 'import "with-carrier-return"\r\nA', expected: "A" },
+        { string: 'After text:\nimport "keep-it!"', expected: 'After text:\nimport "keep-it!"' }
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string, { stripMdxImports: true })).to.equal(test.expected);
+      });
+    })
+
+    it('should not strip import statements from code blocks', function () {
+      const string = 'import test from "module";\n```\nimport test from "module";\ntest.run();```';
+      const expected = 'import test from "module";\ntest.run();';
+      expect(removeMd(string, { stripMdxImports: true })).to.equal(expected);
+    })
+
+    it('should not strip MDX imports by default', function () {
+      const string = 'import test from "module";\n';
+      expect(removeMd(string)).to.equal(string)
+    })
+
+    describe('MDX import regressions', function () {
+      const imports = [
+        'import { A, B } from "pkg";',
+        'import { A, B as C, } from "pkg";',
+        'import Default, { A, B as C } from "pkg";',
+        'import {\n  A,\n  B as C,\n} from "pkg";',
+        'import Default,\n{ A, B }\nfrom "pkg";',
+        'import {} from "pkg";',
+        'import $Component from "pkg";',
+        'import  Default from "pkg";',
+        'import Default, * as components from "pkg";',
+        String.raw`import Component from 'path/with\'quote';`,
+      ];
+
+      imports.forEach(function (statement) {
+        it('should strip ' + JSON.stringify(statement), function () {
+          const string = statement + '\nimport Next from "next";\n\n# Text';
+          expect(removeMd(string, { stripMdxImports: true })).to.equal('Text');
+          expect(removeMd(statement, { stripMdxImports: true })).to.equal('');
+          expect(removeMd(statement)).to.equal(statement);
+          expect(removeMd(statement, { stripMdxImports: false })).to.equal(statement);
+        });
+      });
+
+      ['\n', '\r\n'].forEach(function (newline) {
+        it('should consume trailing and blank-line whitespace with ' + JSON.stringify(newline), function () {
+          const string = ' \t' + newline +
+            'import A from "a"; \t' + newline +
+            ' \t' + newline +
+            'import { B, C } from "b" \t; \t' + newline +
+            '\t ' + newline + '# Text';
+          expect(removeMd(string, { stripMdxImports: true })).to.equal('Text');
+        });
+      });
+
+      it('should consume trailing whitespace at EOF', function () {
+        expect(removeMd('import A from "a"; \t', { stripMdxImports: true })).to.equal('');
+      });
+
+      const contentCases = [
+        ['a list item', '- import "data"\n\nText', 'import "data"\n\nText'],
+        ['an ordered list item', '1. import "data"\n\nText', 'import "data"\n\nText'],
+        ['quoted prose in a list', '- import "data" using the "Import" button.', 'import "data" using the "Import" button.'],
+        ['quoted prose', 'import "data" using the "Import" button.', 'import "data" using the "Import" button.'],
+        ['indented code', '    import A from "a";\n\nText', '    import A from "a";\n\nText'],
+        ['a horizontal rule', '---\nimport A from "a";\n\nText', 'import A from "a";\n\nText'],
+        ['a heading', '# Heading\n\nimport A from "a";\n\nText', 'Heading\n\nimport A from "a";\n\nText'],
+        ['a code fence', '```js\nimport A from "a";\n```', 'import A from "a";'],
+        ['a trailing comment', 'import A from "a"; // comment\n\nText', 'import A from "a"; // comment\n\nText'],
+        ['an unsupported import', 'import A from "a" with { type: "json" };\nimport B from "b";', 'import A from "a" with { type: "json" };\nimport B from "b";'],
+      ];
+
+      contentCases.forEach(function ([name, string, expected]) {
+        it('should preserve content after ' + name, function () {
+          expect(removeMd(string, { stripMdxImports: true })).to.equal(expected);
+          expect(removeMd('import First from "first";\n\n' + string, {
+            stripMdxImports: true,
+          })).to.equal(expected);
+        });
+      });
+
+      it('should preserve list options when stripping imports', function () {
+        const string = 'import First from "first";\n\n- import "data"';
+        expect(removeMd(string, { stripMdxImports: true, stripListLeaders: false })).to.equal('- import "data"');
+        expect(removeMd(string, { stripMdxImports: true, listUnicodeChar: '•' })).to.equal('• import "data"');
+      });
+    });
+
     it('should strip anchors', function () {
       const string = '*Javascript* [developers](https://engineering.condenast.io/)* are the _best_.';
       const expected = 'Javascript developers* are the best.';

@@ -42,7 +42,7 @@ have tested:
 
 ```html
 <script type="module">
-  import removeMd from 'https://unpkg.com/remove-markdown@0.7.1/index.mjs';
+  import removeMd from 'https://unpkg.com/remove-markdown@0.8.0/index.mjs';
 
   const plainText = removeMd('# This is a heading');
 </script>
@@ -51,7 +51,7 @@ have tested:
 ### Deno
 
 ```js
-import removeMd from 'npm:remove-markdown@^0.7.1';
+import removeMd from 'npm:remove-markdown@^0.8.0';
 
 const markdown = '# This is a heading\n\nThis is a paragraph with [a link](http://www.disney.com/) in it.';
 const plainText = removeMd(markdown);
@@ -63,7 +63,8 @@ You can also supply an options object to the function. Currently, the following 
 
 ```js
 const plainText = removeMd(markdown, {
-  stripListLeaders: true ,     // strip list leaders (default: true)
+  stripListLeaders: true,      // strip list leaders (default: true)
+  stripMdxImports: true,       // strip leading MDX import statements (default: false)
   listUnicodeChar: '',         // char to insert instead of stripped list leaders (default: '')
   gfm: true,                   // support GitHub-Flavored Markdown (default: true)
   useImgAltText: true,         // replace images with alt-text, if present (default: true)
@@ -76,6 +77,18 @@ const plainText = removeMd(markdown, {
 ```
 
 Setting `stripListLeaders` to false will retain any list characters (`*, -, +, (digit).`).
+
+Setting `stripMdxImports` to true removes a leading block of default, named,
+namespace, or side-effect imports. Named imports can span multiple lines and
+include aliases and trailing commas. Statements must start at the beginning of
+a line and end with a newline or EOF, with an optional semicolon and trailing
+spaces or tabs. Blank lines, including whitespace-only lines, and LF/CRLF line
+endings are supported.
+
+This conservative filter stops at the first other content or unsupported import
+syntax, such as comments or import attributes. Imports after headings or other
+content remain in the output. Imports in lists and code blocks retain the usual
+Markdown-stripping behavior. This option defaults to false.
 
 ## TODO
 PRs are very much welcome. Here are some ideas for future enhancements:

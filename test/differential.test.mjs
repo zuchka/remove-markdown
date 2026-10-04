@@ -29,10 +29,14 @@ const representativeInputs = [
   '~~struck~~ and `inline code`',
   '*[HTML]: Hyper Text Markup Language\nHTML',
   'Text with [nested [brackets]](https://example.com)',
+  'import { A, B } from "pkg";\n\n# Text',
+  '- import "data" using the "Import" button.',
+  '```js\nimport A from "pkg";\n```',
 ];
 
 const optionSets = [
   undefined,
+  { stripMdxImports: false },
   { stripListLeaders: false },
   { listUnicodeChar: '•' },
   { gfm: false },
