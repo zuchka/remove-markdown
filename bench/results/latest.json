@@ -1,0 +1,4552 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-10T19:09:22.367Z",
+  "status": "local exploratory snapshot",
+  "maintainerDisclosure": "This benchmark is maintained by the remove-markdown project.",
+  "environment": {
+    "node": "v24.15.0",
+    "v8": "13.6.233.17-node.48",
+    "platform": "darwin",
+    "release": "27.0.0",
+    "arch": "arm64",
+    "cpu": "Apple M3",
+    "logicalCpus": 8,
+    "memoryGiB": 16
+  },
+  "source": {
+    "baseCommit": "bcdf939b595b794c51ddb7184766e0664c30fa88",
+    "dirty": true,
+    "hashes": {
+      "index.js": "0dde8e76076811363c3caf5a73a5021bbc5bedfd78228fbdc5f53c767a0d5a58",
+      "index.mjs": "e52f9d1435dd6524215e41bb0a01b5c7616032ba18b26fc6b74b080c62738917",
+      "fixtures/corpus.mjs": "cac22c8d9077c248f1776fb611a17f60ca65a205ef85ea4755eb0b2209f238d9",
+      "bench/adapters.mjs": "101c155ee448110187f2168045aadda90f6610d1163e6376afeffb065c62f4df",
+      "bench/worker.mjs": "0d38c381734044ecb144ec5698e300fff4da41c17992c538364d0ac4b586efb5",
+      "bench/run.mjs": "6a7ab385f0a59f44b8825421fb174115ada38a2802f59313ffe1cdd9a6393424",
+      "bench/statistics.mjs": "67b0bc6b7d13dc90452eef83cdbc4245a6b6914223684d9e36b46e46a40c0ee7",
+      "bench/package-lock.json": "758c4552e5f87ce0bdca30dc01e492d4efd003ecc499cf2fdc3cc77e555799ed"
+    },
+    "lockSha256": "758c4552e5f87ce0bdca30dc01e492d4efd003ecc499cf2fdc3cc77e555799ed"
+  },
+  "methodology": {
+    "seed": 20261010,
+    "rounds": 3,
+    "samplesPerRound": 15,
+    "warmupMs": 100,
+    "targetBatchMs": 5,
+    "timingTimeoutMs": 60000,
+    "stressTimeoutMs": 2000,
+    "normalization": "Collapse whitespace runs to one space and trim for content matching; exact results normalize CRLF only.",
+    "scope": "Synthetic documents repeated to four sizes. Timings require matching normalized content. Full default/configured output audit is separate. No universal ranking or production claim.",
+    "percentile": "p95 is the percentile of per-batch mean latency, not individual request latency."
+  },
+  "corpus": {
+    "version": 1,
+    "cases": [
+      {
+        "id": "plain",
+        "category": "Text",
+        "input": "Keep the words.",
+        "expected": "Keep the words."
+      },
+      {
+        "id": "heading",
+        "category": "Headings",
+        "input": "# Field notes",
+        "expected": "Field notes"
+      },
+      {
+        "id": "heading-inline-hash",
+        "category": "Headings",
+        "input": "## A #small detail",
+        "expected": "A #small detail"
+      },
+      {
+        "id": "setext",
+        "category": "Headings",
+        "input": "Field notes\n==========",
+        "expected": "Field notes"
+      },
+      {
+        "id": "emphasis",
+        "category": "Emphasis",
+        "input": "Keep **bold**, *italic*, and _quiet_ words.",
+        "expected": "Keep bold, italic, and quiet words."
+      },
+      {
+        "id": "nested-emphasis",
+        "category": "Emphasis",
+        "input": "A **very _small_ detail**.",
+        "expected": "A very small detail."
+      },
+      {
+        "id": "literal-underscore",
+        "category": "Text",
+        "input": "Use snake_case for this_name.",
+        "expected": "Use snake_case for this_name."
+      },
+      {
+        "id": "literal-comparison",
+        "category": "Text",
+        "input": "1 < 2 and 3 > 2",
+        "expected": "1 < 2 and 3 > 2"
+      },
+      {
+        "id": "escape",
+        "category": "Escapes",
+        "input": "A \\*literal\\* star.",
+        "expected": "A *literal* star."
+      },
+      {
+        "id": "unicode",
+        "category": "Text",
+        "input": "**你好** — café 🌿",
+        "expected": "你好 — café 🌿"
+      },
+      {
+        "id": "link",
+        "category": "Links",
+        "input": "Read [the notes](https://example.com).",
+        "expected": "Read the notes."
+      },
+      {
+        "id": "link-title",
+        "category": "Links",
+        "input": "[Notes](https://example.com \"A title\")",
+        "expected": "Notes"
+      },
+      {
+        "id": "link-parentheses",
+        "category": "Links",
+        "input": "[Notes](https://example.com/a_(b))",
+        "expected": "Notes"
+      },
+      {
+        "id": "reference",
+        "category": "Links",
+        "input": "Read [the notes][notes].\n\n[notes]: https://example.com",
+        "expected": "Read the notes."
+      },
+      {
+        "id": "autolink",
+        "category": "Links",
+        "input": "Visit <https://example.com>.",
+        "expected": "Visit https://example.com."
+      },
+      {
+        "id": "image-alt",
+        "category": "Images",
+        "input": "![A still lake](lake.jpg)",
+        "expected": "A still lake"
+      },
+      {
+        "id": "image-empty",
+        "category": "Images",
+        "input": "Before ![](lake.jpg) after.",
+        "expected": "Before  after."
+      },
+      {
+        "id": "unordered-list",
+        "category": "Lists",
+        "input": "- One\n- Two",
+        "expected": "One\nTwo"
+      },
+      {
+        "id": "ordered-list",
+        "category": "Lists",
+        "input": "1. One\n2. Two",
+        "expected": "One\nTwo"
+      },
+      {
+        "id": "quote",
+        "category": "Quotes",
+        "input": "> Keep it simple.",
+        "expected": "Keep it simple."
+      },
+      {
+        "id": "inline-code",
+        "category": "Code",
+        "input": "Try `hello()`.",
+        "expected": "Try hello()."
+      },
+      {
+        "id": "code-literal",
+        "category": "Code",
+        "input": "Keep `*literal*` code.",
+        "expected": "Keep *literal* code."
+      },
+      {
+        "id": "code-fence",
+        "category": "Code",
+        "input": "```js\nconst n = 1;\n```",
+        "expected": "const n = 1;"
+      },
+      {
+        "id": "code-html",
+        "category": "Code",
+        "input": "```html\n<b>literal</b>\n```",
+        "expected": "<b>literal</b>"
+      },
+      {
+        "id": "html",
+        "category": "HTML",
+        "input": "<p>A <strong>small</strong> detail.</p>",
+        "expected": "A small detail."
+      },
+      {
+        "id": "entities",
+        "category": "HTML",
+        "input": "Tea &amp; biscuits.",
+        "expected": "Tea & biscuits."
+      },
+      {
+        "id": "strike",
+        "category": "GFM",
+        "input": "An ~~old~~ idea.",
+        "expected": "An old idea."
+      },
+      {
+        "id": "task-list",
+        "category": "GFM",
+        "input": "- [x] One\n- [ ] Two",
+        "expected": "One\nTwo"
+      },
+      {
+        "id": "table",
+        "category": "GFM",
+        "input": "| Name | Value |\n| --- | --- |\n| A | B |",
+        "expected": "Name Value\nA B"
+      },
+      {
+        "id": "unclosed",
+        "category": "Malformed",
+        "input": "An unfinished [thought",
+        "expected": "An unfinished [thought"
+      },
+      {
+        "id": "empty",
+        "category": "Text",
+        "input": "",
+        "expected": ""
+      },
+      {
+        "id": "option-bullet",
+        "category": "Options",
+        "input": "- One\n- Two",
+        "expected": "• One\n• Two",
+        "options": {
+          "listUnicodeChar": "•"
+        }
+      },
+      {
+        "id": "option-list-preserve",
+        "category": "Options",
+        "input": "- One\n- Two",
+        "expected": "- One\n- Two",
+        "options": {
+          "stripListLeaders": false
+        }
+      },
+      {
+        "id": "option-url",
+        "category": "Options",
+        "input": "[Notes](https://example.com)",
+        "expected": "https://example.com",
+        "options": {
+          "replaceLinksWithURL": true
+        }
+      },
+      {
+        "id": "option-both",
+        "category": "Options",
+        "input": "[Notes](https://example.com)",
+        "expected": "Notes: https://example.com",
+        "options": {
+          "replaceLinksWithURL": true,
+          "separateLinksAndTexts": ": "
+        }
+      },
+      {
+        "id": "option-image",
+        "category": "Options",
+        "input": "![Lake](lake.jpg)",
+        "expected": "",
+        "options": {
+          "useImgAltText": false
+        }
+      },
+      {
+        "id": "option-image-separator",
+        "category": "Options",
+        "input": "![Lake](lake.jpg)",
+        "expected": "Lake",
+        "options": {
+          "separateLinksAndTexts": ": "
+        }
+      },
+      {
+        "id": "option-html",
+        "category": "Options",
+        "input": "<p>A <b>detail</b>.</p>",
+        "expected": "A <b>detail</b>.",
+        "options": {
+          "htmlTagsToSkip": [
+            "b"
+          ]
+        }
+      },
+      {
+        "id": "option-abbr",
+        "category": "Options",
+        "input": "*[HTML]: HyperText Markup Language\n\nHTML is useful.",
+        "expected": "HTML is useful.",
+        "options": {
+          "abbr": true
+        }
+      },
+      {
+        "id": "option-mdx",
+        "category": "Options",
+        "input": "import Note from \"./note\";\n\n# Hello",
+        "expected": "Hello",
+        "options": {
+          "stripMdxImports": true
+        }
+      }
+    ],
+    "timingDocument": {
+      "input": "# Field notes\n\nKeep the **important words** and _quiet details_. Read [the notes](https://example.com). Try `hello()` before you go.\n\n- Find a quiet place\n- Make something useful\n\n> Leave room to explore.",
+      "expected": "Field notes\n\nKeep the important words and quiet details. Read the notes. Try hello() before you go.\n\nFind a quiet place\nMake something useful\n\nLeave room to explore."
+    },
+    "workload": [
+      {
+        "targetBytes": 1024,
+        "bytes": 1028,
+        "repeats": 5,
+        "sha256": "2363da8936d9f42cd41fc26c31cb1d882884436586b52e8ea86b26ca3d2a6fef"
+      },
+      {
+        "targetBytes": 10240,
+        "bytes": 10298,
+        "repeats": 50,
+        "sha256": "ec11b2074be0d629f66660444c0012052537f834cab885fb71ea7e72c79564a4"
+      },
+      {
+        "targetBytes": 102400,
+        "bytes": 102586,
+        "repeats": 498,
+        "sha256": "879acb18169c612028e76f49fcdbd94cffd7fab69af1d0dcb84e36c513cd3b57"
+      },
+      {
+        "targetBytes": 1048576,
+        "bytes": 1048744,
+        "repeats": 5091,
+        "sha256": "a9e97b739910216830e885cd07fd8bb9f14617ab4d90571d8ebc8d25be37b578"
+      }
+    ]
+  },
+  "adapters": [
+    {
+      "id": "remove-markdown",
+      "label": "remove-markdown",
+      "packages": [],
+      "profile": "Library defaults",
+      "versions": {
+        "remove-markdown": "0.8.0"
+      }
+    },
+    {
+      "id": "strip-markdown",
+      "label": "remark + strip-markdown",
+      "packages": [
+        "remark",
+        "remark-gfm",
+        "strip-markdown"
+      ],
+      "profile": "remark + GFM + strip defaults; Markdown serializer included",
+      "versions": {
+        "remark": "15.0.1",
+        "remark-gfm": "4.0.1",
+        "strip-markdown": "6.0.0"
+      }
+    },
+    {
+      "id": "markdown-to-txt",
+      "label": "markdown-to-txt",
+      "packages": [
+        "markdown-to-txt",
+        "lodash"
+      ],
+      "profile": "Library defaults; nested Marked retained. Explicit lodash supplies an undeclared runtime dependency.",
+      "versions": {
+        "markdown-to-txt": "2.0.1",
+        "lodash": "4.18.1"
+      }
+    },
+    {
+      "id": "markdown-to-text",
+      "label": "markdown-to-text",
+      "packages": [
+        "markdown-to-text"
+      ],
+      "profile": "Library defaults",
+      "versions": {
+        "markdown-to-text": "0.1.1"
+      }
+    },
+    {
+      "id": "marked-html",
+      "label": "marked + html-to-text",
+      "packages": [
+        "marked",
+        "html-to-text"
+      ],
+      "profile": "GFM; HTML-to-text configured for labels, alt text, and unmarked lists",
+      "versions": {
+        "marked": "18.1.0",
+        "html-to-text": "10.0.1"
+      }
+    },
+    {
+      "id": "markdown-it-html",
+      "label": "markdown-it + html-to-text",
+      "packages": [
+        "markdown-it",
+        "html-to-text"
+      ],
+      "profile": "HTML enabled; HTML-to-text configured for labels, alt text, and unmarked lists",
+      "versions": {
+        "markdown-it": "15.0.2",
+        "html-to-text": "10.0.1"
+      }
+    }
+  ],
+  "quality": [
+    {
+      "adapter": "remove-markdown",
+      "status": "ok",
+      "initializationMs": 0.436124999999997,
+      "cases": [
+        {
+          "id": "plain",
+          "output": "Keep the words.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "heading",
+          "output": "Field notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "heading-inline-hash",
+          "output": "A #small detail",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "setext",
+          "output": "Field notes\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "emphasis",
+          "output": "Keep bold, italic, and quiet words.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "nested-emphasis",
+          "output": "A very small detail.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "literal-underscore",
+          "output": "Use snake_case for this_name.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "literal-comparison",
+          "output": "1  2",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "escape",
+          "output": "A \\literal\\ star.",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "unicode",
+          "output": "你好 — café 🌿",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link",
+          "output": "Read the notes.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link-title",
+          "output": "Notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link-parentheses",
+          "output": "Notes)",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "reference",
+          "output": "Read the notes.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "autolink",
+          "output": "Visit .",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "image-alt",
+          "output": "A still lake",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "image-empty",
+          "output": "Before  after.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "unordered-list",
+          "output": "One\nTwo",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "ordered-list",
+          "output": "One\nTwo",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "quote",
+          "output": "Keep it simple.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "inline-code",
+          "output": "Try hello().",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "code-literal",
+          "output": "Keep literal code.",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "code-fence",
+          "output": "const n = 1;",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "code-html",
+          "output": "literal",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "html",
+          "output": "A small detail.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "entities",
+          "output": "Tea &amp; biscuits.",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "strike",
+          "output": "An old idea.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "task-list",
+          "output": "[x] One\n[ ] Two",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "table",
+          "output": "| Name | Value |\n| --- | --- |\n| A | B |",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "unclosed",
+          "output": "An unfinished [thought",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "empty",
+          "output": "",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "option-bullet",
+          "output": "• One\n• Two",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "option-list-preserve",
+          "output": "- One\n- Two",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "option-url",
+          "output": "https://example.com",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "option-both",
+          "output": "Notes: https://example.com",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "option-image",
+          "output": "",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "option-image-separator",
+          "output": "!Lake: lake.jpg",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "option-html",
+          "output": "A <b>detail</b>.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "option-abbr",
+          "output": "\nHTML is useful.",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "option-mdx",
+          "output": "Hello",
+          "exact": true,
+          "content": true,
+          "logs": []
+        }
+      ]
+    },
+    {
+      "adapter": "strip-markdown",
+      "status": "ok",
+      "initializationMs": 25.426667000000002,
+      "cases": [
+        {
+          "id": "plain",
+          "output": "Keep the words.\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "heading",
+          "output": "Field notes\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "heading-inline-hash",
+          "output": "A #small detail\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "setext",
+          "output": "Field notes\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "emphasis",
+          "output": "Keep bold, italic, and quiet words.\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "nested-emphasis",
+          "output": "A very small detail.\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "literal-underscore",
+          "output": "Use snake_case for this_name.\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "literal-comparison",
+          "output": "1 < 2 and 3 > 2\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "escape",
+          "output": "A \\*literal\\* star.\n",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "unicode",
+          "output": "你好 — café 🌿\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link",
+          "output": "Read the notes.\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link-title",
+          "output": "Notes\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link-parentheses",
+          "output": "Notes\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "reference",
+          "output": "Read the notes.\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "autolink",
+          "output": "Visit https\\://example.com.\n",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "image-alt",
+          "output": "A still lake\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "image-empty",
+          "output": "Before  after.\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "unordered-list",
+          "output": "One\n\nTwo\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "ordered-list",
+          "output": "One\n\nTwo\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "quote",
+          "output": "Keep it simple.\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "inline-code",
+          "output": "Try hello().\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "code-literal",
+          "output": "Keep \\*literal\\* code.\n",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "code-fence",
+          "output": "",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "code-html",
+          "output": "",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "html",
+          "output": "",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "entities",
+          "output": "Tea & biscuits.\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "strike",
+          "output": "An old idea.\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "task-list",
+          "output": "One\n\nTwo\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "table",
+          "output": "",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "unclosed",
+          "output": "An unfinished \\[thought\n",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "empty",
+          "output": "",
+          "exact": true,
+          "content": true,
+          "logs": []
+        }
+      ]
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "status": "ok",
+      "initializationMs": 7.503124999999997,
+      "cases": [
+        {
+          "id": "plain",
+          "output": "Keep the words.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "heading",
+          "output": "Field notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "heading-inline-hash",
+          "output": "A #small detail",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "setext",
+          "output": "Field notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "emphasis",
+          "output": "Keep bold, italic, and quiet words.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "nested-emphasis",
+          "output": "A very small detail.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "literal-underscore",
+          "output": "Use snake_case for this_name.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "literal-comparison",
+          "output": "1 < 2 and 3 > 2",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "escape",
+          "output": "A *literal* star.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "unicode",
+          "output": "你好 — café 🌿",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link",
+          "output": "Read the notes.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link-title",
+          "output": "Notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link-parentheses",
+          "output": "Notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "reference",
+          "output": "Read the notes.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "autolink",
+          "output": "Visit https://example.com.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "image-alt",
+          "output": "A still lake",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "image-empty",
+          "output": "Before  after.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "unordered-list",
+          "output": "One\nTwo",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "ordered-list",
+          "output": "One\nTwo",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "quote",
+          "output": "Keep it simple.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "inline-code",
+          "output": "Try hello().",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "code-literal",
+          "output": "Keep *literal* code.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "code-fence",
+          "output": "const n = 1;",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "code-html",
+          "output": "<b>literal</b>",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "html",
+          "output": "",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "entities",
+          "output": "Tea & biscuits.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "strike",
+          "output": "An old idea.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "task-list",
+          "output": "One\nTwo",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "table",
+          "output": "Name Value\nA B",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "unclosed",
+          "output": "An unfinished [thought",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "empty",
+          "output": "",
+          "exact": true,
+          "content": true,
+          "logs": []
+        }
+      ]
+    },
+    {
+      "adapter": "markdown-to-text",
+      "status": "ok",
+      "initializationMs": 0.47154199999999946,
+      "cases": [
+        {
+          "id": "plain",
+          "output": "Keep the words.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "heading",
+          "output": "Field notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "heading-inline-hash",
+          "output": "A #small detail",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "setext",
+          "output": "Field notes\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "emphasis",
+          "output": "Keep bold, italic, and quiet words.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "nested-emphasis",
+          "output": "A very small detail.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "literal-underscore",
+          "output": "Use snakecase for thisname.",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "literal-comparison",
+          "output": "1  2",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "escape",
+          "output": "A \\literal\\ star.",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "unicode",
+          "output": "你好 — café 🌿",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link",
+          "output": "Read the notes.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link-title",
+          "output": "Notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link-parentheses",
+          "output": "Notes)",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "reference",
+          "output": "Read the notes.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "autolink",
+          "output": "Visit .",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "image-alt",
+          "output": "A still lake",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "image-empty",
+          "output": "Before  after.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "unordered-list",
+          "output": "One\nTwo",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "ordered-list",
+          "output": "One\nTwo",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "quote",
+          "output": "Keep it simple.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "inline-code",
+          "output": "Try hello().",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "code-literal",
+          "output": "Keep literal code.",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "code-fence",
+          "output": "const n = 1;\n`",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "code-html",
+          "output": "literal\n`",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "html",
+          "output": "A small detail.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "entities",
+          "output": "Tea &amp; biscuits.",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "strike",
+          "output": "An old idea.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "task-list",
+          "output": "[x] One\n[ ] Two",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "table",
+          "output": "| Name | Value |\n| --- | --- |\n| A | B |",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "unclosed",
+          "output": "An unfinished [thought",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "empty",
+          "output": "",
+          "exact": true,
+          "content": true,
+          "logs": []
+        }
+      ]
+    },
+    {
+      "adapter": "marked-html",
+      "status": "ok",
+      "initializationMs": 18.03316700000002,
+      "cases": [
+        {
+          "id": "plain",
+          "output": "Keep the words.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "heading",
+          "output": "Field notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "heading-inline-hash",
+          "output": "A #small detail",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "setext",
+          "output": "Field notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "emphasis",
+          "output": "Keep bold, italic, and quiet words.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "nested-emphasis",
+          "output": "A very small detail.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "literal-underscore",
+          "output": "Use snake_case for this_name.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "literal-comparison",
+          "output": "1 < 2 and 3 > 2",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "escape",
+          "output": "A *literal* star.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "unicode",
+          "output": "你好 — café 🌿",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link",
+          "output": "Read the notes.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link-title",
+          "output": "Notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link-parentheses",
+          "output": "Notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "reference",
+          "output": "Read the notes.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "autolink",
+          "output": "Visit https://example.com.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "image-alt",
+          "output": "A still lake",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "image-empty",
+          "output": "Before after.",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "unordered-list",
+          "output": "One\n\nTwo",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "ordered-list",
+          "output": "One\n\nTwo",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "quote",
+          "output": "Keep it simple.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "inline-code",
+          "output": "Try hello().",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "code-literal",
+          "output": "Keep *literal* code.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "code-fence",
+          "output": "const n = 1;\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "code-html",
+          "output": "<b>literal</b>\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "html",
+          "output": "A small detail.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "entities",
+          "output": "Tea & biscuits.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "strike",
+          "output": "An old idea.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "task-list",
+          "output": "One\n\nTwo",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "table",
+          "output": "Name Value A B",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "unclosed",
+          "output": "An unfinished [thought",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "empty",
+          "output": "",
+          "exact": true,
+          "content": true,
+          "logs": []
+        }
+      ]
+    },
+    {
+      "adapter": "markdown-it-html",
+      "status": "ok",
+      "initializationMs": 18.011374999999987,
+      "cases": [
+        {
+          "id": "plain",
+          "output": "Keep the words.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "heading",
+          "output": "Field notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "heading-inline-hash",
+          "output": "A #small detail",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "setext",
+          "output": "Field notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "emphasis",
+          "output": "Keep bold, italic, and quiet words.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "nested-emphasis",
+          "output": "A very small detail.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "literal-underscore",
+          "output": "Use snake_case for this_name.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "literal-comparison",
+          "output": "1 < 2 and 3 > 2",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "escape",
+          "output": "A *literal* star.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "unicode",
+          "output": "你好 — café 🌿",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link",
+          "output": "Read the notes.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link-title",
+          "output": "Notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "link-parentheses",
+          "output": "Notes",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "reference",
+          "output": "Read the notes.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "autolink",
+          "output": "Visit https://example.com.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "image-alt",
+          "output": "A still lake",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "image-empty",
+          "output": "Before after.",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "unordered-list",
+          "output": "One\n\nTwo",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "ordered-list",
+          "output": "One\n\nTwo",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "quote",
+          "output": "Keep it simple.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "inline-code",
+          "output": "Try hello().",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "code-literal",
+          "output": "Keep *literal* code.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "code-fence",
+          "output": "const n = 1;\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "code-html",
+          "output": "<b>literal</b>\n",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "html",
+          "output": "A small detail.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "entities",
+          "output": "Tea & biscuits.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "strike",
+          "output": "An old idea.",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "task-list",
+          "output": "[x] One\n\n[ ] Two",
+          "exact": false,
+          "content": false,
+          "logs": []
+        },
+        {
+          "id": "table",
+          "output": "Name Value A B",
+          "exact": false,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "unclosed",
+          "output": "An unfinished [thought",
+          "exact": true,
+          "content": true,
+          "logs": []
+        },
+        {
+          "id": "empty",
+          "output": "",
+          "exact": true,
+          "content": true,
+          "logs": []
+        }
+      ]
+    }
+  ],
+  "timings": [
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 10240,
+      "round": 0,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 7.633082999999999,
+      "firstConversionMs": 7.228041999999988,
+      "values": [
+        0.7541428571428567,
+        0.7567142857142893,
+        0.7594285714285677,
+        0.7708691428571471,
+        0.7593155714285688,
+        0.752922571428566,
+        0.7708809999999987,
+        0.7657381428571496,
+        0.7660774285714312,
+        0.7517082857142847,
+        0.9532321428571403,
+        0.8366547142857144,
+        0.8394285714285681,
+        0.740589285714285,
+        0.8136905714285702
+      ],
+      "batchSize": 7,
+      "warmupCalls": 126,
+      "consumed": 1951026,
+      "outputLength": 8446,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 1048576,
+      "round": 0,
+      "bytes": 1048744,
+      "status": "timeout",
+      "timeoutMs": 60000
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 102400,
+      "round": 1,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 31.362458999996306,
+      "firstConversionMs": 38.15020799999911,
+      "values": [
+        14.265916000003926,
+        14.441083999998227,
+        13.275999999998021,
+        13.91962500000227,
+        14.271709000000556,
+        13.2425840000069,
+        13.14558300000499,
+        14.225208000003477,
+        13.132208999995783,
+        14.931541999998444,
+        13.232875000001513,
+        13.113125000003492,
+        15.3067499999961,
+        14.07704200000444,
+        13.946959000000788
+      ],
+      "batchSize": 1,
+      "warmupCalls": 7,
+      "consumed": 1851498,
+      "outputLength": 84159,
+      "logs": []
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 102400,
+      "round": 0,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 19.11250000000291,
+      "firstConversionMs": 36.95841600000131,
+      "values": [
+        14.865250000002561,
+        14.927917000000889,
+        13.485874999998487,
+        14.506750000000466,
+        13.430458000002545,
+        15.589165999997931,
+        13.391916000000492,
+        13.677332999999635,
+        15.004333000004408,
+        13.60158400000364,
+        13.471208000002662,
+        14.41258299999754,
+        14.031208000000333,
+        16.712666999999783,
+        13.603250000000116
+      ],
+      "batchSize": 1,
+      "warmupCalls": 7,
+      "consumed": 1851498,
+      "outputLength": 84159,
+      "logs": []
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 1024,
+      "round": 0,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 20.722207999999227,
+      "firstConversionMs": 10.086583000003884,
+      "values": [
+        0.15777554838695645,
+        0.135370967742112,
+        0.13436964516140212,
+        0.15348925806451477,
+        0.13647983870971309,
+        0.1341518709678278,
+        0.13430512903235672,
+        0.1514879032258778,
+        0.1323857741935494,
+        0.13342474193538487,
+        0.13610348387080576,
+        0.1473938064516387,
+        0.1401854838709809,
+        0.14223658064527686,
+        0.17182529032265115
+      ],
+      "batchSize": 31,
+      "warmupCalls": 619,
+      "consumed": 912728,
+      "outputLength": 842,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 10240,
+      "round": 2,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 2.0056669999976293,
+      "firstConversionMs": 0.5653339999989839,
+      "values": [
+        0.09532166000004509,
+        0.09568832000004476,
+        0.10156000000002678,
+        0.0955975000000035,
+        0.09592166000002181,
+        0.0969258400000399,
+        0.09674417999995058,
+        0.09653833999997005,
+        0.09580000000001747,
+        0.09601999999998952,
+        0.09570584000000963,
+        0.09559416000003694,
+        0.09551500000001396,
+        0.09554250000001048,
+        0.09537416000006488
+      ],
+      "batchSize": 50,
+      "warmupCalls": 993,
+      "consumed": 14550564,
+      "outputLength": 8348,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 1048576,
+      "round": 1,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 10.989291000005323,
+      "firstConversionMs": 341.01154099999985,
+      "values": [
+        308.2441669999971,
+        152.64508300000307,
+        314.88875000000553,
+        131.1410840000026,
+        217.3539579999997,
+        134.5117920000048,
+        220.61416600000666,
+        133.36745800000062,
+        222.50670799999352,
+        131.3141670000041,
+        225.11283299999923,
+        137.10450000000128,
+        134.0944159999999,
+        278.8031669999982,
+        133.91949999999633
+      ],
+      "batchSize": 1,
+      "warmupCalls": 1,
+      "consumed": 13766000,
+      "outputLength": 860375,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 1024,
+      "round": 0,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 0.4625420000011218,
+      "firstConversionMs": 0.46333299999969313,
+      "values": [
+        0.010678071120686394,
+        0.010659661637920839,
+        0.0107910366379405,
+        0.010853178879313356,
+        0.010637482758613322,
+        0.010600303879308395,
+        0.01065768749999577,
+        0.010662176724132411,
+        0.010705549568965893,
+        0.010649603448279055,
+        0.010612607758628594,
+        0.010636045258612786,
+        0.010595635775863574,
+        0.010596534482750752,
+        0.010587732758628182
+      ],
+      "batchSize": 464,
+      "warmupCalls": 9278,
+      "consumed": 13526254,
+      "outputLength": 833,
+      "logs": []
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 10240,
+      "round": 0,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 18.296875,
+      "firstConversionMs": 14.47937500000262,
+      "values": [
+        1.3066249999992579,
+        1.4393749999999272,
+        1.3340312500004075,
+        1.2824375000000146,
+        1.3183957499986718,
+        1.3442084999987856,
+        1.2619999999988067,
+        1.2770937499990396,
+        1.344072750000123,
+        1.3013124999997672,
+        1.3286459999999352,
+        1.452500000001237,
+        1.2894999999989523,
+        1.2781772499984072,
+        1.286906249999447
+      ],
+      "batchSize": 4,
+      "warmupCalls": 67,
+      "consumed": 1072769,
+      "outputLength": 8447,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 1024,
+      "round": 2,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 0.47645899999770336,
+      "firstConversionMs": 0.48654199999873526,
+      "values": [
+        0.010784934497801596,
+        0.010711882096074987,
+        0.010727620087331415,
+        0.01104421397377142,
+        0.010755731441043968,
+        0.010691502183406587,
+        0.010734351528386532,
+        0.010725890829675988,
+        0.010689500000005778,
+        0.010764919213966393,
+        0.01069341266378313,
+        0.010739901746699726,
+        0.010695050218350745,
+        0.01086189956330556,
+        0.010679858078616855
+      ],
+      "batchSize": 458,
+      "warmupCalls": 9157,
+      "consumed": 13350491,
+      "outputLength": 833,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 1024,
+      "round": 2,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 7.4874999999883585,
+      "firstConversionMs": 5.045333000001847,
+      "values": [
+        0.07523762499999975,
+        0.07400651562488747,
+        0.07345703124997272,
+        0.07659570312512187,
+        0.07460678125016784,
+        0.07316731249989061,
+        0.07594335937483265,
+        0.07440170312497685,
+        0.07267187499996908,
+        0.07480728125005953,
+        0.07482095312502679,
+        0.07357551562495246,
+        0.07351953124998545,
+        0.07554687499987267,
+        0.0743118593750296
+      ],
+      "batchSize": 64,
+      "warmupCalls": 1268,
+      "consumed": 1873748,
+      "outputLength": 841,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 1048576,
+      "round": 1,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 23.55204200001026,
+      "firstConversionMs": 191.08820900000865,
+      "values": [
+        183.65066699999443,
+        170.20170900000085,
+        180.80879199999617,
+        180.75858300000255,
+        167.32720900001004,
+        169.55979200000002,
+        579.3851670000004,
+        177.39695799999754,
+        183.41345799999544,
+        183.9333750000078,
+        170.09962500000256,
+        181.44770799999242,
+        190.0722090000054,
+        166.6787500000064,
+        160.2855830000044
+      ],
+      "batchSize": 1,
+      "warmupCalls": 1,
+      "consumed": 13766016,
+      "outputLength": 860376,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 10240,
+      "round": 1,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 1.5499169999966398,
+      "firstConversionMs": 0.7377919999998994,
+      "values": [
+        0.3490416666667443,
+        0.33354446666586834,
+        0.33619719999939357,
+        0.33612499999968953,
+        0.3337416666666589,
+        0.3340611333337923,
+        0.32824720000013863,
+        0.3311749999993481,
+        0.3276222666667309,
+        0.32767499999996896,
+        0.3276611333334586,
+        0.3287944666672653,
+        0.3293805333339454,
+        0.3259221999993315,
+        0.3288972666661721
+      ],
+      "batchSize": 15,
+      "warmupCalls": 294,
+      "consumed": 4332612,
+      "outputLength": 8348,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 10240,
+      "round": 2,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 7.427125000001979,
+      "firstConversionMs": 6.515790999997989,
+      "values": [
+        0.7454345714296713,
+        0.7650714285721604,
+        0.768339285714319,
+        0.7707262857147725,
+        0.742131000000102,
+        0.7408214285720273,
+        0.7933690000001141,
+        0.7272381428566794,
+        0.7462499999985864,
+        0.7899404285708442,
+        0.8260000000009313,
+        0.8232201428576705,
+        0.779107142857226,
+        0.780952428571514,
+        0.7338689999991662
+      ],
+      "batchSize": 7,
+      "warmupCalls": 130,
+      "consumed": 1984810,
+      "outputLength": 8446,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 10240,
+      "round": 0,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 0.5069999999977881,
+      "firstConversionMs": 0.5593339999904856,
+      "values": [
+        0.10115546153834797,
+        0.09784294230764946,
+        0.0962355769230411,
+        0.10120753846142459,
+        0.0958589807694527,
+        0.09642548076925987,
+        0.09931971153855557,
+        0.09619311538447689,
+        0.09565144230789603,
+        0.09554407692317349,
+        0.10171234615392258,
+        0.09566667307696591,
+        0.09604246153825304,
+        0.10125480769224501,
+        0.09434453846160278
+      ],
+      "batchSize": 52,
+      "warmupCalls": 1025,
+      "consumed": 15068140,
+      "outputLength": 8348,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 102400,
+      "round": 0,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 56.397165999995195,
+      "firstConversionMs": 144.63187499999185,
+      "values": [
+        134.57954099999915,
+        119.14920800000255,
+        116.05370799999218,
+        117.08599999999569,
+        134.24695899999642,
+        127.3859999999986,
+        116.517875000005,
+        121.86508299999696,
+        126.62033400000655,
+        308.2552080000023,
+        140.4222499999887,
+        135.98670900000434,
+        111.78049999999348,
+        114.50999999999476,
+        112.95812500000466
+      ],
+      "batchSize": 1,
+      "warmupCalls": 1,
+      "consumed": 1338608,
+      "outputLength": 83663,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 1048576,
+      "round": 1,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 0.49470899999141693,
+      "firstConversionMs": 11.315749999994296,
+      "values": [
+        10.148416999989422,
+        10.622458000012557,
+        9.969166999988374,
+        9.892417000010028,
+        9.96112500000163,
+        10.468499999988126,
+        9.917832999999519,
+        9.991208999999799,
+        9.846040999997058,
+        10.315833000000566,
+        9.82591699999466,
+        9.864124999992782,
+        9.825082999988808,
+        10.62187499999709,
+        9.855707999988226
+      ],
+      "batchSize": 1,
+      "warmupCalls": 10,
+      "consumed": 21254875,
+      "outputLength": 850195,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 102400,
+      "round": 0,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 0.44483300000138115,
+      "firstConversionMs": 1.5793750000011642,
+      "values": [
+        0.9213681666660705,
+        0.9252153333339569,
+        0.9445971666670326,
+        0.9253888333332725,
+        0.9797500000010283,
+        0.9523193333322221,
+        0.9324930000002496,
+        0.9303195000005265,
+        0.933833333333799,
+        0.9260346666681775,
+        0.9294653333345195,
+        0.9575346666679252,
+        0.9240140000013829,
+        0.9353055000004437,
+        0.9690416666659681
+      ],
+      "batchSize": 6,
+      "warmupCalls": 107,
+      "consumed": 16383308,
+      "outputLength": 83164,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 1048576,
+      "round": 2,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 7.848708999998053,
+      "firstConversionMs": 327.16470800001116,
+      "values": [
+        307.50141599999915,
+        158.52275000000373,
+        316.9723329999979,
+        131.44216700000106,
+        227.20316599999205,
+        130.43825000000652,
+        232.92783300000883,
+        134.6785830000008,
+        242.12329200000386,
+        131.83637499999895,
+        248.7166670000006,
+        213.60975000000326,
+        303.06245800000033,
+        152.94012500000827,
+        130.5349589999969
+      ],
+      "batchSize": 1,
+      "warmupCalls": 1,
+      "consumed": 13766000,
+      "outputLength": 860375,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 1024,
+      "round": 1,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 0.49416699999710545,
+      "firstConversionMs": 0.4689159999979893,
+      "values": [
+        0.010711141304352129,
+        0.010656158695675676,
+        0.010737319565226283,
+        0.01095199347824825,
+        0.010664765217370586,
+        0.010677445652159487,
+        0.010671106521729836,
+        0.0106282608695556,
+        0.010636230434782033,
+        0.01069157608694893,
+        0.010707791304341062,
+        0.010661956521748242,
+        0.010721195652181253,
+        0.010651902173919117,
+        0.010644565217365237
+      ],
+      "batchSize": 460,
+      "warmupCalls": 9185,
+      "consumed": 13398805,
+      "outputLength": 833,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 102400,
+      "round": 1,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 0.43924999999580905,
+      "firstConversionMs": 1.5704580000019632,
+      "values": [
+        0.9121458333320334,
+        0.9083820000014384,
+        0.9142361666672514,
+        0.9106041666673264,
+        0.908909833332776,
+        0.9162361666676588,
+        0.9407568333335803,
+        0.9117013333331366,
+        0.9175973333331058,
+        0.9122083333325767,
+        0.9051319999998668,
+        0.9126875000001746,
+        0.9092153333331225,
+        0.9255695000004683,
+        0.9147291666668025
+      ],
+      "batchSize": 6,
+      "warmupCalls": 109,
+      "consumed": 16549636,
+      "outputLength": 83164,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 10240,
+      "round": 0,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 0.5194579999952111,
+      "firstConversionMs": 0.6980000000039581,
+      "values": [
+        0.3346638666669605,
+        0.34911113333364485,
+        0.3317555999994511,
+        0.335136066666261,
+        0.3350861333330007,
+        0.34051939999917524,
+        0.3320888666659206,
+        0.3372305333342714,
+        0.35485000000044237,
+        0.3388055333334099,
+        0.3326277999993181,
+        0.33616940000016865,
+        0.3338999999997517,
+        0.3320860666669129,
+        0.3375916666671401
+      ],
+      "batchSize": 15,
+      "warmupCalls": 297,
+      "consumed": 4357656,
+      "outputLength": 8348,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 102400,
+      "round": 1,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 26.17958300000464,
+      "firstConversionMs": 143.93712499999674,
+      "values": [
+        132.58287500000733,
+        118.24120800000674,
+        113.84200000000419,
+        115.27679099999659,
+        119.01570799999172,
+        119.62099999999919,
+        131.15262500000244,
+        114.10533299999952,
+        118.02520800000639,
+        131.22225000000617,
+        113.9876249999943,
+        112.27895800000988,
+        128.40366700000595,
+        124.17141599999741,
+        124.73145799999475
+      ],
+      "batchSize": 1,
+      "warmupCalls": 1,
+      "consumed": 1338608,
+      "outputLength": 83663,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 1024,
+      "round": 2,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 28.14587500000198,
+      "firstConversionMs": 8.97833399999945,
+      "values": [
+        0.856441600000835,
+        0.830250000001979,
+        0.8300082000001566,
+        0.8215250000008382,
+        0.9612833999999566,
+        0.8337250000011409,
+        0.8261918000003788,
+        0.8959415999997873,
+        0.8184831999999005,
+        0.8755499999999301,
+        0.8018749999988358,
+        0.8670083999983035,
+        0.8389418000006117,
+        0.9834831999993184,
+        0.8732500000012806
+      ],
+      "batchSize": 5,
+      "warmupCalls": 98,
+      "consumed": 145147,
+      "outputLength": 839,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 1024,
+      "round": 2,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 0.6587909999943804,
+      "firstConversionMs": 0.41504100000020117,
+      "values": [
+        0.03469030496458761,
+        0.03515631914894668,
+        0.034820921985756155,
+        0.03479580141844208,
+        0.034272460992995434,
+        0.03358717730501254,
+        0.03395567375888754,
+        0.033830375886494984,
+        0.033737886524804646,
+        0.033658099290790985,
+        0.033871751772991135,
+        0.03374379432621059,
+        0.03368971631203775,
+        0.033740539007146464,
+        0.03353841134746632
+      ],
+      "batchSize": 141,
+      "warmupCalls": 2815,
+      "consumed": 4106690,
+      "outputLength": 833,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 10240,
+      "round": 0,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 30.688458999997238,
+      "firstConversionMs": 9.70145799999591,
+      "values": [
+        1.4505104999989271,
+        1.410416750000877,
+        1.4925625000032596,
+        1.5057710000000952,
+        1.4606144999997923,
+        1.4439375000001746,
+        1.4738227500020002,
+        1.4854687499973807,
+        1.4352289999987988,
+        5.252427250001347,
+        1.668687499997759,
+        1.5372812499990687,
+        1.4340105000010226,
+        1.5631874999999127,
+        1.5014165000029607
+      ],
+      "batchSize": 4,
+      "warmupCalls": 62,
+      "consumed": 1030534,
+      "outputLength": 8447,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 1048576,
+      "round": 1,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 0.4938750000001164,
+      "firstConversionMs": 36.07387500000186,
+      "values": [
+        34.86654199998884,
+        34.436625000002095,
+        34.0800409999938,
+        34.11470800000825,
+        33.75504099999671,
+        35.62454200000502,
+        35.21600000000035,
+        35.59633400000166,
+        34.898832999999286,
+        34.415832999991835,
+        34.50933299999451,
+        36.07162499999686,
+        35.11333399999421,
+        34.94854100000521,
+        35.23895800000173
+      ],
+      "batchSize": 1,
+      "warmupCalls": 3,
+      "consumed": 15303510,
+      "outputLength": 850195,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 1048576,
+      "round": 2,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 20.619250000003376,
+      "firstConversionMs": 224.83366699999897,
+      "values": [
+        188.09674999999697,
+        166.30391699999745,
+        169.8547499999986,
+        166.0270840000012,
+        164.44862500000454,
+        164.734083000003,
+        182.07474999999977,
+        162.03720799999428,
+        160.59620899999572,
+        164.2979580000101,
+        159.46245900000213,
+        162.7302500000078,
+        173.40291699999943,
+        202.48008399999526,
+        181.9154589999962
+      ],
+      "batchSize": 1,
+      "warmupCalls": 1,
+      "consumed": 13766016,
+      "outputLength": 860376,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 10240,
+      "round": 1,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 0.6997909999918193,
+      "firstConversionMs": 0.9725419999886071,
+      "values": [
+        0.09759948979611793,
+        0.0985892857142786,
+        0.10345748979604223,
+        0.10311565306114878,
+        0.10114285714297118,
+        0.10224828571443474,
+        0.10100851020400356,
+        0.10121173469369936,
+        0.10069728571427417,
+        0.10250000000013067,
+        0.09682057142864713,
+        0.09647108163275965,
+        0.09770153061224252,
+        0.09963095918350036,
+        0.10113181632632219
+      ],
+      "batchSize": 49,
+      "warmupCalls": 968,
+      "consumed": 14216644,
+      "outputLength": 8348,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 1048576,
+      "round": 0,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 19.515457999994396,
+      "firstConversionMs": 202.24658399999316,
+      "values": [
+        200.90137500000128,
+        169.528999999995,
+        167.06229200000234,
+        171.0240829999966,
+        160.0908749999944,
+        163.13525000000664,
+        168.6784170000028,
+        160.35570800000278,
+        163.93608299999323,
+        165.75420799999847,
+        166.9386669999949,
+        164.94683400000213,
+        171.02241600000707,
+        159.4233749999985,
+        212.47762499999953
+      ],
+      "batchSize": 1,
+      "warmupCalls": 1,
+      "consumed": 13766016,
+      "outputLength": 860376,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 1024,
+      "round": 0,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 40.68266599999333,
+      "firstConversionMs": 8.954458000007435,
+      "values": [
+        0.949299999998766,
+        0.8340499999991152,
+        0.9146750000014435,
+        0.8168583999999101,
+        0.8011334000009811,
+        0.7700167999981204,
+        0.885416799999075,
+        0.8137249999999767,
+        0.9026833999989321,
+        0.7902999999991153,
+        0.7934500000003026,
+        0.7958500000007916,
+        0.8401000000012573,
+        0.8153916000010213,
+        0.809908399998676
+      ],
+      "batchSize": 5,
+      "warmupCalls": 88,
+      "consumed": 136757,
+      "outputLength": 839,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 102400,
+      "round": 2,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 0.5025420000019949,
+      "firstConversionMs": 1.6045409999933327,
+      "values": [
+        0.921562499999709,
+        0.9283333333320721,
+        0.9299721666660238,
+        0.9220901666679614,
+        0.9314028333319584,
+        0.9243888333342815,
+        0.9241111666682021,
+        0.9366666666658906,
+        0.9295416666670159,
+        0.9195556666672928,
+        0.9225416666668025,
+        0.9258680000008704,
+        0.918354166666783,
+        0.9211666666645518,
+        0.9219235000006544
+      ],
+      "batchSize": 6,
+      "warmupCalls": 107,
+      "consumed": 16383308,
+      "outputLength": 83164,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 1048576,
+      "round": 0,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 10.217499999998836,
+      "firstConversionMs": 323.4834169999958,
+      "values": [
+        275.953125,
+        139.35754199999792,
+        276.7473750000063,
+        305.80458300000464,
+        139.0911250000063,
+        288.0742089999985,
+        177.8943339999969,
+        219.11287500000617,
+        139.05895900000178,
+        165.65908300000592,
+        311.5555000000022,
+        167.68124999999418,
+        185.54274999999325,
+        136.18737500000861,
+        154.21437500001048
+      ],
+      "batchSize": 1,
+      "warmupCalls": 1,
+      "consumed": 13766000,
+      "outputLength": 860375,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 102400,
+      "round": 0,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 0.9226670000061858,
+      "firstConversionMs": 4.069459000005736,
+      "values": [
+        3.2951669999965816,
+        3.2998125000012806,
+        3.292979000005289,
+        3.3123750000013388,
+        3.300854500004789,
+        3.3061039999956847,
+        3.2868955000012647,
+        3.3233540000001085,
+        3.364625000001979,
+        3.3344169999982114,
+        3.2918124999996508,
+        3.3037084999959916,
+        3.281645999995817,
+        3.306457999999111,
+        3.398520999995526
+      ],
+      "batchSize": 2,
+      "warmupCalls": 31,
+      "consumed": 5073004,
+      "outputLength": 83164,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 102400,
+      "round": 1,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 7.941666999991867,
+      "firstConversionMs": 16.69483300000138,
+      "values": [
+        7.805540999994264,
+        8.369625000006636,
+        8.614916999998968,
+        7.796415999997407,
+        7.665292000005138,
+        7.6855000000068685,
+        9.012332999991486,
+        7.694292000000132,
+        7.669792000000598,
+        8.903957999995328,
+        7.679833000001963,
+        7.649166999995941,
+        9.031624999988708,
+        7.6663750000006985,
+        7.858624999993481
+      ],
+      "batchSize": 1,
+      "warmupCalls": 12,
+      "consumed": 2272266,
+      "outputLength": 84158,
+      "logs": []
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 1024,
+      "round": 1,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 19.44491600000765,
+      "firstConversionMs": 9.965083000002778,
+      "values": [
+        0.13269318181802658,
+        0.13191415151496502,
+        0.13336615151528156,
+        0.13482703030317542,
+        0.13323484848484496,
+        0.1320770303030837,
+        0.13165657575794312,
+        0.13436618181841561,
+        0.13681060606066955,
+        0.13653030303028185,
+        0.1358737272724587,
+        0.13784848484845663,
+        0.13767299999987395,
+        0.13731566666683648,
+        0.1323952121209445
+      ],
+      "batchSize": 33,
+      "warmupCalls": 642,
+      "consumed": 957354,
+      "outputLength": 842,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 10240,
+      "round": 1,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 23.364792000007583,
+      "firstConversionMs": 11.43545799999265,
+      "values": [
+        1.4485833333358944,
+        1.4514583333317812,
+        1.4195693333313102,
+        1.4825693333308056,
+        1.44872233333687,
+        1.4678056666695436,
+        1.4549166666644548,
+        1.5065693333308445,
+        1.4648613333314036,
+        1.4505416666700814,
+        1.6068193333339877,
+        1.486791666665037,
+        1.451111000002129,
+        1.5482776666661568,
+        1.4228609999991022
+      ],
+      "batchSize": 3,
+      "warmupCalls": 57,
+      "consumed": 861594,
+      "outputLength": 8447,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 102400,
+      "round": 1,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 18.461250000007567,
+      "firstConversionMs": 33.44487500000105,
+      "values": [
+        14.251124999995227,
+        14.839957999996841,
+        15.14999999999418,
+        14.657208999997238,
+        15.035458000013023,
+        13.796833000000333,
+        14.280082999990555,
+        15.098916000002646,
+        14.101083000001381,
+        15.742249999995693,
+        14.026083000004292,
+        14.28116699999373,
+        15.357915999993565,
+        14.080832999999984,
+        17.243499999996857
+      ],
+      "batchSize": 1,
+      "warmupCalls": 6,
+      "consumed": 1767339,
+      "outputLength": 84159,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 1048576,
+      "round": 2,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 0.47712500000488944,
+      "firstConversionMs": 11.025374999997439,
+      "values": [
+        9.960665999999037,
+        11.026292000009562,
+        9.95350000000326,
+        10.183459000007133,
+        9.960957999996026,
+        11.183040999996592,
+        9.881957999998122,
+        9.859666000003926,
+        9.852083000005223,
+        10.648082999992766,
+        9.959459000005154,
+        9.936667000001762,
+        9.940041000008932,
+        10.459499999997206,
+        9.919624999994994
+      ],
+      "batchSize": 1,
+      "warmupCalls": 10,
+      "consumed": 21254875,
+      "outputLength": 850195,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 102400,
+      "round": 1,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 0.47212500000023283,
+      "firstConversionMs": 3.810250000009546,
+      "values": [
+        3.280749999998079,
+        3.361937499998021,
+        3.2873334999967483,
+        3.3049584999971557,
+        3.3329165000031935,
+        3.436979500002053,
+        3.381708000000799,
+        3.321145499998238,
+        3.3892500000001746,
+        3.408728999995219,
+        3.354229000004125,
+        3.4555624999993597,
+        3.3606875000041327,
+        3.352708000005805,
+        3.3210624999992433
+      ],
+      "batchSize": 2,
+      "warmupCalls": 31,
+      "consumed": 5073004,
+      "outputLength": 83164,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 1024,
+      "round": 1,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 30.836874999993597,
+      "firstConversionMs": 9.025332999997772,
+      "values": [
+        0.8852584000007482,
+        0.8130915999994613,
+        0.8090666000003693,
+        0.7966416000010212,
+        0.8580165999999736,
+        0.8231583999993746,
+        0.8017250000004423,
+        0.7813332000019727,
+        0.8006750000000465,
+        0.7942333999992115,
+        0.7964334000018425,
+        0.7875833999976749,
+        0.7621083999983966,
+        0.8128834000002826,
+        0.8302250000007916
+      ],
+      "batchSize": 5,
+      "warmupCalls": 97,
+      "consumed": 144308,
+      "outputLength": 839,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 1048576,
+      "round": 0,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 0.44483300000138115,
+      "firstConversionMs": 11.552792000002228,
+      "values": [
+        9.938125000000582,
+        13.053999999989173,
+        10.105750000002445,
+        9.93895799999882,
+        10.083792000004905,
+        11.247209000008297,
+        9.941374999994878,
+        10.14983399999619,
+        9.955042000001413,
+        10.74275000000489,
+        10.055540999994264,
+        10.076833000013721,
+        10.174500000008265,
+        10.972750000000815,
+        10.115667000005487
+      ],
+      "batchSize": 1,
+      "warmupCalls": 10,
+      "consumed": 21254875,
+      "outputLength": 850195,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 1024,
+      "round": 1,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 8.135957999998936,
+      "firstConversionMs": 5.2899580000084825,
+      "values": [
+        0.07395503174611515,
+        0.07504960317451079,
+        0.07519312698411615,
+        0.07401453968255765,
+        0.07468650793649316,
+        0.07619377777778677,
+        0.07453306349195792,
+        0.07491798412714464,
+        0.07463955555558352,
+        0.07375331746025329,
+        0.07460384127002076,
+        0.07477844444460176,
+        0.07441004761910465,
+        0.07461639682532266,
+        0.07463757142850516
+      ],
+      "batchSize": 63,
+      "warmupCalls": 1254,
+      "consumed": 1849359,
+      "outputLength": 841,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 1024,
+      "round": 1,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 0.46687499999825377,
+      "firstConversionMs": 0.39195799999288283,
+      "values": [
+        0.03398497959174814,
+        0.03392148299319321,
+        0.03390702721088662,
+        0.03375226530619837,
+        0.03357454421763707,
+        0.033735258503362446,
+        0.03373866666664312,
+        0.033745748299268255,
+        0.03568083673470486,
+        0.03407227891157967,
+        0.03415901360541921,
+        0.03487046258496342,
+        0.03456632653063205,
+        0.03416440136056333,
+        0.034787129251730664
+      ],
+      "batchSize": 147,
+      "warmupCalls": 2921,
+      "consumed": 4269958,
+      "outputLength": 833,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 1024,
+      "round": 0,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 20.268958000000566,
+      "firstConversionMs": 5.023207999998704,
+      "values": [
+        0.14950146428548447,
+        0.15528721428563586,
+        0.15713242857132823,
+        0.15145239285733883,
+        0.15138392857105437,
+        0.1513467142857345,
+        0.16114135714295635,
+        0.15130207142855007,
+        0.1451056428569635,
+        0.14556396428555932,
+        0.15593303571430234,
+        0.14689582142870808,
+        0.14842410714274074,
+        0.14735567857132992,
+        0.18461607142827624
+      ],
+      "batchSize": 28,
+      "warmupCalls": 560,
+      "consumed": 825160,
+      "outputLength": 842,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 102400,
+      "round": 0,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 7.642790999991121,
+      "firstConversionMs": 16.768499999991036,
+      "values": [
+        8.077917000002344,
+        7.734832999994978,
+        8.428625000000466,
+        7.659708000006503,
+        7.612124999999651,
+        7.664457999999286,
+        9.064499999993131,
+        7.679374999992433,
+        7.642709000007017,
+        8.951207999998587,
+        7.757874999995693,
+        7.647292000008747,
+        9.033459000012954,
+        7.626292000000831,
+        7.948084000003291
+      ],
+      "batchSize": 1,
+      "warmupCalls": 12,
+      "consumed": 2272266,
+      "outputLength": 84158,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 102400,
+      "round": 2,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 25.51941700000316,
+      "firstConversionMs": 153.00487499999872,
+      "values": [
+        127.76479200000176,
+        121.46766700000444,
+        120.75091700001212,
+        119.75020799999766,
+        128.11858300000313,
+        130.0173330000107,
+        134.916916999995,
+        115.00083299999824,
+        113.24233300000196,
+        123.32174999998824,
+        118.84537499998987,
+        114.8449169999949,
+        111.7263329999987,
+        156.23462499999732,
+        119.34020800000872
+      ],
+      "batchSize": 1,
+      "warmupCalls": 1,
+      "consumed": 1338608,
+      "outputLength": 83663,
+      "logs": []
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 1048576,
+      "round": 0,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 19.053916999997455,
+      "firstConversionMs": 183.77441700000782,
+      "values": [
+        162.16704200000095,
+        151.79245799999626,
+        148.92454199999338,
+        161.97504199999094,
+        160.4874170000112,
+        148.31308399999398,
+        152.70720799999253,
+        153.21666600000754,
+        151.75400000000081,
+        151.63779199999408,
+        149.20933399999922,
+        159.94700000000012,
+        153.6519169999956,
+        149.63037500000792,
+        148.12562500000058
+      ],
+      "batchSize": 1,
+      "warmupCalls": 1,
+      "consumed": 13766016,
+      "outputLength": 860376,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 102400,
+      "round": 0,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 18.800915999992867,
+      "firstConversionMs": 33.86720900000364,
+      "values": [
+        14.72712500000489,
+        15.605792000002111,
+        15.528707999998005,
+        15.433124999995925,
+        15.218499999988126,
+        15.636874999996508,
+        14.519750000006752,
+        14.749542000005022,
+        16.01320799998939,
+        14.369917000003625,
+        15.520999999993364,
+        13.942290999999386,
+        13.860167000006186,
+        15.086750000002212,
+        14.337625000000116
+      ],
+      "batchSize": 1,
+      "warmupCalls": 6,
+      "consumed": 1767339,
+      "outputLength": 84159,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 10240,
+      "round": 1,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 7.599124999993364,
+      "firstConversionMs": 6.472249999991618,
+      "values": [
+        0.7478452857155519,
+        0.7654167142858829,
+        0.7461071428572593,
+        0.7374405714279939,
+        0.7366368571425223,
+        0.7228452857151362,
+        0.7620058571441665,
+        1.037702285713749,
+        1.0240774285713476,
+        1.0522977142848373,
+        1.2145714285725262,
+        0.9333392857141527,
+        0.8570238571431089,
+        0.7384524285714308,
+        0.7429941428563325
+      ],
+      "batchSize": 7,
+      "warmupCalls": 130,
+      "consumed": 1984810,
+      "outputLength": 8446,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 102400,
+      "round": 2,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 19.684791000006953,
+      "firstConversionMs": 35.55358399999386,
+      "values": [
+        15.167707999993581,
+        14.688791000007768,
+        14.76516699999047,
+        14.615082999996957,
+        14.773291999998037,
+        15.052958000000217,
+        13.95470899999782,
+        13.80616700000246,
+        14.674291999996058,
+        14.05404199998884,
+        15.345665999993798,
+        13.681000000011409,
+        15.266667000003508,
+        13.829666999998153,
+        14.120166999986395
+      ],
+      "batchSize": 1,
+      "warmupCalls": 6,
+      "consumed": 1767339,
+      "outputLength": 84159,
+      "logs": []
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 1048576,
+      "round": 2,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 17.882124999989173,
+      "firstConversionMs": 185.77387499999895,
+      "values": [
+        154.66012499999488,
+        159.23450000000594,
+        165.92441699998744,
+        159.85058299999218,
+        154.65008300000045,
+        154.12891600000148,
+        164.99033299999428,
+        154.66337500000373,
+        157.08916699999827,
+        165.85395800000697,
+        163.28775000000314,
+        160.90100000001257,
+        148.64250000000175,
+        150.60066700000607,
+        156.38404099999752
+      ],
+      "batchSize": 1,
+      "warmupCalls": 1,
+      "consumed": 13766016,
+      "outputLength": 860376,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 1024,
+      "round": 1,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 18.81754199998977,
+      "firstConversionMs": 4.683958000008715,
+      "values": [
+        0.14599858620705822,
+        0.14452731034493652,
+        0.14579600000007334,
+        0.1435502758620965,
+        0.14391810344813136,
+        0.1489583103448867,
+        0.14729451724169534,
+        0.14102875862063857,
+        0.1438117931031919,
+        0.1424166551722888,
+        0.14562789655184163,
+        0.146173827585981,
+        0.14384768965527625,
+        0.14542672413768615,
+        0.14165517241354822
+      ],
+      "batchSize": 29,
+      "warmupCalls": 570,
+      "consumed": 846210,
+      "outputLength": 842,
+      "logs": []
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 1024,
+      "round": 2,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 18.9307919999992,
+      "firstConversionMs": 9.780624999999418,
+      "values": [
+        0.17167410714318976,
+        0.13846874999996675,
+        0.13775146428555932,
+        0.1749256071426706,
+        0.2178243928574375,
+        0.19356100000004517,
+        0.2050922499999745,
+        0.2411756071430448,
+        0.3188854285716453,
+        0.19833332142869559,
+        0.1647500000004324,
+        0.19365924999978493,
+        0.18953717857168936,
+        0.17779167857120878,
+        0.13962799999977246
+      ],
+      "batchSize": 28,
+      "warmupCalls": 552,
+      "consumed": 818424,
+      "outputLength": 842,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 10240,
+      "round": 2,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 29.81449999999313,
+      "firstConversionMs": 25.808250000001863,
+      "values": [
+        9.324917000005371,
+        9.015792000005604,
+        10.672958000010112,
+        8.582958999992115,
+        10.720290999990539,
+        8.455457999996725,
+        10.623999999996158,
+        8.308875000002445,
+        12.162666999996873,
+        13.9721669999999,
+        11.113790999996127,
+        11.952957999994396,
+        9.889541999989888,
+        11.593500000002678,
+        9.201709000000847
+      ],
+      "batchSize": 1,
+      "warmupCalls": 9,
+      "consumed": 201576,
+      "outputLength": 8399,
+      "logs": []
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 10240,
+      "round": 1,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 18.20837500000198,
+      "firstConversionMs": 13.885374999998021,
+      "values": [
+        1.2776457500003744,
+        1.4211772499984363,
+        1.3264477500015346,
+        1.2699480000010226,
+        1.3368332500031102,
+        1.2765207499978715,
+        1.255614499998046,
+        1.3286457499998505,
+        1.3238957499997923,
+        1.3387499999989814,
+        1.334770749999734,
+        1.3239269999976386,
+        1.2558332500011602,
+        1.3016250000000582,
+        1.3361875000009604
+      ],
+      "batchSize": 4,
+      "warmupCalls": 69,
+      "consumed": 1089663,
+      "outputLength": 8447,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 10240,
+      "round": 1,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 25.42354200000409,
+      "firstConversionMs": 24.950666000004276,
+      "values": [
+        9.053958000004059,
+        8.427207999993698,
+        8.745332999998936,
+        8.595916000005673,
+        8.701499999995576,
+        9.005790999988676,
+        8.471957999994629,
+        8.462125000005472,
+        8.380792000010842,
+        9.270250000001397,
+        8.293583000006038,
+        8.746417000002111,
+        8.404374999998254,
+        8.403707999998005,
+        8.647417000000132
+      ],
+      "batchSize": 1,
+      "warmupCalls": 10,
+      "consumed": 209975,
+      "outputLength": 8399,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 1024,
+      "round": 0,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 7.391084000002593,
+      "firstConversionMs": 5.157000000006519,
+      "values": [
+        0.07346098412693079,
+        0.07458531746034702,
+        0.07614615873021577,
+        0.07409061904763803,
+        0.07427911111130564,
+        0.07510119047623852,
+        0.07498742857142278,
+        0.07551322222224414,
+        0.0746891587302329,
+        0.07512433333336264,
+        0.07490476190471941,
+        0.07399734920643765,
+        0.0747301587301384,
+        0.07593980952376678,
+        0.07393319047627128
+      ],
+      "batchSize": 63,
+      "warmupCalls": 1255,
+      "consumed": 1850200,
+      "outputLength": 841,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 1048576,
+      "round": 0,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 1.4530420000082813,
+      "firstConversionMs": 37.12441599999147,
+      "values": [
+        35.343582999994396,
+        34.273749999993015,
+        33.66208399999596,
+        34.02570800000103,
+        34.34154200000921,
+        34.237458000003244,
+        35.234582999997656,
+        33.89145900000585,
+        35.144083999999566,
+        34.14108300000953,
+        34.373749999998836,
+        34.21287499999744,
+        35.61441599999671,
+        34.91000000000349,
+        35.83929200000421
+      ],
+      "batchSize": 1,
+      "warmupCalls": 3,
+      "consumed": 15303510,
+      "outputLength": 850195,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 1048576,
+      "round": 2,
+      "bytes": 1048744,
+      "status": "timeout",
+      "timeoutMs": 60000
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 102400,
+      "round": 2,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 32.042709000001196,
+      "firstConversionMs": 37.74295799998799,
+      "values": [
+        14.780124999990221,
+        15.355458000005456,
+        15.537416000006488,
+        15.982665999996243,
+        13.853375000006054,
+        14.194791999994777,
+        15.826541999995243,
+        13.793083999975352,
+        14.260041000001365,
+        15.474790999985998,
+        13.788208000012673,
+        13.451582999987295,
+        15.082374999998137,
+        13.68320900000981,
+        16.51037499998347
+      ],
+      "batchSize": 1,
+      "warmupCalls": 6,
+      "consumed": 1767339,
+      "outputLength": 84159,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 10240,
+      "round": 2,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 25.46229199998197,
+      "firstConversionMs": 10.021291000011843,
+      "values": [
+        1.5549863333289977,
+        1.4269583333322469,
+        1.421875,
+        1.4275136666644055,
+        1.5805276666748493,
+        1.4837500000042685,
+        1.430249999995188,
+        1.4711250000012417,
+        1.5620276666692614,
+        1.4203196666688502,
+        1.4403886666696053,
+        1.4607639999982591,
+        1.5503470000015416,
+        1.3788333333310827,
+        1.4534583333297633
+      ],
+      "batchSize": 3,
+      "warmupCalls": 60,
+      "consumed": 886935,
+      "outputLength": 8447,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 10240,
+      "round": 0,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 58.249374999984866,
+      "firstConversionMs": 24.83016700000735,
+      "values": [
+        9.310834000003524,
+        9.362458000017796,
+        8.871791999990819,
+        9.194208000000799,
+        9.225666999991518,
+        9.01804200001061,
+        8.713790999987395,
+        8.849667000002228,
+        8.947249999997439,
+        9.065833000000566,
+        8.605832999979611,
+        8.542000000015832,
+        8.468541999987792,
+        8.746624999999767,
+        9.091165999998339
+      ],
+      "batchSize": 1,
+      "warmupCalls": 9,
+      "consumed": 201576,
+      "outputLength": 8399,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 102400,
+      "round": 2,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 11.475292000017362,
+      "firstConversionMs": 16.304791999980807,
+      "values": [
+        7.794167000014568,
+        8.025540999980876,
+        8.522541000013007,
+        8.326499999995576,
+        7.7367080000112765,
+        7.944792000023881,
+        9.201999999990221,
+        8.046750000008615,
+        7.812833000003593,
+        9.24633399999584,
+        7.8012500000186265,
+        7.908124999987194,
+        9.535917000001064,
+        7.798333999991883,
+        8.159332999988692
+      ],
+      "batchSize": 1,
+      "warmupCalls": 12,
+      "consumed": 2272266,
+      "outputLength": 84158,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 102400,
+      "round": 2,
+      "bytes": 102586,
+      "status": "ok",
+      "initializationMs": 0.8624170000257436,
+      "firstConversionMs": 4.15687499998603,
+      "values": [
+        3.290916500001913,
+        3.2965209999965737,
+        3.307458499999484,
+        3.3070000000006985,
+        3.2907709999999497,
+        3.2991040000051726,
+        3.281354000006104,
+        3.3025829999969574,
+        3.2918954999913694,
+        3.300291499996092,
+        3.282791499994346,
+        3.298624999995809,
+        3.2922084999881918,
+        3.30018750000454,
+        3.277041499997722
+      ],
+      "batchSize": 2,
+      "warmupCalls": 30,
+      "consumed": 4989840,
+      "outputLength": 83164,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 1048576,
+      "round": 2,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 0.4746669999731239,
+      "firstConversionMs": 35.16579100000672,
+      "values": [
+        33.92191699999967,
+        34.03699999998207,
+        33.767290999996476,
+        34.606500000023516,
+        34.74729099997785,
+        35.54700000002049,
+        34.04749999998603,
+        34.73424999997951,
+        33.811707999993814,
+        33.904375000012806,
+        33.8214169999992,
+        34.4993330000143,
+        38.592499999998836,
+        33.70195899999817,
+        39.104541999986395
+      ],
+      "batchSize": 1,
+      "warmupCalls": 3,
+      "consumed": 15303510,
+      "outputLength": 850195,
+      "logs": []
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 10240,
+      "round": 2,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 18.772292000008747,
+      "firstConversionMs": 14.110874999983935,
+      "values": [
+        1.2995209999935469,
+        1.3223645000034594,
+        1.3010104999993928,
+        1.2789479999992182,
+        1.2991145000050892,
+        1.2832500000004075,
+        1.2797917499992764,
+        1.2795832500050892,
+        1.2610625000015716,
+        1.419448000000557,
+        1.3251145000031102,
+        1.3045625000013388,
+        1.2813852499966742,
+        1.3140625000014552,
+        1.3284062500024447
+      ],
+      "batchSize": 4,
+      "warmupCalls": 68,
+      "consumed": 1081216,
+      "outputLength": 8447,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 10240,
+      "round": 2,
+      "bytes": 10298,
+      "status": "ok",
+      "initializationMs": 0.4673750000074506,
+      "firstConversionMs": 0.6854999999923166,
+      "values": [
+        0.3513611333328299,
+        0.3437305333345042,
+        0.3521277333338124,
+        0.34333886666572655,
+        0.34530273333269484,
+        0.34784720000073627,
+        0.33163059999933464,
+        0.35263333333423363,
+        0.3421000000011797,
+        0.33453606666686636,
+        0.34359440000068087,
+        0.3341611333327213,
+        0.3473666666657664,
+        0.3403916666672255,
+        0.33590833333243303
+      ],
+      "batchSize": 15,
+      "warmupCalls": 295,
+      "consumed": 4340960,
+      "outputLength": 8348,
+      "logs": []
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 1048576,
+      "round": 1,
+      "bytes": 1048744,
+      "status": "ok",
+      "initializationMs": 19.904959000006784,
+      "firstConversionMs": 188.35566699999617,
+      "values": [
+        168.31116700000712,
+        158.64933300000848,
+        154.40120799999568,
+        160.52312500000698,
+        155.56554199999664,
+        150.5342079999973,
+        150.14662499999395,
+        155.688833000022,
+        153.4642500000191,
+        152.9412500000035,
+        149.60929200000828,
+        154.89208399999188,
+        153.37645799998427,
+        159.64341700001387,
+        149.8013749999809
+      ],
+      "batchSize": 1,
+      "warmupCalls": 1,
+      "consumed": 13766016,
+      "outputLength": 860376,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 1024,
+      "round": 2,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 19.830291000020225,
+      "firstConversionMs": 4.593708000000333,
+      "values": [
+        0.145000000000562,
+        0.145478448275565,
+        0.1440632068963545,
+        0.14281606896587745,
+        0.14247413793105054,
+        0.14720399999902745,
+        0.1455818965513227,
+        0.14166379310411464,
+        0.14306896551740997,
+        0.14294110344831254,
+        0.14531324137953625,
+        0.14423275862093854,
+        0.14199568965504394,
+        0.1420646551725503,
+        0.1413261379307971
+      ],
+      "batchSize": 29,
+      "warmupCalls": 578,
+      "consumed": 852946,
+      "outputLength": 842,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 1024,
+      "round": 0,
+      "bytes": 1028,
+      "status": "ok",
+      "initializationMs": 0.48933300000499,
+      "firstConversionMs": 0.3957090000039898,
+      "values": [
+        0.034519827586261494,
+        0.03446293103444422,
+        0.03430144137939727,
+        0.03427068965513548,
+        0.03496867586208251,
+        0.036986206896635225,
+        0.0359614965517941,
+        0.03678333793108448,
+        0.03756954482744512,
+        0.03710114482754103,
+        0.04267931034495444,
+        0.03825431034482758,
+        0.03545575172415581,
+        0.03366264827581572,
+        0.03428649655161907
+      ],
+      "batchSize": 145,
+      "warmupCalls": 2899,
+      "consumed": 4226642,
+      "outputLength": 833,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 1048576,
+      "round": 1,
+      "bytes": 1048744,
+      "status": "timeout",
+      "timeoutMs": 60000
+    }
+  ],
+  "performance": [
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 1024,
+      "bytes": 1028,
+      "status": "ok",
+      "medianMs": 0.010689500000005778,
+      "p95BatchMeanMs": 0.01086015542650712,
+      "minMs": 0.010587732758628182,
+      "maxMs": 0.01104421397377142,
+      "q1Ms": 0.010651902173919117,
+      "q3Ms": 0.010727620087331415,
+      "throughputMiBPerSecond": 91.71403688339913,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 10240,
+      "bytes": 10298,
+      "status": "ok",
+      "medianMs": 0.09674417999995058,
+      "p95BatchMeanMs": 0.10244965714299148,
+      "minMs": 0.09434453846160278,
+      "maxMs": 0.10345748979604223,
+      "q1Ms": 0.09570584000000963,
+      "q3Ms": 0.10113181632632219,
+      "throughputMiBPerSecond": 101.51451085074657,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 102400,
+      "bytes": 102586,
+      "status": "ok",
+      "medianMs": 0.9241111666682021,
+      "p95BatchMeanMs": 0.9564916000007846,
+      "minMs": 0.9051319999998668,
+      "maxMs": 0.9797500000010283,
+      "q1Ms": 0.9162361666676588,
+      "q3Ms": 0.9303195000005265,
+      "throughputMiBPerSecond": 105.86781866902629,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "remove-markdown",
+      "targetBytes": 1048576,
+      "bytes": 1048744,
+      "status": "ok",
+      "medianMs": 9.969166999988374,
+      "p95BatchMeanMs": 11.151691199999187,
+      "minMs": 9.825082999988808,
+      "maxMs": 13.053999999989173,
+      "q1Ms": 9.936667000001762,
+      "q3Ms": 10.315833000000566,
+      "throughputMiBPerSecond": 100.32535489538118,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 1024,
+      "bytes": 1028,
+      "status": "ok",
+      "medianMs": 0.8215250000008382,
+      "p95BatchMeanMs": 0.9423749999993014,
+      "minMs": 0.7621083999983966,
+      "maxMs": 0.9834831999993184,
+      "q1Ms": 0.8011334000009811,
+      "q3Ms": 0.8580165999999736,
+      "throughputMiBPerSecond": 1.1933625845404885,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 10240,
+      "bytes": 10298,
+      "status": "ok",
+      "medianMs": 8.947249999997439,
+      "p95BatchMeanMs": 11.881066399996051,
+      "minMs": 8.293583000006038,
+      "maxMs": 13.9721669999999,
+      "q1Ms": 8.582958999992115,
+      "q3Ms": 9.310834000003524,
+      "throughputMiBPerSecond": 1.0976487870970828,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 102400,
+      "bytes": 102586,
+      "status": "ok",
+      "medianMs": 119.75020799999766,
+      "p95BatchMeanMs": 139.53514179999183,
+      "minMs": 111.7263329999987,
+      "maxMs": 308.2552080000023,
+      "q1Ms": 115.27679099999659,
+      "q3Ms": 128.40366700000595,
+      "throughputMiBPerSecond": 0.8169809059776622,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "strip-markdown",
+      "targetBytes": 1048576,
+      "bytes": 1048744,
+      "status": "timeout",
+      "rounds": 3
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 1024,
+      "bytes": 1028,
+      "status": "ok",
+      "medianMs": 0.07463757142850516,
+      "p95BatchMeanMs": 0.07610559885913915,
+      "minMs": 0.07267187499996908,
+      "maxMs": 0.07659570312512187,
+      "q1Ms": 0.07401453968255765,
+      "q3Ms": 0.07504960317451079,
+      "throughputMiBPerSecond": 13.135170109396201,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 10240,
+      "bytes": 10298,
+      "status": "ok",
+      "medianMs": 0.7654167142858829,
+      "p95BatchMeanMs": 1.0349773142852687,
+      "minMs": 0.7228452857151362,
+      "maxMs": 1.2145714285725262,
+      "q1Ms": 0.7461071428572593,
+      "q3Ms": 0.8136905714285702,
+      "throughputMiBPerSecond": 12.830838322513358,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 102400,
+      "bytes": 102586,
+      "status": "ok",
+      "medianMs": 7.812833000003593,
+      "p95BatchMeanMs": 9.174499999990802,
+      "minMs": 7.612124999999651,
+      "maxMs": 9.535917000001064,
+      "q1Ms": 7.679833000001963,
+      "q3Ms": 8.428625000000466,
+      "throughputMiBPerSecond": 12.52217133308834,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "targetBytes": 1048576,
+      "bytes": 1048744,
+      "status": "ok",
+      "medianMs": 177.8943339999969,
+      "p95BatchMeanMs": 310.8932334000012,
+      "minMs": 130.43825000000652,
+      "maxMs": 316.9723329999979,
+      "q1Ms": 136.18737500000861,
+      "q3Ms": 248.7166670000006,
+      "throughputMiBPerSecond": 5.6222151363470285,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 1024,
+      "bytes": 1028,
+      "status": "ok",
+      "medianMs": 0.03427068965513548,
+      "p95BatchMeanMs": 0.0374758648274643,
+      "minMs": 0.03353841134746632,
+      "maxMs": 0.04267931034495444,
+      "q1Ms": 0.033745748299268255,
+      "q3Ms": 0.03487046258496342,
+      "throughputMiBPerSecond": 28.606870977243815,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 10240,
+      "bytes": 10298,
+      "status": "ok",
+      "medianMs": 0.335136066666261,
+      "p95BatchMeanMs": 0.3519744133336159,
+      "minMs": 0.3259221999993315,
+      "maxMs": 0.35485000000044237,
+      "q1Ms": 0.3320860666669129,
+      "q3Ms": 0.34333886666572655,
+      "throughputMiBPerSecond": 29.30433065006865,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 102400,
+      "bytes": 102586,
+      "status": "ok",
+      "medianMs": 3.3037084999959916,
+      "p95BatchMeanMs": 3.4066873999952803,
+      "minMs": 3.277041499997722,
+      "maxMs": 3.4555624999993597,
+      "q1Ms": 3.2922084999881918,
+      "q3Ms": 3.3344169999982114,
+      "throughputMiBPerSecond": 29.613276541489743,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "markdown-to-text",
+      "targetBytes": 1048576,
+      "bytes": 1048744,
+      "status": "ok",
+      "medianMs": 34.4993330000143,
+      "p95BatchMeanMs": 36.025158399998325,
+      "minMs": 33.66208399999596,
+      "maxMs": 39.104541999986395,
+      "q1Ms": 34.04749999998603,
+      "q3Ms": 35.21600000000035,
+      "throughputMiBPerSecond": 28.9907117127378,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 1024,
+      "bytes": 1028,
+      "status": "ok",
+      "medianMs": 0.13775146428555932,
+      "p95BatchMeanMs": 0.21527796428594487,
+      "minMs": 0.13165657575794312,
+      "maxMs": 0.3188854285716453,
+      "q1Ms": 0.13436618181841561,
+      "q3Ms": 0.17167410714318976,
+      "throughputMiBPerSecond": 7.117000188348627,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 10240,
+      "bytes": 10298,
+      "status": "ok",
+      "medianMs": 1.3045625000013388,
+      "p95BatchMeanMs": 1.4208313999988604,
+      "minMs": 1.255614499998046,
+      "maxMs": 1.452500000001237,
+      "q1Ms": 1.2797917499992764,
+      "q3Ms": 1.3286459999999352,
+      "throughputMiBPerSecond": 7.528146877088284,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 102400,
+      "bytes": 102586,
+      "status": "ok",
+      "medianMs": 14.194791999994777,
+      "p95BatchMeanMs": 15.951441199996042,
+      "minMs": 13.113125000003492,
+      "maxMs": 16.712666999999783,
+      "q1Ms": 13.60158400000364,
+      "q3Ms": 14.931541999998444,
+      "throughputMiBPerSecond": 6.892220289165741,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "marked-html",
+      "targetBytes": 1048576,
+      "bytes": 1048744,
+      "status": "ok",
+      "medianMs": 154.65008300000045,
+      "p95BatchMeanMs": 165.68123300000443,
+      "minMs": 148.12562500000058,
+      "maxMs": 168.31116700000712,
+      "q1Ms": 151.63779199999408,
+      "q3Ms": 159.85058299999218,
+      "throughputMiBPerSecond": 6.467246559997989,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 1024,
+      "bytes": 1028,
+      "status": "ok",
+      "medianMs": 0.145478448275565,
+      "p95BatchMeanMs": 0.15689254999992305,
+      "minMs": 0.14102875862063857,
+      "maxMs": 0.18461607142827624,
+      "q1Ms": 0.1435502758620965,
+      "q3Ms": 0.14842410714274074,
+      "throughputMiBPerSecond": 6.7389858008974395,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 10240,
+      "bytes": 10298,
+      "status": "ok",
+      "medianMs": 1.4607639999982591,
+      "p95BatchMeanMs": 1.60156100000216,
+      "minMs": 1.3788333333310827,
+      "maxMs": 5.252427250001347,
+      "q1Ms": 1.4403886666696053,
+      "q3Ms": 1.5057710000000952,
+      "throughputMiBPerSecond": 6.723151796158221,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 102400,
+      "bytes": 102586,
+      "status": "ok",
+      "medianMs": 14.72712500000489,
+      "p95BatchMeanMs": 15.721174999995855,
+      "minMs": 13.681000000011409,
+      "maxMs": 17.243499999996857,
+      "q1Ms": 14.120166999986395,
+      "q3Ms": 15.218499999988126,
+      "throughputMiBPerSecond": 6.643091127617854,
+      "samples": 45,
+      "rounds": 3
+    },
+    {
+      "adapter": "markdown-it-html",
+      "targetBytes": 1048576,
+      "bytes": 1048744,
+      "status": "ok",
+      "medianMs": 169.528999999995,
+      "p95BatchMeanMs": 202.16434219999647,
+      "minMs": 159.4233749999985,
+      "maxMs": 579.3851670000004,
+      "q1Ms": 164.44862500000454,
+      "q3Ms": 181.44770799999242,
+      "throughputMiBPerSecond": 5.899640871385933,
+      "samples": 45,
+      "rounds": 3
+    }
+  ],
+  "stress": [
+    {
+      "adapter": "remove-markdown",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 1024,
+      "status": "ok",
+      "initializationMs": 1.1124579999886919,
+      "elapsedMs": 0.9564170000085142,
+      "outputLength": 1024,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 4096,
+      "status": "ok",
+      "initializationMs": 0.465916000015568,
+      "elapsedMs": 7.522375000000466,
+      "outputLength": 4096,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "remove-markdown",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 16384,
+      "status": "ok",
+      "initializationMs": 0.4855000000097789,
+      "elapsedMs": 128.95750000001863,
+      "outputLength": 16384,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 1024,
+      "status": "ok",
+      "initializationMs": 62.3106249999837,
+      "elapsedMs": 7.627792000013869,
+      "outputLength": 2049,
+      "unchanged": false,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 4096,
+      "status": "ok",
+      "initializationMs": 25.8559580000001,
+      "elapsedMs": 15.126375000021653,
+      "outputLength": 8193,
+      "unchanged": false,
+      "logs": []
+    },
+    {
+      "adapter": "strip-markdown",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 16384,
+      "status": "ok",
+      "initializationMs": 26.148500000010245,
+      "elapsedMs": 42.90120799999568,
+      "outputLength": 32769,
+      "unchanged": false,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 1024,
+      "status": "ok",
+      "initializationMs": 11.333958999981405,
+      "elapsedMs": 4.482916999986628,
+      "outputLength": 1024,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 4096,
+      "status": "ok",
+      "initializationMs": 7.980999999999767,
+      "elapsedMs": 9.007541999977548,
+      "outputLength": 4096,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 16384,
+      "status": "ok",
+      "initializationMs": 7.491458999982569,
+      "elapsedMs": 72.59062500001164,
+      "outputLength": 16384,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 1024,
+      "status": "ok",
+      "initializationMs": 1.4719579999800771,
+      "elapsedMs": 1.37208400000236,
+      "outputLength": 1024,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 4096,
+      "status": "ok",
+      "initializationMs": 0.7995839999930467,
+      "elapsedMs": 11.86395800000173,
+      "outputLength": 4096,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-to-text",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 16384,
+      "status": "ok",
+      "initializationMs": 0.4874159999890253,
+      "elapsedMs": 149.13783400002285,
+      "outputLength": 16384,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "marked-html",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 1024,
+      "status": "ok",
+      "initializationMs": 36.41062499998952,
+      "elapsedMs": 5.911541000008583,
+      "outputLength": 1024,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "marked-html",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 4096,
+      "status": "ok",
+      "initializationMs": 24.718209000013303,
+      "elapsedMs": 8.386375000001863,
+      "outputLength": 4096,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "marked-html",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 16384,
+      "status": "ok",
+      "initializationMs": 21.87408300000243,
+      "elapsedMs": 14.34437499998603,
+      "outputLength": 16384,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 1024,
+      "status": "ok",
+      "initializationMs": 22.527957999991486,
+      "elapsedMs": 5.3428750000020955,
+      "outputLength": 1024,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 4096,
+      "status": "ok",
+      "initializationMs": 18.344000000011874,
+      "elapsedMs": 9.924417000001995,
+      "outputLength": 4096,
+      "unchanged": true,
+      "logs": []
+    },
+    {
+      "adapter": "markdown-it-html",
+      "input": "Repeated unmatched opening brackets",
+      "bytes": 16384,
+      "status": "ok",
+      "initializationMs": 18.070416000002297,
+      "elapsedMs": 23.854624999978114,
+      "outputLength": 16384,
+      "unchanged": true,
+      "logs": []
+    }
+  ]
+}

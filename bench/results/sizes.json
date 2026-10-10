@@ -1,0 +1,64 @@
+{
+  "generatedAt": "2026-10-10T19:05:30.259Z",
+  "esbuild": "0.28.2",
+  "configuration": {
+    "platform": "browser",
+    "format": "esm",
+    "target": "es2022",
+    "gzipLevel": 9,
+    "scope": "Complete standalone conversion pipeline, including adapters and transitive dependencies. No externals or polyfills. Size only; browser execution is not verified for competitors."
+  },
+  "lockSha256": "758c4552e5f87ce0bdca30dc01e492d4efd003ecc499cf2fdc3cc77e555799ed",
+  "entries": {
+    "remove-markdown": "export {default} from '../index.mjs';",
+    "strip-markdown": "import {remark} from 'remark'; import gfm from 'remark-gfm'; import strip from 'strip-markdown'; const processor=remark().use(gfm).use(strip).freeze(); export default input=>String(processor.processSync(input));",
+    "markdown-to-txt": "import {markdownToTxt} from 'markdown-to-txt'; export default input=>markdownToTxt(input);",
+    "markdown-to-text": "import module from 'markdown-to-text'; const fn=module.default||module; export default input=>fn(input);",
+    "marked-html": "import {Marked} from 'marked'; import {compile} from 'html-to-text'; const toText=compile({...{\"wordwrap\":false,\"limits\":{\"maxInputLength\":16777216},\"selectors\":[{\"selector\":\"h1\",\"options\":{\"uppercase\":false}},{\"selector\":\"h2\",\"options\":{\"uppercase\":false}},{\"selector\":\"h3\",\"options\":{\"uppercase\":false}},{\"selector\":\"h4\",\"options\":{\"uppercase\":false}},{\"selector\":\"h5\",\"options\":{\"uppercase\":false}},{\"selector\":\"h6\",\"options\":{\"uppercase\":false}},{\"selector\":\"a\",\"options\":{\"ignoreHref\":true}},{\"selector\":\"img\",\"format\":\"imageAlt\"},{\"selector\":\"ul\",\"format\":\"block\"},{\"selector\":\"ol\",\"format\":\"block\"},{\"selector\":\"li\",\"format\":\"block\"},{\"selector\":\"blockquote\",\"format\":\"block\"}]},formatters:{imageAlt:function imageAlt(element, _walk, builder) {\n  builder.addInline(element.attribs.alt || '');\n}}}); const parser=new Marked({gfm:true,async:false}); export default input=>toText(parser.parse(input));",
+    "markdown-it-html": "import MarkdownIt from 'markdown-it'; import {compile} from 'html-to-text'; const toText=compile({...{\"wordwrap\":false,\"limits\":{\"maxInputLength\":16777216},\"selectors\":[{\"selector\":\"h1\",\"options\":{\"uppercase\":false}},{\"selector\":\"h2\",\"options\":{\"uppercase\":false}},{\"selector\":\"h3\",\"options\":{\"uppercase\":false}},{\"selector\":\"h4\",\"options\":{\"uppercase\":false}},{\"selector\":\"h5\",\"options\":{\"uppercase\":false}},{\"selector\":\"h6\",\"options\":{\"uppercase\":false}},{\"selector\":\"a\",\"options\":{\"ignoreHref\":true}},{\"selector\":\"img\",\"format\":\"imageAlt\"},{\"selector\":\"ul\",\"format\":\"block\"},{\"selector\":\"ol\",\"format\":\"block\"},{\"selector\":\"li\",\"format\":\"block\"},{\"selector\":\"blockquote\",\"format\":\"block\"}]},formatters:{imageAlt:function imageAlt(element, _walk, builder) {\n  builder.addInline(element.attribs.alt || '');\n}}}); const parser=new MarkdownIt({html:true}); export default input=>toText(parser.render(input));"
+  },
+  "results": [
+    {
+      "adapter": "remove-markdown",
+      "status": "ok",
+      "minifiedBytes": 2605,
+      "gzipBytes": 1124,
+      "sha256": "4cacd1f2b849bff63392b6bf2af39197a86eb18b0de3a37df855f6b131d01e1a"
+    },
+    {
+      "adapter": "strip-markdown",
+      "status": "ok",
+      "minifiedBytes": 126804,
+      "gzipBytes": 37935,
+      "sha256": "768ca804c8cf346e6c672b2cc560ca76761bd83c3af44619a4481cd2bdfe4106"
+    },
+    {
+      "adapter": "markdown-to-txt",
+      "status": "ok",
+      "minifiedBytes": 124912,
+      "gzipBytes": 43993,
+      "sha256": "0be9141f17b8eca19043ce04010fa8f28817b17e20751f1b52150de494bccdae"
+    },
+    {
+      "adapter": "markdown-to-text",
+      "status": "ok",
+      "minifiedBytes": 2029,
+      "gzipBytes": 909,
+      "sha256": "1446cc4a449d2348fff77b5fbbc008b6a0420e27454168a15a95d2ff41bdedcc"
+    },
+    {
+      "adapter": "marked-html",
+      "status": "ok",
+      "minifiedBytes": 242157,
+      "gzipBytes": 88055,
+      "sha256": "affae383a62c9c13939f0b45737f86b607dbdde418a83a5da7250fa5ed86f0a1"
+    },
+    {
+      "adapter": "markdown-it-html",
+      "status": "ok",
+      "minifiedBytes": 295260,
+      "gzipBytes": 115668,
+      "sha256": "d047e9a5a57bda84b8ce257cba03326ed1cafe7105e5f48e303859b70eb1c527"
+    }
+  ]
+}
