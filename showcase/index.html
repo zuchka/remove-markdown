@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore remove-markdown: turn Markdown into plain text, try every option, and compare the results.">
+  <title>remove-markdown — Keep the words.</title>
+  <script>try{const p=localStorage.getItem('remove-markdown-theme');document.documentElement.dataset.theme=p==='light'||p==='dark'?p:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch{}</script>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./theme.mjs"></script>
+  <script type="module" src="./demo.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#playground">Skip to playground</a>
+  <header class="site-header wrap">
+    <a class="wordmark" href="./" aria-label="remove-markdown home"><span class="brand-mark" aria-hidden="true">m<span>↓</span></span>remove-markdown<span class="wordmark-dot">.</span></a>
+    <nav aria-label="Main"><a href="#playground" aria-current="page">Playground</a><a href="./benchmarks/">Benchmarks</a><a href="https://github.com/zuchka/remove-markdown">GitHub <span aria-hidden="true">↗</span></a></nav>
+    <label class="theme-label"><span class="sr-only">Color theme</span><select id="theme" aria-label="Color theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+  </header>
+  <main class="wrap">
+    <section class="hero" aria-labelledby="title">
+      <div><p class="eyebrow"><span class="signal"></span>A small tool for clearer text <span class="version">v__VERSION__</span></p><h1 id="title">Keep the words.<br><span>Leave the markup.</span></h1></div>
+      <div class="hero-aside"><p>From Markdown to plain text.<br>Try your own words, explore the options,<br class="desktop-break"> and see exactly what stays.</p><button class="install" id="copy-install" type="button" data-copy="npm install remove-markdown"><span class="prompt" aria-hidden="true">$</span><code>npm install remove-markdown</code><span class="copy-label">Copy</span></button><p class="fine-print">Zero runtime dependencies. Runs in your browser.</p></div>
+    </section>
+
+    <remove-markdown-demo id="playground">
+      <div class="section-heading"><div><p class="eyebrow">01 / The playground</p><h2>A little less syntax.</h2></div><p class="section-note">Your text stays on this device.</p></div>
+      <div class="example-bar"><span class="bar-label">Start with</span><div class="example-buttons" role="group" aria-label="Example documents"></div></div>
+      <p class="example-description" id="example-description"></p>
+      <div class="mobile-views" role="group" aria-label="Visible editor panel"><button type="button" data-view="input" aria-pressed="true">Original</button><button type="button" data-view="baseline" aria-pressed="false">Defaults</button><button type="button" data-view="output" aria-pressed="false">Your settings</button></div>
+      <div class="editor-grid" data-view="input">
+        <section class="editor-panel source-panel" data-panel="input"><div class="panel-heading"><label for="markdown">Original Markdown</label><span class="file-label">input.md</span></div><textarea id="markdown" aria-describedby="input-help" spellcheck="false" maxlength="200000"></textarea><div class="panel-footer"><span id="input-count"></span><span id="input-help">Editable · up to 200k characters</span></div></section>
+        <section class="editor-panel" data-panel="baseline"><div class="panel-heading"><h3>With defaults</h3><button type="button" class="text-button copy-output" data-output="baseline" aria-label="Copy default output">Copy</button></div><pre id="baseline" aria-label="Output with default options" tabindex="0"></pre><div class="panel-footer"><code>removeMd(markdown)</code><span id="baseline-count"></span></div></section>
+        <section class="editor-panel configured-panel" data-panel="output"><div class="panel-heading"><h3>With your settings</h3><button type="button" class="text-button copy-output" data-output="output" aria-label="Copy configured output">Copy</button></div><pre id="output" aria-label="Output with your settings" tabindex="0"></pre><div class="panel-footer"><span id="output-summary"></span><span id="output-count"></span></div></section>
+      </div>
+      <div class="editor-status"><p id="conversion-status" role="status">Loading the converter…</p><label class="check"><input type="checkbox" id="highlight" checked> Highlight changes from defaults</label></div>
+      <div id="conversion-error" class="notice error" role="alert" hidden></div>
+      <div class="options-heading"><div><h2>Make it yours.</h2><p>Ten options. Exactly the text you need.</p></div><button type="button" class="button secondary" id="reset-options">Reset to defaults</button></div>
+      <form id="options" class="options-grid" aria-label="Conversion settings">
+        <fieldset class="option-group"><legend>Lists</legend><p class="option-description">Choose what leads each item.</p><label class="check"><input type="checkbox" name="stripListLeaders" checked> Strip list markers</label><label class="field">Replacement character<input name="listUnicodeChar" type="text" placeholder="None — or try •" maxlength="16"></label><small><code>listUnicodeChar</code> applies when markers are stripped.</small><button class="example-link" type="button" data-example="lists">Try a list <span aria-hidden="true">↗</span></button></fieldset>
+        <fieldset class="option-group"><legend>Links</legend><p class="option-description">Keep the label, the URL, or both.</p><label class="check"><input type="checkbox" name="replaceLinksWithURL"> Replace text with URL</label><label class="field">Text + URL separator<input name="separateLinksAndTexts" type="text" placeholder="Empty = disabled. Try →" maxlength="32"></label><small id="link-help">A separator takes precedence over URL-only mode.</small><button class="example-link" type="button" data-example="links">Try some links <span aria-hidden="true">↗</span></button></fieldset>
+        <fieldset class="option-group"><legend>Images</legend><p class="option-description">Let the description tell the story.</p><label class="check"><input type="checkbox" name="useImgAltText" checked> Keep image alt text</label><small>Switch off to remove the image entirely.</small><p class="option-code"><code>useImgAltText</code></p><button class="example-link" type="button" data-example="images">Try an image <span aria-hidden="true">↗</span></button></fieldset>
+        <fieldset class="option-group"><legend>Markdown extensions</legend><p class="option-description">A few extra kinds of syntax.</p><label class="check"><input type="checkbox" name="gfm" checked> Process GFM syntax</label><small>Fences, strike markers, and setext headings. Table and task-list syntax may remain.</small><label class="check"><input type="checkbox" name="abbr"> Remove abbreviation definitions</label><div class="inline-links"><button class="example-link" type="button" data-example="code">Try code ↗</button><button class="example-link" type="button" data-example="abbr">Try abbreviations ↗</button></div></fieldset>
+        <fieldset class="option-group"><legend>HTML</legend><p class="option-description">Keep selected tags as literal text.</p><label class="field">Tags to preserve<input name="htmlTagsToSkip" type="text" placeholder="e.g. strong, em" aria-describedby="tags-help"></label><small id="tags-help">Comma-separated names. Empty strips all tags.</small><p class="option-code"><code>htmlTagsToSkip</code></p><button class="example-link" type="button" data-example="html">Try HTML <span aria-hidden="true">↗</span></button></fieldset>
+        <fieldset class="option-group"><legend>MDX</legend><p class="option-description">Start where the writing starts.</p><label class="check"><input type="checkbox" name="stripMdxImports"> Strip leading imports</label><small>Supported imports at the start of the document only. Other MDX syntax is not evaluated.</small><p class="option-code"><code>stripMdxImports</code></p><button class="example-link" type="button" data-example="mdx">Try MDX <span aria-hidden="true">↗</span></button></fieldset>
+        <details class="advanced"><summary>Advanced <span>Error handling</span></summary><label class="check"><input type="checkbox" name="throwError"> Throw processing errors <code>throwError</code></label><p>When an error is caught by the library, the default behavior logs it and returns the original input. Enable this to throw instead. It does not change successful output.</p><small>The library’s catch block does not cover every input/setup error. This playground catches worker errors in either mode.</small></details>
+      </form>
+      <div class="code-section"><div><p class="eyebrow">Take it with you</p><h2>Your text. Your settings.<br>One function call.</h2><p>The snippet includes your current input and only the options you changed.</p><button type="button" class="button primary" id="copy-code">Copy JavaScript <span aria-hidden="true">↗</span></button></div><pre class="code-preview"><code id="usage-code"></code></pre></div>
+      <noscript><p class="notice">Enable JavaScript to try the interactive converter. The library and usage examples are available on GitHub.</p></noscript>
+    </remove-markdown-demo>
+    <section class="benchmark-teaser"><div><p class="eyebrow">02 / Under the surface</p><h2>Good comparisons<br>show their work.</h2></div><div><p>Explore output differences, conversion speed, and bundle size across Markdown-to-text tools. Every result comes with its inputs, versions, and methodology.</p><a class="button secondary" href="./benchmarks/">Explore the benchmarks <span aria-hidden="true">↗</span></a></div></section>
+  </main>
+  <footer class="wrap"><a href="https://github.com/zuchka/remove-markdown">Open source, down to the details.</a><span>MIT licensed · remove-markdown v__VERSION__</span></footer>
+  <div id="toast" role="status" class="toast" hidden></div>
+</body>
+</html>

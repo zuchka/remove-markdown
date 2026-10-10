@@ -41,6 +41,11 @@
     "LICENSE"
   ],
   "scripts": {
+    "build:site": "node scripts/build-site.mjs",
+    "dev:site": "node scripts/dev-site.mjs",
+    "test:showcase": "node --test test/showcase.test.mjs",
+    "bench": "npm --prefix bench run run",
+    "bench:sizes": "npm --prefix bench run sizes",
     "build:esm": "node scripts/build-esm.mjs",
     "check:esm": "node scripts/build-esm.mjs --check",
     "test": "mocha -R spec test/remove-markdown.js",

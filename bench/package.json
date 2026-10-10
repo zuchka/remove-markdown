@@ -1,0 +1,24 @@
+{
+  "name": "remove-markdown-benchmarks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test adapters.test.mjs",
+    "run": "node run.mjs",
+    "sizes": "node sizes.mjs"
+  },
+  "dependencies": {
+    "html-to-text": "10.0.1",
+    "lodash": "4.18.1",
+    "markdown-it": "15.0.2",
+    "markdown-to-text": "0.1.1",
+    "markdown-to-txt": "2.0.1",
+    "marked": "18.1.0",
+    "remark": "15.0.1",
+    "remark-gfm": "4.0.1",
+    "strip-markdown": "6.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

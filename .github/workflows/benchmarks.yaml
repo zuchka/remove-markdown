@@ -1,0 +1,33 @@
+name: Benchmark snapshot
+
+# Deliberate runs only; nothing here publishes the website or claims.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          cache: npm
+          cache-dependency-path: bench/package-lock.json
+      - run: npm ci --prefix bench
+      - run: npm run test:showcase
+      - run: npm --prefix bench test
+      - run: npm run bench:sizes
+      - run: npm run bench
+      - run: npm run build:site
+      - uses: actions/upload-artifact@v7
+        with:
+          name: benchmark-snapshot
+          path: |
+            bench/results/
+            dist/site/
+          if-no-files-found: error

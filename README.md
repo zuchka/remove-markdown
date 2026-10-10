@@ -90,6 +90,18 @@ syntax, such as comments or import attributes. Imports after headings or other
 content remain in the output. Imports in lists and code blocks retain the usual
 Markdown-stripping behavior. This option defaults to false.
 
+## Showcase and benchmarks
+
+Run `npm run dev:site` for the local interactive showcase. It demonstrates all
+options with original, default, and configured output, and supports System,
+Light, and Dark themes. Build static assets with `npm run build:site`.
+
+The standalone benchmark harness compares output policies, end-to-end
+conversion, and complete browser bundle sizes. See the
+[showcase guide](showcase/README.md) and
+[benchmark methodology](bench/README.md) for setup, reproducibility, and the
+publication review checklist. The first snapshots are exploratory local results.
+
 ## TODO
 PRs are very much welcome. Here are some ideas for future enhancements:
 
