@@ -69,7 +69,8 @@ The stress probe repeats unmatched opening brackets at 1,024, 4,096, and 16,384 
 
 ## Publication review
 
-The first snapshot intentionally stays local. Before public publication:
+The first snapshot was measured locally and is presented as exploratory on the
+showcase. Before publishing broader performance claims:
 
 - Add pinned, openly licensed real documents across multiple domains and sizes, preserving attribution and input hashes. Review outputs against the policy before timing them.
 - Expand adversarial families and test multiple runtime environments. Repeat on a quiet machine and independently reproduce the results.

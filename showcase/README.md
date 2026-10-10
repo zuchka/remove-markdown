@@ -15,3 +15,29 @@ Examples intentionally change relevant settings so the initial comparison shows 
 All ten current options are represented. The option inventory and generated snippet are checked against the package API. GFM copy describes actual limited transformations. HTML tag entry accepts names rather than regex syntax. Error handling is advanced because `throwError` does not change successful output. The UI catches failures and disables stale copy actions.
 
 The benchmark page reads static JSON produced by `bench/`; it never runs timing workloads in a visitor's browser. Its first results are explicitly exploratory. See `bench/README.md` for methodology and publication review requirements.
+
+## Cloudflare Workers
+
+The site is deployed as Workers Static Assets using the root `wrangler.jsonc`.
+The production domain is https://removemarkdown.dev, attached to the
+`remove-markdown-showcase` Worker. Cloudflare manages its DNS and TLS certificate.
+Markdown conversion still runs entirely in the visitor's browser. Use Node.js 24
+or newer for the pinned Wrangler CLI.
+
+```sh
+npm ci
+npm run dev:worker
+npm run deploy:site -- --dry-run
+npm run deploy:site
+```
+
+Wrangler rebuilds the static site before previewing or deploying it. Deployment
+requires Cloudflare authentication for the `zuchka studios` account, with Workers
+write access and Workers Routes write access for the domain. Credentials stay in
+Wrangler's local authentication store or the `CLOUDFLARE_API_TOKEN` environment
+variable; no credentials belong in this repository.
+
+The showcase CI workflow checks deployment packaging and uploads a preview
+artifact. Production deployments are manual using `npm run deploy:site`.
+Only `dist/site/` is uploaded; `.assetsignore` excludes the component README.
+Unknown paths return 404, and unversioned assets are revalidated on each visit.

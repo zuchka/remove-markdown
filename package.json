@@ -43,6 +43,8 @@
   "scripts": {
     "build:site": "node scripts/build-site.mjs",
     "dev:site": "node scripts/dev-site.mjs",
+    "dev:worker": "wrangler dev",
+    "deploy:site": "wrangler deploy",
     "test:showcase": "node --test test/showcase.test.mjs",
     "bench": "npm --prefix bench run run",
     "bench:sizes": "npm --prefix bench run sizes",
@@ -80,7 +82,8 @@
     "mocha": "11.3.0",
     "rollup": "^4.62.5",
     "should": "^5.0.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "wrangler": "4.149.0"
   },
   "overrides": {
     "serialize-javascript": "^7.0.5"

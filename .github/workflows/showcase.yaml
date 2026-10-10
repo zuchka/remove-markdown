@@ -3,9 +3,9 @@ name: Showcase
 on:
   push:
     branches: [main]
-    paths: ['showcase/**', 'fixtures/**', 'scripts/*site.mjs', 'test/showcase.test.mjs', 'bench/statistics.mjs', 'index*', 'package*.json', '.github/workflows/showcase.yaml']
+    paths: ['showcase/**', 'fixtures/**', 'scripts/*site.mjs', 'test/showcase.test.mjs', 'bench/statistics.mjs', 'bench/results/**', 'bench/README.md', 'index*', 'package*.json', 'wrangler.jsonc', '.github/workflows/showcase.yaml']
   pull_request:
-    paths: ['showcase/**', 'fixtures/**', 'scripts/*site.mjs', 'test/showcase.test.mjs', 'bench/statistics.mjs', 'index*', 'package*.json', '.github/workflows/showcase.yaml']
+    paths: ['showcase/**', 'fixtures/**', 'scripts/*site.mjs', 'test/showcase.test.mjs', 'bench/statistics.mjs', 'bench/results/**', 'bench/README.md', 'index*', 'package*.json', 'wrangler.jsonc', '.github/workflows/showcase.yaml']
   workflow_dispatch:
 
 permissions:
@@ -23,7 +23,7 @@ jobs:
       - run: npm ci
       - run: npm run test:showcase
       - run: npm run check:esm
-      - run: npm run build:site
+      - run: npm run deploy:site -- --dry-run
       - uses: actions/upload-artifact@v7
         with:
           name: showcase-preview
