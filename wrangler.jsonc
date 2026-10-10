@@ -1,0 +1,29 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "remove-markdown-showcase",
+  "account_id": "b5a19010c0fa72255f749f63b2ec0962",
+  "compatibility_date": "2026-10-10",
+  "workers_dev": true,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "removemarkdown.dev",
+      "custom_domain": true
+    }
+  ],
+  "build": {
+    "command": "npm run build:site"
+  },
+  "assets": {
+    "directory": "./dist/site",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  },
+  "observability": {
+    "enabled": true,
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
+    }
+  }
+}
