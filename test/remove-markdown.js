@@ -15,6 +15,18 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should strip emphasis nested inside other emphasis', function () {
+      const tests = [
+        { string: '**a *b* c**', expected: 'a b c' },
+        { string: '*a **b** c*', expected: 'a b c' },
+        { string: 'Use **bold with *italic* inside** here', expected: 'Use bold with italic inside here' },
+        { string: 'A *b **c** d* e', expected: 'A b c d e' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
     it('should leave non-matching markdown markdown', function () {
       const string = '*Javascript* developers* are the _best_.';
       const expected = 'Javascript developers* are the best.';

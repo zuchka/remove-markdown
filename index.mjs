@@ -94,9 +94,17 @@ export default function removeMarkdown(md, options) {
       // Remove reference-style links?
       .replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')
       // Remove atx-style headers
-      .replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6')
-      // Remove * emphasis
-      .replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3')
+      .replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6');
+
+    // Remove * emphasis. A single pass strips only the outermost emphasis, so repeat a few
+    // times (bounded) to also strip emphasis nested inside it, e.g. **bold with *italic* inside**.
+    for (let pass = 0; pass < 5; pass++) {
+      const stripped = output.replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3');
+      if (stripped === output) break;
+      output = stripped;
+    }
+
+    output = output
       // Remove _ emphasis. Unlike *, _ emphasis gets rendered only if
       //   1. Either there is a whitespace character before opening _ and after closing _.
       //   2. Or _ is at the start/end of the string.
