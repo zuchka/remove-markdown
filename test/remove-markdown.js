@@ -310,6 +310,39 @@ import 'a'`, expected: '' },
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should not let bracketed text that is not a link swallow text up to a later link', function () {
+      const tests = [
+        { string: 'see [1] and [link](http://x.y) end', expected: 'see [1] and link end' },
+        { string: 'Press [Enter] then [docs](http://d.e)', expected: 'Press [Enter] then docs' },
+        { string: '[x]\n\nSome text\n\n[link](u)', expected: '[x]\n\nSome text\n\nlink' },
+        { string: 'to the west.[15] Ashgabat is the capital.[16] See [docs](http://d.e).', expected: 'to the west.[15] Ashgabat is the capital.[16] See docs.' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
+    it('should not treat bracketed text followed by whitespace and parentheses as a link', function () {
+      const string = 'Smith et al. [12] (see appendix) and [Jones] (2020)';
+      expect(removeMd(string)).to.equal(string);
+    });
+
+    it('should keep the url of a link after a bracketed footnote marker', function () {
+      const string = 'see [1] and [link](http://x.y) end';
+      const expected = 'see [1] and http://x.y end';
+      expect(removeMd(string, { replaceLinksWithURL: true })).to.equal(expected);
+    });
+
+    it('should still remove reference-style links and images next to bracketed text', function () {
+      const tests = [
+        { string: 'a [text][ref] b', expected: 'a text b' },
+        { string: 'a [1] ![alt](http://i.png) b [text][ref]', expected: 'a [1] alt b text' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
     it('should keep url instead of text when replaceLinksWithURL is enabled', function () {
       const string = 'This is a [link](http://www.disney.com/).';
       const expected = 'This is a http://www.disney.com/.';
