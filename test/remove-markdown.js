@@ -33,6 +33,42 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should strip HTML comments, declarations, CDATA, processing instructions and autolinks', function () {
+      const tests = [
+        { string: '<p>Hello <b>World</b><br/><img src="a.png" alt="x"></p>', expected: 'Hello World' },
+        { string: 'a <!-- comment > still a comment --> b', expected: 'a  b' },
+        { string: 'a <![CDATA[ x > y ]]> b', expected: 'a  b' },
+        { string: 'a <?php echo 1; ?> b', expected: 'a  b' },
+        { string: '<!DOCTYPE html><html><body>hi</body></html>', expected: 'hi' },
+        { string: 'visit <https://example.com/x> or <me@example.com>', expected: 'visit  or ' },
+        { string: '<div\nclass="x">multi</div>', expected: 'multi' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
+    it('should not strip plain-text angle brackets that do not form HTML', function () {
+      const tests = [
+        { string: 'The equations 2 < 3 and 3 > 1 are both true', expected: 'The equations 2 < 3 and 3 > 1 are both true' },
+        { string: 'Cost: $5 < $10 and $20 > $15, so choose.', expected: 'Cost: $5 < $10 and $20 > $15, so choose.' },
+        { string: 'You can write to John Doe <john.doe AT example DOT com>', expected: 'You can write to John Doe <john.doe AT example DOT com>' },
+        { string: '1 < 100 and 100 > 0', expected: '1 < 100 and 100 > 0' },
+        { string: '2 << 3 >> 1', expected: '2 << 3 >> 1' },
+        { string: 'x <-> y <=> z', expected: 'x <-> y <=> z' },
+        { string: 'a <! word > b', expected: 'a <! word > b' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
+    it('should not strip plain-text angle brackets when htmlTagsToSkip is used', function () {
+      const string = '<p>Hello <b>World</b> 2 < 3 > 1</p>';
+      const expected = 'Hello <b>World</b> 2 < 3 > 1';
+      expect(removeMd(string, { htmlTagsToSkip: ['b'] })).to.equal(expected);
+    });
+
     it('should strip MDX import statements', function () {
       const tests = [
         { string: 'import page404 from "@/assets/images/404.png"\n\nHere is some text', expected: 'Here is some text' },

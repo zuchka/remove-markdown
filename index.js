@@ -60,12 +60,24 @@ module.exports = function(md, options) {
       output = output.replace(/\*\[.*\]:.*\n/, '');
     }
 
-    let htmlReplaceRegex = /<[^>]*>/g
+    // Only "<" followed by something that can start HTML (as in CommonMark) is treated as
+    // HTML, so plain text such as "2 < 3 and 3 > 1" is left alone. Attribute values are not
+    // parsed: a tag ends at the first ">", as before.
+    const htmlConstructs = [
+      '<!--[\\s\\S]*?-->',                                   // comment
+      '<!\\[CDATA\\[[\\s\\S]*?\\]\\]>',                      // CDATA section
+      '<\\?[\\s\\S]*?\\?>',                                  // processing instruction
+      '<![A-Za-z][^>]*>',                                    // declaration, e.g. <!DOCTYPE html>
+      '<[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\\s<>]*>',            // URI autolink
+      "<[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*>", // email autolink
+      '</?[A-Za-z][A-Za-z0-9-]*(?:[\\s/][^<>]*)?>',          // opening, closing or self-closing tag
+    ].join('|')
+    let htmlReplaceRegex = new RegExp(htmlConstructs, 'g')
     if (options.htmlTagsToSkip && options.htmlTagsToSkip.length > 0) {
       // Create a regex that matches tags not in htmlTagsToSkip
       const joinedHtmlTagsToSkip = options.htmlTagsToSkip.join('|')
       htmlReplaceRegex = new RegExp(
-        `<(?!\/?(${joinedHtmlTagsToSkip})(?=>|\\s[^>]*>))[^>]*>`,
+        `(?!</?(${joinedHtmlTagsToSkip})(?=>|\\s[^>]*>))(?:${htmlConstructs})`,
         'g',
       )
     }
