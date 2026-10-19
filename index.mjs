@@ -1,5 +1,73 @@
 // Generated from index.js by scripts/build-esm.mjs. Do not edit directly.
 
+const linkTokens = /\\[\s\S]|`+|[\[\]]/g;
+const linkDestination = /[\(\[](.*?)[\)\]]/y;
+
+// Replaces inline links ("[text](url)" and "[text][ref]") with their text, or with the
+// destination. Square brackets are matched like a stack in one left-to-right pass: link text may
+// contain any depth of balanced brackets, and bracketed text that is not followed directly by
+// "(" or "[" (a footnote marker, "[Enter]") never swallows the text before a later link. A
+// backslash escapes the next character, and inside link text a code span can hold brackets.
+function removeInlineLinks(text, replaceWithUrl) {
+  const parts = [];
+  const openBrackets = [];
+  let backtickRuns = null;
+  const backtickRunsAfter = function(position, length) {
+    if (!backtickRuns) {
+      backtickRuns = {};
+      const runs = /`+/g;
+      let run;
+      while ((run = runs.exec(text))) {
+        const entry = backtickRuns[run[0].length] || (backtickRuns[run[0].length] = { starts: [], next: 0 });
+        entry.starts.push(run.index);
+      }
+    }
+    const entry = backtickRuns[length];
+    if (!entry) return -1;
+    // Positions only increase, so each run is passed at most once.
+    while (entry.next < entry.starts.length && entry.starts[entry.next] < position) entry.next++;
+    return entry.next < entry.starts.length ? entry.starts[entry.next] : -1;
+  };
+
+  let copied = 0;
+  let token;
+  linkTokens.lastIndex = 0;
+  while ((token = linkTokens.exec(text))) {
+    const start = token.index;
+    const end = start + token[0].length;
+    const mark = token[0].charAt(0);
+    if (mark === '`') {
+      // Inside link text, a code span may contain brackets that must not count.
+      const closing = openBrackets.length > 0 ? backtickRunsAfter(end, token[0].length) : -1;
+      if (closing !== -1) linkTokens.lastIndex = closing + token[0].length;
+    } else if (mark === '[') {
+      parts.push(text.slice(copied, start), '[');
+      openBrackets.push(parts.length - 1);
+      copied = end;
+    } else if (mark === ']') {
+      parts.push(text.slice(copied, start));
+      copied = end;
+      linkDestination.lastIndex = end;
+      const destination = openBrackets.length > 0 ? linkDestination.exec(text) : null;
+      const opening = openBrackets.pop();
+      if (destination) {
+        if (replaceWithUrl) {
+          parts.length = opening;
+          parts.push(destination[1]);
+        } else {
+          parts[opening] = '';
+        }
+        copied = linkDestination.lastIndex;
+        linkTokens.lastIndex = copied;
+      } else {
+        parts.push(']');
+      }
+    }
+  }
+  parts.push(text.slice(copied));
+  return parts.join('');
+}
+
 export default function removeMarkdown(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
@@ -85,11 +153,12 @@ export default function removeMarkdown(md, options) {
       .replace(/\[\^.+?\](\: .*?$)?/g, '')
       .replace(/\s{0,2}\[.*?\]: .*?$/g, '')
       // Remove images
-      .replace(/\!\[(.*?)\][\[\(].*?[\]\)]/g, options.useImgAltText ? '$1' : '')
-      // Remove inline links
-      // The link text may contain balanced square brackets, but not an unmatched one, and
-      // the destination must follow the closing bracket immediately (as in CommonMark).
-      .replace(/\[((?:[^\[\]]|\[[^\[\]]*\])*)\][\(\[](.*?)[\)\]]/g, options.replaceLinksWithURL ? '$2' : '$1')
+      .replace(/\!\[(.*?)\][\[\(].*?[\]\)]/g, options.useImgAltText ? '$1' : '');
+
+    // Remove inline links
+    output = removeInlineLinks(output, options.replaceLinksWithURL);
+
+    output = output
       // Remove blockquotes
       .replace(/^(\n)?\s{0,3}>\s?/gm, '$1')
       // .replace(/(^|\n)\s{0,3}>\s?/g, '\n\n')

@@ -343,6 +343,44 @@ import 'a'`, expected: '' },
       });
     });
 
+    it('should remove links whose text has nested square brackets', function () {
+      const tests = [
+        { string: '[link [foo [bar]]](/uri)', expected: 'link [foo [bar]]', url: '/uri' },
+        { string: '[a [b [c [d]]]](u)', expected: 'a [b [c [d]]]', url: 'u' },
+        { string: 'x [link [foo [bar]]](/uri) y [z](w)', expected: 'x link [foo [bar]] y z', url: 'x /uri y w' },
+        { string: '[x] and [link [nested]](u)', expected: '[x] and link [nested]', url: '[x] and u' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+        expect(removeMd(test.string, { replaceLinksWithURL: true })).to.equal(test.url);
+      });
+    });
+
+    it('should respect escaped square brackets in link text', function () {
+      const tests = [
+        { string: '[link \\[bar](/uri)', expected: 'link \\[bar', url: '/uri' },
+        { string: '[a \\] b](/u)', expected: 'a \\] b', url: '/u' },
+        { string: '[a \\\\](u) z', expected: 'a \\\\ z', url: 'u z' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+        expect(removeMd(test.string, { replaceLinksWithURL: true })).to.equal(test.url);
+      });
+    });
+
+    it('should not count square brackets inside code spans in link text', function () {
+      const tests = [
+        { string: '[foo `]` bar](/uri)', expected: 'foo ] bar', url: '/uri' },
+        { string: '[foo `[` bar](/uri)', expected: 'foo [ bar', url: '/uri' },
+        { string: '[foo ``]`` bar](/uri)', expected: 'foo `]` bar', url: '/uri' },
+        { string: 'use `a[0]` and [link](u)', expected: 'use a[0] and link', url: 'use a[0] and u' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+        expect(removeMd(test.string, { replaceLinksWithURL: true })).to.equal(test.url);
+      });
+    });
+
     it('should keep url instead of text when replaceLinksWithURL is enabled', function () {
       const string = 'This is a [link](http://www.disney.com/).';
       const expected = 'This is a http://www.disney.com/.';
