@@ -69,6 +69,66 @@ describe('remove Markdown', function () {
       expect(removeMd(string, { htmlTagsToSkip: ['b'] })).to.equal(expected);
     });
 
+    it('should strip tags whose quoted attribute values contain angle brackets', function () {
+      const tests = [
+        { string: '<span title="1 < 2">hello</span>', expected: 'hello' },
+        { string: "<span title='1 < 2'>hello</span>", expected: 'hello' },
+        { string: '<img src=x onerror="alert(1)" data-note="<">', expected: '' },
+        { string: "<img src=x onerror='alert(1)' data-note='<'>", expected: '' },
+        { string: "<a href='x' title=\"a<b\">t</a>", expected: 't' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+        expect(removeMd(test.string, { htmlTagsToSkip: ['b'] })).to.equal(test.expected);
+      });
+    });
+
+    it('should still skip listed tags whose quoted attribute values contain angle brackets', function () {
+      const options = { htmlTagsToSkip: ['b'] };
+      expect(removeMd('<b title="1 < 2">x</b> <i title=\'a<b\'>y</i>', options)).to.equal('<b title="1 < 2">x</b> y');
+    });
+
+    it('should not treat a "<" outside a quoted attribute value as part of a tag', function () {
+      const tests = [
+        { string: '<a title=1 < 2>x</a>', expected: '<a title=1 < 2>x' },
+        { string: 'if x < 3 then say "hi" > y', expected: 'if x < 3 then say "hi" > y' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
+    it('should leave unterminated comments, CDATA sections and processing instructions as text', function () {
+      const tests = [
+        { string: 'a <!-- b', expected: 'a <!-- b' },
+        { string: 'a <![CDATA[ b > c', expected: 'a <![CDATA[ b > c' },
+        { string: 'a <?php b > c', expected: 'a <?php b > c' },
+        { string: 'a <!-- b --> c <!-- d <!-- e', expected: 'a  c <!-- d <!-- e' },
+        { string: 'a <![CDATA[ b ]]> c <![CDATA[ d <![CDATA[ e', expected: 'a  c <![CDATA[ d <![CDATA[ e' },
+        { string: 'a <?p b ?> c <?q d <?r e', expected: 'a  c <?q d <?r e' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
+    it('should take linear time on repeated unterminated HTML constructs', function () {
+      // Each of these used to rescan the rest of the text from every opener (quadratic): the first
+      // three took seconds at this size. They are left as text, and must finish in well under a second.
+      const inputs = {
+        comments: '<!--x>'.repeat(64000),
+        'processing instructions': '<?x>'.repeat(64000),
+        declarations: '<!a'.repeat(64000),
+      };
+      Object.keys(inputs).forEach(function (name) {
+        const started = Date.now();
+        const output = removeMd(inputs[name]);
+        const elapsed = Date.now() - started;
+        expect(output, name).to.equal(inputs[name]);
+        expect(elapsed, name + ' took ' + elapsed + 'ms').to.be.below(1000);
+      });
+    });
+
     it('should strip MDX import statements', function () {
       const tests = [
         { string: 'import page404 from "@/assets/images/404.png"\n\nHere is some text', expected: 'Here is some text' },

@@ -1,5 +1,88 @@
 // Generated from index.js by scripts/build-esm.mjs. Do not edit directly.
 
+const uriAutolink = /<[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\s<>]*>/y;
+const emailAutolink = /<[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*>/y;
+const htmlTagName = /<\/?[A-Za-z][A-Za-z0-9-]*/y;
+
+// Removes HTML, treating "<" as HTML only when it can start an HTML construct (as in CommonMark),
+// so plain text such as "2 < 3 and 3 > 1" is left alone. The text is scanned once from left to
+// right, and the position of a missing terminator is remembered, so many unterminated comments,
+// CDATA sections or declarations cannot make it rescan the rest of the text for each one.
+// A tag still ends at the first ">", but a quoted attribute value may contain "<".
+function removeHtml(text, tagsToSkip) {
+  const skipRegex = tagsToSkip.length > 0 ? new RegExp(`</?(?:${tagsToSkip.join('|')})(?=[>\\s])`, 'y') : null;
+  const found = {};
+  // Index of the first `needle` at or after `from`; `from` never decreases for a given needle.
+  const find = function(needle, from) {
+    if (found[needle] === -1) return -1;
+    if (found[needle] === undefined || found[needle] < from) found[needle] = text.indexOf(needle, from);
+    return found[needle];
+  };
+  // Index just after a construct that must be closed by `terminator`, or -1.
+  const endOf = function(terminator, from) {
+    const index = find(terminator, from);
+    return index === -1 ? -1 : index + terminator.length;
+  };
+  const matchEnd = function(regex, start) {
+    regex.lastIndex = start;
+    return regex.test(text) ? regex.lastIndex : -1;
+  };
+
+  const htmlEnd = function(start) {
+    let construct = -1;
+    if (text.startsWith('<!--', start)) construct = endOf('-->', start + 4);
+    else if (text.startsWith('<![CDATA[', start)) construct = endOf(']]>', start + 9);
+    else if (text.startsWith('<?', start)) construct = endOf('?>', start + 2);
+    else if (text.startsWith('<!', start) && /[A-Za-z]/.test(text.charAt(start + 2))) construct = endOf('>', start);
+    if (construct !== -1) return construct;
+
+    const autolinkEnd = Math.max(matchEnd(uriAutolink, start), matchEnd(emailAutolink, start));
+    if (autolinkEnd !== -1) return autolinkEnd;
+
+    const nameEnd = matchEnd(htmlTagName, start);
+    if (nameEnd === -1) return -1;
+    if (text.charAt(nameEnd) === '>') return nameEnd + 1;
+    if (text.charAt(nameEnd) !== '/' && !/\s/.test(text.charAt(nameEnd))) return -1;
+    const end = endOf('>', start);
+    if (end === -1) return -1;
+    let quote = '';
+    for (let index = nameEnd + 1; index < end - 1; index++) {
+      const character = text.charAt(index);
+      if (quote) {
+        if (character === quote) quote = '';
+      } else if (character === '"' || character === "'") {
+        quote = character;
+      } else if (character === '<') {
+        return -1;
+      }
+    }
+    return end;
+  };
+
+  const isSkipped = function(start) {
+    if (!skipRegex) return false;
+    skipRegex.lastIndex = start;
+    if (!skipRegex.test(text)) return false;
+    const next = text.charAt(skipRegex.lastIndex);
+    return next === '>' || find('>', start) !== -1;
+  };
+
+  let result = '';
+  let copied = 0;
+  let start = text.indexOf('<');
+  while (start !== -1) {
+    const end = isSkipped(start) ? -1 : htmlEnd(start);
+    if (end === -1) {
+      start = text.indexOf('<', start + 1);
+    } else {
+      result += text.slice(copied, start);
+      copied = end;
+      start = text.indexOf('<', end);
+    }
+  }
+  return result + text.slice(copied);
+}
+
 export default function removeMarkdown(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
@@ -62,35 +145,14 @@ export default function removeMarkdown(md, options) {
       output = output.replace(/\*\[.*\]:.*\n/, '');
     }
 
-    // Only "<" followed by something that can start HTML (as in CommonMark) is treated as
-    // HTML, so plain text such as "2 < 3 and 3 > 1" is left alone. Attribute values are not
-    // parsed: a tag ends at the first ">", as before.
-    const htmlConstructs = [
-      '<!--[\\s\\S]*?-->',                                   // comment
-      '<!\\[CDATA\\[[\\s\\S]*?\\]\\]>',                      // CDATA section
-      '<\\?[\\s\\S]*?\\?>',                                  // processing instruction
-      '<![A-Za-z][^>]*>',                                    // declaration, e.g. <!DOCTYPE html>
-      '<[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\\s<>]*>',            // URI autolink
-      "<[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*>", // email autolink
-      '</?[A-Za-z][A-Za-z0-9-]*(?:[\\s/][^<>]*)?>',          // opening, closing or self-closing tag
-    ].join('|')
-    let htmlReplaceRegex = new RegExp(htmlConstructs, 'g')
-    if (options.htmlTagsToSkip && options.htmlTagsToSkip.length > 0) {
-      // Create a regex that matches tags not in htmlTagsToSkip
-      const joinedHtmlTagsToSkip = options.htmlTagsToSkip.join('|')
-      htmlReplaceRegex = new RegExp(
-        `(?!</?(${joinedHtmlTagsToSkip})(?=>|\\s[^>]*>))(?:${htmlConstructs})`,
-        'g',
-      )
-    }
-
     if (options.separateLinksAndTexts) {
       output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
     }
 
+    // Remove HTML tags
+    output = removeHtml(output, options.htmlTagsToSkip || []);
+
     output = output
-      // Remove HTML tags
-      .replace(htmlReplaceRegex, '')
       // Remove setext-style headers
       .replace(/^[=\-]{2,}\s*$/g, '')
       // Remove footnotes?
