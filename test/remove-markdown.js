@@ -21,6 +21,20 @@ describe('remove Markdown', function () {
         { string: '*a **b** c*', expected: 'a b c' },
         { string: 'Use **bold with *italic* inside** here', expected: 'Use bold with italic inside here' },
         { string: 'A *b **c** d* e', expected: 'A b c d e' },
+        { string: '**a *b **c** d* e**', expected: 'a b c d e' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
+    it('should not pair literal asterisks left behind by separate emphasis spans', function () {
+      const tests = [
+        { string: '**2*3** and **4*5**', expected: '2*3 and 4*5' },
+        { string: '**x*y** + **z*w**', expected: 'x*y + z*w' },
+        { string: '**a*b** c*', expected: 'a*b c*' },
+        { string: '**a*b**\n**c*d**', expected: 'a*b\nc*d' },
+        { string: '**2*3** and *4*', expected: '2*3 and 4' },
       ];
       tests.forEach(function (test) {
         expect(removeMd(test.string)).to.equal(test.expected);

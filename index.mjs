@@ -1,5 +1,87 @@
 // Generated from index.js by scripts/build-esm.mjs. Do not edit directly.
 
+// Pairs runs of `*` (one line) like a delimiter stack and leaves the number of asterisks still
+// unpaired in `left`. Closers are visited once, left to right, so the work is linear. A pair
+// makes every run between its two delimiters literal (`dead`) so it cannot pair again.
+function pairAsteriskRuns(runs, splitOpeners) {
+  const openers = [];
+  const loose = [];
+  const openersByLeft = {};
+  const remember = function(run) {
+    (openersByLeft[run.left] = openersByLeft[run.left] || []).push(run);
+  };
+
+  runs.forEach(function(closer) {
+    while (closer.canClose && closer.left > 0) {
+      // Prefer the nearest opener with exactly as many asterisks left, so that in **2*3** the
+      // closing ** pairs with the opening ** instead of the single * taking one of its asterisks.
+      let opener;
+      const sameLength = openersByLeft[closer.left] || [];
+      while (sameLength.length > 0 && !opener) {
+        const candidate = sameLength[sameLength.length - 1];
+        if (candidate.dead || candidate.left !== closer.left) sameLength.pop();
+        else opener = candidate;
+      }
+      const nearest = openers[openers.length - 1];
+      if (!opener && nearest && (splitOpeners || nearest.left <= closer.left)) opener = nearest;
+      if (!opener) break;
+
+      while (openers[openers.length - 1] !== opener) openers.pop().dead = true;
+      while (loose.length > 0 && loose[loose.length - 1].order > opener.order) loose.pop().dead = true;
+      const used = Math.min(opener.left, closer.left);
+      opener.left -= used;
+      closer.left -= used;
+      if (opener.left > 0) remember(opener);
+      else openers.pop();
+    }
+
+    if (closer.left === 0) return;
+    if (closer.canOpen) {
+      openers.push(closer);
+      remember(closer);
+    } else {
+      loose.push(closer);
+    }
+  });
+}
+
+// Strips `*` emphasis by pairing the delimiter runs once, in the original text, so emphasis nested
+// inside other emphasis is removed without re-reading the stripped output (which would turn
+// literal asterisks from separate spans into new pairs). Like the previous regex, a delimiter
+// opens only before a non-space and closes only after a non-space, and pairs stay on one line.
+function stripAsteriskEmphasis(text) {
+  return text.replace(/.+/g, function(line) {
+    const runs = [];
+    const runRegex = /\*+/g;
+    let match;
+    while ((match = runRegex.exec(line))) {
+      const before = line.charAt(match.index - 1);
+      const after = line.charAt(match.index + match[0].length);
+      runs.push({
+        order: runs.length,
+        start: match.index,
+        length: match[0].length,
+        left: match[0].length,
+        dead: false,
+        canOpen: after !== '' && !/\s/.test(after),
+        canClose: before !== '' && !/\s/.test(before),
+      });
+    }
+
+    // First pair without splitting an opener run, then pair what is left over (which may).
+    pairAsteriskRuns(runs, false);
+    pairAsteriskRuns(runs.filter(function(run) { return !run.dead && run.left > 0; }), true);
+
+    let result = '';
+    let position = 0;
+    runs.forEach(function(run) {
+      result += line.slice(position, run.start) + '*'.repeat(run.left);
+      position = run.start + run.length;
+    });
+    return result + line.slice(position);
+  });
+}
+
 export default function removeMarkdown(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
@@ -96,13 +178,8 @@ export default function removeMarkdown(md, options) {
       // Remove atx-style headers
       .replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6');
 
-    // Remove * emphasis. A single pass strips only the outermost emphasis, so repeat a few
-    // times (bounded) to also strip emphasis nested inside it, e.g. **bold with *italic* inside**.
-    for (let pass = 0; pass < 5; pass++) {
-      const stripped = output.replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3');
-      if (stripped === output) break;
-      output = stripped;
-    }
+    // Remove * emphasis
+    output = stripAsteriskEmphasis(output);
 
     output = output
       // Remove _ emphasis. Unlike *, _ emphasis gets rendered only if
