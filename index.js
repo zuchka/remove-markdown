@@ -1,3 +1,26 @@
+function stripHtml(text, options) {
+  let regex = /<[^>]*>/g;
+  if (options.htmlTagsToSkip && options.htmlTagsToSkip.length > 0) {
+    const tags = options.htmlTagsToSkip.join('|');
+    regex = new RegExp('<(?!\\/?(' + tags + ')(?=>|\\s[^>]*>))[^>]*>', 'g');
+  }
+  return text.replace(regex, '');
+}
+
+function stripImages(text, options) {
+  return text.replace(/\!\[(.*?)\][\[\(].*?[\]\)]/g, options.useImgAltText ? '$1' : '');
+}
+
+function stripInlineLinks(text, options) {
+  return text.replace(/\[([\s\S]*?)\]\s*[\(\[](.*?)[\)\]]/g, options.replaceLinksWithURL ? '$2' : '$1');
+}
+
+function stripEmphasis(text) {
+  return text
+    .replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3')
+    .replace(/(^|\W)([_]+)(\S)(.*?\S)??\2($|\W)/g, '$1$3$4$5');
+}
+
 module.exports = function(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
@@ -60,45 +83,26 @@ module.exports = function(md, options) {
       output = output.replace(/\*\[.*\]:.*\n/, '');
     }
 
-    let htmlReplaceRegex = /<[^>]*>/g
-    if (options.htmlTagsToSkip && options.htmlTagsToSkip.length > 0) {
-      // Create a regex that matches tags not in htmlTagsToSkip
-      const joinedHtmlTagsToSkip = options.htmlTagsToSkip.join('|')
-      htmlReplaceRegex = new RegExp(
-        `<(?!\/?(${joinedHtmlTagsToSkip})(?=>|\\s[^>]*>))[^>]*>`,
-        'g',
-      )
-    }
-
     if (options.separateLinksAndTexts) {
       output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
     }
 
-    output = output
-      // Remove HTML tags
-      .replace(htmlReplaceRegex, '')
+    output = stripHtml(output, options)
       // Remove setext-style headers
       .replace(/^[=\-]{2,}\s*$/g, '')
       // Remove footnotes?
       .replace(/\[\^.+?\](\: .*?$)?/g, '')
-      .replace(/\s{0,2}\[.*?\]: .*?$/g, '')
-      // Remove images
-      .replace(/\!\[(.*?)\][\[\(].*?[\]\)]/g, options.useImgAltText ? '$1' : '')
-      // Remove inline links
-      .replace(/\[([\s\S]*?)\]\s*[\(\[](.*?)[\)\]]/g, options.replaceLinksWithURL ? '$2' : '$1')
+      .replace(/\s{0,2}\[.*?\]: .*?$/g, '');
+    output = stripImages(output, options);
+    output = stripInlineLinks(output, options)
       // Remove blockquotes
       .replace(/^(\n)?\s{0,3}>\s?/gm, '$1')
       // .replace(/(^|\n)\s{0,3}>\s?/g, '\n\n')
       // Remove reference-style links?
       .replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')
       // Remove atx-style headers
-      .replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6')
-      // Remove * emphasis
-      .replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3')
-      // Remove _ emphasis. Unlike *, _ emphasis gets rendered only if
-      //   1. Either there is a whitespace character before opening _ and after closing _.
-      //   2. Or _ is at the start/end of the string.
-      .replace(/(^|\W)([_]+)(\S)(.*?\S)??\2($|\W)/g, '$1$3$4$5')
+      .replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6');
+    output = stripEmphasis(output)
       // Remove single-line code blocks (already handled multiline above in gfm section)
       .replace(/(`{3,})(.*?)\1/gm, '$2')
       // Remove inline code
