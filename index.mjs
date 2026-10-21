@@ -12,17 +12,18 @@ const htmlTagName = /<\/?[A-Za-z][A-Za-z0-9-]*/y;
 // nor lie inside one, so it is hidden from the pattern and put back afterwards. The result is the
 // same as without hiding. `lines` applies this per line (true), or to the last line only ('last'),
 // for patterns that cannot cross a line break; otherwise it applies to the whole text.
+// A hidden bracket is written as U+E000. To keep that safe for any input, U+E000 and the escape
+// character U+E001 that already occur in the text are first written as U+E001 followed by "1" or
+// "2", and are decoded again at the end, so no text can be mistaken for a hidden bracket.
 function replaceLiveBrackets(text, regex, replacement, tail, lines) {
   if (text.indexOf('[') === -1) return text;
-  let hidden = '';
-  for (let code = 0xE000; code <= 0xF8FF && !hidden; code++) {
-    if (text.indexOf(String.fromCharCode(code)) === -1) hidden = String.fromCharCode(code);
-  }
-  if (!hidden) return text.replace(regex, replacement);
+  const hidden = String.fromCharCode(0xE000);
+  const escape = String.fromCharCode(0xE001);
+  const escaped = text.split(escape).join(escape + '2').split(hidden).join(escape + '1');
 
   const hideDeadBrackets = function(part, offset) {
     // Only the last line can match a pattern that has to reach the end of the text.
-    let end = lines === 'last' && offset + part.length !== text.length ? 0 : -1;
+    let end = lines === 'last' && offset + part.length !== escaped.length ? 0 : -1;
     if (end === -1) {
       let match;
       tail.lastIndex = 0;
@@ -33,8 +34,12 @@ function replaceLiveBrackets(text, regex, replacement, tail, lines) {
     }
     return end === -1 ? part.split('[').join(hidden) : part.slice(0, end) + part.slice(end).split('[').join(hidden);
   };
-  const visible = lines ? text.replace(/.+/g, hideDeadBrackets) : hideDeadBrackets(text, 0);
-  return visible.replace(regex, replacement).split(hidden).join('[');
+  const visible = lines ? escaped.replace(/.+/g, hideDeadBrackets) : hideDeadBrackets(escaped, 0);
+  return visible
+    .replace(regex, replacement)
+    .split(hidden).join('[')
+    .split(escape + '1').join(hidden)
+    .split(escape + '2').join(escape);
 }
 
 // Removes HTML, treating "<" as HTML only when it can start an HTML construct (as in CommonMark),

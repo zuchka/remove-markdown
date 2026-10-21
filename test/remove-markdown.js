@@ -125,19 +125,26 @@ describe('remove Markdown', function () {
         { unit: '<?[x>', sizes: [64000] },
         { unit: '<[x>', sizes: [64000] },
         { unit: '![a', sizes: [64000] },
+        // The text may hold every character from U+E000 to U+F8FF, which are the private-use
+        // characters the implementation could otherwise be tempted to use for itself.
+        { unit: '<![CDATA[x>', sizes: [16000, 32000], privateUse: true },
+        { unit: '<[x>', sizes: [64000], privateUse: true },
       ];
       inputs.forEach(function (input) {
         input.sizes.forEach(function (size) {
           const code = [
             'const removeMd = require(' + JSON.stringify(entry) + ');',
             "removeMd('warmup');",
-            'const input = ' + JSON.stringify(input.unit) + '.repeat(' + size + ');',
+            'const prefix = ' + (input.privateUse
+              ? "Array.from({ length: 6400 }, (_, i) => String.fromCharCode(0xE000 + i)).join('')"
+              : "''") + ';',
+            'const input = prefix + ' + JSON.stringify(input.unit) + '.repeat(' + size + ');',
             'const start = Date.now();',
             'const output = removeMd(input);',
             'console.log(JSON.stringify([Date.now() - start, output.length]));',
           ].join('\n');
           const result = spawnSync(process.execPath, ['-e', code], { encoding: 'utf8', timeout: 10000 });
-          const label = JSON.stringify(input.unit) + ' x ' + size;
+          const label = JSON.stringify(input.unit) + ' x ' + size + (input.privateUse ? ' after U+E000..U+F8FF' : '');
           expect(result.error && result.error.code, label).to.equal(undefined);
           expect(result.status, label + ' ' + result.stderr).to.equal(0);
           expect(JSON.parse(result.stdout)[0], label).to.be.below(2500);
@@ -147,6 +154,8 @@ describe('remove Markdown', function () {
 
     it('should still remove valid links and images next to stray square brackets', function () {
       const stray = String.fromCharCode(0xE000);
+      const escape = String.fromCharCode(0xE001);
+      const allPrivateUse = Array.from({ length: 6400 }, function (_, i) { return String.fromCharCode(0xE000 + i); }).join('');
       const tests = [
         { string: 'x [a](b) y [ [ [', expected: 'x a y [ [ [' },
         { string: '![i](p.png) [ [ [ and [ ref ] [l](u)', expected: 'i  [ [ and [ ref (u)' },
@@ -155,6 +164,8 @@ describe('remove Markdown', function () {
         { string: 'a\n\n[ref]: http://r', expected: 'a' },
         // Text that happens to hold a character used internally must come back unchanged.
         { string: stray + ' [a](b) ' + stray, expected: stray + ' a ' + stray },
+        { string: escape + '1 [a](b) ' + stray + '2 [ ' + escape + escape + '2', expected: escape + '1 a ' + stray + '2 [ ' + escape + escape + '2' },
+        { string: allPrivateUse + ' [a](b) [ [ [ ![i](p) ' + allPrivateUse, expected: allPrivateUse + ' a [ [ [ i ' + allPrivateUse },
       ];
       tests.forEach(function (test) {
         expect(removeMd(test.string)).to.equal(test.expected);

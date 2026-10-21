@@ -41,6 +41,21 @@ test('the portable ESM implementation matches the CommonJS implementation', () =
   }
 });
 
+test('portable ESM stays fast and exact when the text holds every U+E000..U+F8FF character', () => {
+  const commonJs = require('remove-markdown');
+  const privateUse = Array.from({ length: 6400 }, (_, i) => String.fromCharCode(0xE000 + i)).join('');
+  const input = `${privateUse} [a](b) ${'<![CDATA[x>'.repeat(32000)}`;
+  const expected = `${privateUse} a ${'<![CDATA[x>'.repeat(32000)}`;
+
+  const started = Date.now();
+  const output = removeMdFromPortableEsm(input);
+  const elapsed = Date.now() - started;
+
+  assert.equal(output, expected);
+  assert.equal(commonJs(input), expected);
+  assert.ok(elapsed < 2500, `took ${elapsed} ms`);
+});
+
 test('the generated ESM implementation is synchronized with index.js', () => {
   run(process.execPath, ['scripts/build-esm.mjs', '--check'], projectRoot);
 });
