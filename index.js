@@ -1,3 +1,62 @@
+function readRuleOverrides(rules) {
+  if (rules === undefined) return undefined;
+  if (rules === null || typeof rules !== 'object' || Array.isArray(rules)) {
+    throw new TypeError('rules must be an object');
+  }
+  const overrides = Object.create(null);
+  Object.getOwnPropertyNames(rules).forEach(function(name) {
+    if (['html', 'images', 'inlineLinks', 'emphasis'].indexOf(name) === -1) {
+      throw new TypeError('Unknown rule: ' + name);
+    }
+    const rule = rules[name];
+    if (rule !== undefined && rule !== false && typeof rule !== 'function') {
+      throw new TypeError('Rule ' + name + ' must be false or a function');
+    }
+    overrides[name] = rule;
+  });
+  return overrides;
+}
+
+function runRule(name, text, overrides, options, defaultRule) {
+  const override = overrides && overrides[name];
+  if (override === undefined) return defaultRule(text, options);
+  if (override === false) return text;
+  const result = override(text);
+  if (typeof result !== 'string') {
+    // Consume rejected promises from unsupported async callbacks as well.
+    if (result && typeof result.then === 'function') Promise.resolve(result).catch(function() {});
+    throw new TypeError('Rule ' + name + ' must return a string');
+  }
+  return result;
+}
+
+function htmlRegex(options) {
+  let regex = /<[^>]*>/g;
+  if (options.htmlTagsToSkip && options.htmlTagsToSkip.length > 0) {
+    const tags = options.htmlTagsToSkip.join('|');
+    regex = new RegExp('<(?!\\/?(' + tags + ')(?=>|\\s[^>]*>))[^>]*>', 'g');
+  }
+  return regex;
+}
+
+function stripHtml(text, regex) {
+  return text.replace(regex, '');
+}
+
+function stripImages(text, options) {
+  return text.replace(/\!\[(.*?)\][\[\(].*?[\]\)]/g, options.useImgAltText ? '$1' : '');
+}
+
+function stripInlineLinks(text, options) {
+  return text.replace(/\[([\s\S]*?)\]\s*[\(\[](.*?)[\)\]]/g, options.replaceLinksWithURL ? '$2' : '$1');
+}
+
+function stripEmphasis(text) {
+  return text
+    .replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3')
+    .replace(/(^|\W)([_]+)(\S)(.*?\S)??\2($|\W)/g, '$1$3$4$5');
+}
+
 module.exports = function(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
@@ -38,6 +97,8 @@ module.exports = function(md, options) {
   output = output.replace(/^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/gm, '');
 
   try {
+    const overrides = Object.prototype.hasOwnProperty.call(options, 'rules')
+      ? readRuleOverrides(options.rules) : undefined;
     if (options.stripListLeaders) {
       if (options.listUnicodeChar)
         output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, options.listUnicodeChar + ' $1');
@@ -60,45 +121,30 @@ module.exports = function(md, options) {
       output = output.replace(/\*\[.*\]:.*\n/, '');
     }
 
-    let htmlReplaceRegex = /<[^>]*>/g
-    if (options.htmlTagsToSkip && options.htmlTagsToSkip.length > 0) {
-      // Create a regex that matches tags not in htmlTagsToSkip
-      const joinedHtmlTagsToSkip = options.htmlTagsToSkip.join('|')
-      htmlReplaceRegex = new RegExp(
-        `<(?!\/?(${joinedHtmlTagsToSkip})(?=>|\\s[^>]*>))[^>]*>`,
-        'g',
-      )
-    }
-
-    if (options.separateLinksAndTexts) {
+    // Preserve the legacy preparation order, including option getter behavior.
+    const htmlPattern = !overrides || overrides.html === undefined ? htmlRegex(options) : undefined;
+    // The legacy separator pass runs early. An explicit link override replaces
+    // both link paths and runs once at the usual inline-link position below.
+    if (options.separateLinksAndTexts && (!overrides || overrides.inlineLinks === undefined)) {
       output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
     }
 
-    output = output
-      // Remove HTML tags
-      .replace(htmlReplaceRegex, '')
+    output = runRule('html', output, overrides, htmlPattern, stripHtml)
       // Remove setext-style headers
       .replace(/^[=\-]{2,}\s*$/g, '')
       // Remove footnotes?
       .replace(/\[\^.+?\](\: .*?$)?/g, '')
-      .replace(/\s{0,2}\[.*?\]: .*?$/g, '')
-      // Remove images
-      .replace(/\!\[(.*?)\][\[\(].*?[\]\)]/g, options.useImgAltText ? '$1' : '')
-      // Remove inline links
-      .replace(/\[([\s\S]*?)\]\s*[\(\[](.*?)[\)\]]/g, options.replaceLinksWithURL ? '$2' : '$1')
+      .replace(/\s{0,2}\[.*?\]: .*?$/g, '');
+    output = runRule('images', output, overrides, options, stripImages);
+    output = runRule('inlineLinks', output, overrides, options, stripInlineLinks)
       // Remove blockquotes
       .replace(/^(\n)?\s{0,3}>\s?/gm, '$1')
       // .replace(/(^|\n)\s{0,3}>\s?/g, '\n\n')
       // Remove reference-style links?
       .replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')
       // Remove atx-style headers
-      .replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6')
-      // Remove * emphasis
-      .replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3')
-      // Remove _ emphasis. Unlike *, _ emphasis gets rendered only if
-      //   1. Either there is a whitespace character before opening _ and after closing _.
-      //   2. Or _ is at the start/end of the string.
-      .replace(/(^|\W)([_]+)(\S)(.*?\S)??\2($|\W)/g, '$1$3$4$5')
+      .replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6');
+    output = runRule('emphasis', output, overrides, options, stripEmphasis)
       // Remove single-line code blocks (already handled multiline above in gfm section)
       .replace(/(`{3,})(.*?)\1/gm, '$2')
       // Remove inline code

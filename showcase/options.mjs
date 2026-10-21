@@ -4,6 +4,9 @@ export const defaults = Object.freeze({
   htmlTagsToSkip: Object.freeze([]), stripMdxImports: false, throwError: false,
 });
 
+// Callback overrides are configured in application code, outside the worker form.
+export const programmaticOptions = Object.freeze(['rules']);
+
 export function changedOptions(options) {
   return Object.fromEntries(Object.entries(defaults)
     .filter(([key, value]) => JSON.stringify(options[key]) !== JSON.stringify(value))

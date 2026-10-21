@@ -9,6 +9,17 @@ Deno.test('the ESM entry works in Deno', () => {
   }
 });
 
+Deno.test('rule overrides work in Deno', () => {
+  if (removeMd('# **kept**', { rules: { emphasis: false } }) !== '**kept**') {
+    throw new Error('Unexpected emphasis override output');
+  }
+  if (removeMd('<b>text</b>', {
+    rules: { html: text => text.toUpperCase() },
+  }) !== '<B>TEXT</B>') {
+    throw new Error('Unexpected HTML override output');
+  }
+});
+
 Deno.test('the ESM entry works as a self-contained URL module', async () => {
   const esmSource = await Deno.readTextFile(new URL('../index.mjs', import.meta.url));
   const requestedPaths = [];
@@ -39,6 +50,9 @@ Deno.test('the ESM entry works as a self-contained URL module', async () => {
 
     if (removeMarkdown('# URL-loaded **module**') !== 'URL-loaded module') {
       throw new Error('The URL-loaded ESM entry returned unexpected output');
+    }
+    if (removeMarkdown('# **kept**', { rules: { emphasis: false } }) !== '**kept**') {
+      throw new Error('The URL-loaded ESM entry returned unexpected override output');
     }
     if (requestedPaths.length !== 1 || requestedPaths[0] !== '/index.mjs') {
       throw new Error(

@@ -77,6 +77,22 @@ declare function removeMd(md: string, options?: {
   htmlTagsToSkip?: string[];
 
   /**
+   * Per-call replacements for built-in operations. Omit an entry for normal behavior.
+   * Each callback receives the current text once and returns a string synchronously.
+   * Output continues through later operations. Errors follow throwError.
+   */
+  rules?: {
+    /** Skip HTML stripping with false, or replace it with a synchronous string transform. */
+    html?: false | ((text: string) => string);
+    /** Skip or replace image handling, superseding useImgAltText. Later rules still run. */
+    images?: false | ((text: string) => string);
+    /** Skip or replace link occurrences, superseding both link output options. */
+    inlineLinks?: false | ((text: string) => string);
+    /** Skip or replace both asterisk and underscore emphasis removal. */
+    emphasis?: false | ((text: string) => string);
+  };
+
+  /**
    * Throw errors encountered while processing instead of catching them,
    * logging via `console.error`, and returning the original input.
    * @default false
