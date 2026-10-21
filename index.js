@@ -6,13 +6,74 @@ const linkDestination = /[\(\[](.*?)[\)\]]/y;
 // contain any depth of balanced brackets, and bracketed text that is not followed directly by
 // "(" or "[" (a footnote marker, "[Enter]") never swallows the text before a later link. A
 // backslash escapes the next character, and a code span can hold brackets. A code span is found
-// before its brackets are counted, but only when it closes in the same block (a blank line or an
-// ATX heading ends a block), so a lone backtick cannot reach into a later paragraph.
-function removeInlineLinks(text, replaceWithUrl) {
+// before its brackets are counted, but only when it closes in the same block, so a lone backtick
+// cannot reach into a later paragraph, quote, list item or heading. 'blockEnds' holds the offsets
+// where blocks end, as returned by blockBoundaries() and moved along by replaceTracked().
+// Where blocks end, as offsets into the original text, so that a code span cannot reach across
+// them: at a blank line, around an ATX heading or a thematic break, at the start of a blockquote
+// and at the start of every list item. Lines end with LF, CRLF or CR. The offsets are found before
+// the list markers, rules and fences are removed (see replaceTracked), because those are gone by
+// the time links are. Known limits: a line that continues a quote or list item without its marker
+// (a lazy continuation) stays in that block, the paragraphs inside a list item are not told apart,
+// and nested structures such as a list inside a quote are only recognised by their first marker.
+function blockBoundaries(text) {
+  const ends = [];
+  const terminator = /\r\n|\r|\n/g;
+  let start = 0;
+  let afterQuote = false;
+  for (;;) {
+    const found = terminator.exec(text);
+    const lineEnd = found ? found.index : text.length;
+    const line = text.slice(start, lineEnd);
+    const quote = /^ {0,3}>/.test(line);
+    if (/^[ \t]*$/.test(line)) {
+      ends.push(start);
+    } else if (/^ {0,3}#{1,6}(?:[ \t]|$)/.test(line) || /^ {0,3}(?:(?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})$/.test(line)) {
+      ends.push(start, lineEnd);
+    } else if (quote ? !afterQuote : /^[ \t]*(?:[*+-]|\d+\.)[ \t]+\S/.test(line)) {
+      ends.push(start);
+    }
+    afterQuote = quote;
+    if (!found) return ends;
+    start = found.index + found[0].length;
+  }
+}
+
+// Like text.replace(regex, replacement), but also moves the offsets in 'offsets' to where they fall
+// in the new text. An offset strictly inside a replaced span is dropped: what stood there is gone,
+// or is code inside a fence, and is no longer markdown structure.
+// 'replacement' is a string with $1..$9 or a function, as for String.prototype.replace.
+function replaceTracked(text, regex, replacement, offsets) {
+  const spans = [];
+  const output = text.replace(regex, function() {
+    const groups = arguments;
+    const match = groups[0];
+    const offset = groups[groups.length - 2];
+    const replaced = typeof replacement === 'function'
+      ? replacement.apply(null, groups)
+      : replacement.replace(/\$([1-9])/g, function(_, number) { return groups[number] || ''; });
+    spans.push([offset, offset + match.length, replaced.length]);
+    return replaced;
+  });
+  const moved = [];
+  let shift = 0;
+  let span = 0;
+  offsets.forEach(function(offset) {
+    while (span < spans.length && spans[span][1] <= offset) {
+      shift += spans[span][2] - (spans[span][1] - spans[span][0]);
+      span++;
+    }
+    if (span === spans.length || spans[span][0] >= offset) moved.push(offset + shift);
+  });
+  offsets.length = 0;
+  Array.prototype.push.apply(offsets, moved);
+  return output;
+}
+
+function removeInlineLinks(text, replaceWithUrl, blockEnds) {
   const parts = [];
   const openBrackets = [];
   let backtickRuns = null;
-  let blockEnds = null;
   let blockEndIndex = 0;
   // Index of the closing run of a code span opened by `length` backticks that end at `position`.
   const closingBacktickRun = function(position, length) {
@@ -24,14 +85,6 @@ function removeInlineLinks(text, replaceWithUrl) {
         const entry = backtickRuns[run[0].length] || (backtickRuns[run[0].length] = { starts: [], next: 0 });
         entry.starts.push(run.index);
       }
-      // Block ends: the start of a blank line, and the start and the end of an ATX heading line.
-      blockEnds = [];
-      let lineStart = 0;
-      text.split('\n').forEach(function(line) {
-        if (/^[ \t\r]*$/.test(line)) blockEnds.push(lineStart);
-        else if (/^ {0,3}#{1,6}(?:[ \t]|\r?$)/.test(line)) blockEnds.push(lineStart, lineStart + line.length);
-        lineStart += line.length + 1;
-      });
     }
     while (blockEndIndex < blockEnds.length && blockEnds[blockEndIndex] < position) blockEndIndex++;
     const blockEnd = blockEndIndex < blockEnds.length ? blockEnds[blockEndIndex] : text.length;
@@ -118,30 +171,36 @@ module.exports = function(md, options) {
     }
   }
 
+  // The block boundaries are read from the text as it is now, and every replacement up to the link
+  // step goes through replace(), which keeps them in place.
+  const blockEnds = blockBoundaries(output);
+  const replace = function(regex, replacement) {
+    output = replaceTracked(output, regex, replacement, blockEnds);
+  };
+
   // Remove horizontal rules (stripListHeaders conflict with this rule, which is why it has been moved to the top)
-  output = output.replace(/^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/gm, '');
+  replace(/^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/gm, '');
 
   try {
     if (options.stripListLeaders) {
       if (options.listUnicodeChar)
-        output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, options.listUnicodeChar + ' $1');
+        replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, options.listUnicodeChar + ' $1');
       else
-        output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, '$1');
+        replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, '$1');
     }
     if (options.gfm) {
-      output = output
       // Header
-        .replace(/\n={2,}/g, '\n')
-        // Fenced codeblocks
-        .replace(/~{3}.*\n/g, '')
-        // Strikethrough
-        .replace(/~~/g, '')
-        // Fenced codeblocks with backticks
-        .replace(/```(?:.*)\n([\s\S]*?)```/g, (_, code) => code.trim());
+      replace(/\n={2,}/g, '\n');
+      // Fenced codeblocks
+      replace(/~{3}.*\n/g, '');
+      // Strikethrough
+      replace(/~~/g, '');
+      // Fenced codeblocks with backticks
+      replace(/```(?:.*)\n([\s\S]*?)```/g, (_, code) => code.trim());
     }
     if (options.abbr) {
       // Remove abbreviations
-      output = output.replace(/\*\[.*\]:.*\n/, '');
+      replace(/\*\[.*\]:.*\n/, '');
     }
 
     let htmlReplaceRegex = /<[^>]*>/g
@@ -155,22 +214,21 @@ module.exports = function(md, options) {
     }
 
     if (options.separateLinksAndTexts) {
-      output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
+      replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
     }
 
-    output = output
-      // Remove HTML tags
-      .replace(htmlReplaceRegex, '')
-      // Remove setext-style headers
-      .replace(/^[=\-]{2,}\s*$/g, '')
-      // Remove footnotes?
-      .replace(/\[\^.+?\](\: .*?$)?/g, '')
-      .replace(/\s{0,2}\[.*?\]: .*?$/g, '')
-      // Remove images
-      .replace(/\!\[(.*?)\][\[\(].*?[\]\)]/g, options.useImgAltText ? '$1' : '');
+    // Remove HTML tags
+    replace(htmlReplaceRegex, '');
+    // Remove setext-style headers
+    replace(/^[=\-]{2,}\s*$/g, '');
+    // Remove footnotes?
+    replace(/\[\^.+?\](\: .*?$)?/g, '');
+    replace(/\s{0,2}\[.*?\]: .*?$/g, '');
+    // Remove images
+    replace(/\!\[(.*?)\][\[\(].*?[\]\)]/g, options.useImgAltText ? '$1' : '');
 
     // Remove inline links
-    output = removeInlineLinks(output, options.replaceLinksWithURL);
+    output = removeInlineLinks(output, options.replaceLinksWithURL, blockEnds);
 
     output = output
       // Remove blockquotes
