@@ -5,12 +5,17 @@ const linkDestination = /[\(\[](.*?)[\)\]]/y;
 // destination. Square brackets are matched like a stack in one left-to-right pass: link text may
 // contain any depth of balanced brackets, and bracketed text that is not followed directly by
 // "(" or "[" (a footnote marker, "[Enter]") never swallows the text before a later link. A
-// backslash escapes the next character, and inside link text a code span can hold brackets.
+// backslash escapes the next character, and a code span can hold brackets. A code span is found
+// before its brackets are counted, but only when it closes in the same block (a blank line or an
+// ATX heading ends a block), so a lone backtick cannot reach into a later paragraph.
 function removeInlineLinks(text, replaceWithUrl) {
   const parts = [];
   const openBrackets = [];
   let backtickRuns = null;
-  const backtickRunsAfter = function(position, length) {
+  let blockEnds = null;
+  let blockEndIndex = 0;
+  // Index of the closing run of a code span opened by `length` backticks that end at `position`.
+  const closingBacktickRun = function(position, length) {
     if (!backtickRuns) {
       backtickRuns = {};
       const runs = /`+/g;
@@ -19,12 +24,23 @@ function removeInlineLinks(text, replaceWithUrl) {
         const entry = backtickRuns[run[0].length] || (backtickRuns[run[0].length] = { starts: [], next: 0 });
         entry.starts.push(run.index);
       }
+      // Block ends: the start of a blank line, and the start and the end of an ATX heading line.
+      blockEnds = [];
+      let lineStart = 0;
+      text.split('\n').forEach(function(line) {
+        if (/^[ \t\r]*$/.test(line)) blockEnds.push(lineStart);
+        else if (/^ {0,3}#{1,6}(?:[ \t]|\r?$)/.test(line)) blockEnds.push(lineStart, lineStart + line.length);
+        lineStart += line.length + 1;
+      });
     }
+    while (blockEndIndex < blockEnds.length && blockEnds[blockEndIndex] < position) blockEndIndex++;
+    const blockEnd = blockEndIndex < blockEnds.length ? blockEnds[blockEndIndex] : text.length;
     const entry = backtickRuns[length];
     if (!entry) return -1;
     // Positions only increase, so each run is passed at most once.
     while (entry.next < entry.starts.length && entry.starts[entry.next] < position) entry.next++;
-    return entry.next < entry.starts.length ? entry.starts[entry.next] : -1;
+    const closing = entry.next < entry.starts.length ? entry.starts[entry.next] : -1;
+    return closing !== -1 && closing + length <= blockEnd ? closing : -1;
   };
 
   let copied = 0;
@@ -35,8 +51,8 @@ function removeInlineLinks(text, replaceWithUrl) {
     const end = start + token[0].length;
     const mark = token[0].charAt(0);
     if (mark === '`') {
-      // Inside link text, a code span may contain brackets that must not count.
-      const closing = openBrackets.length > 0 ? backtickRunsAfter(end, token[0].length) : -1;
+      // The brackets inside a code span must not count, wherever the span is.
+      const closing = closingBacktickRun(end, token[0].length);
       if (closing !== -1) linkTokens.lastIndex = closing + token[0].length;
     } else if (mark === '[') {
       parts.push(text.slice(copied, start), '[');

@@ -381,6 +381,33 @@ import 'a'`, expected: '' },
       });
     });
 
+    it('should not let a backtick in link text close a code span in a later block', function () {
+      const tests = [
+        { string: '[foo `bar](/uri)\n\nText with `code`.', expected: 'foo `bar\n\nText with code.', url: '/uri\n\nText with code.' },
+        { string: '[foo `bar](/uri)\n# Heading `code`', expected: 'foo `bar\nHeading code', url: '/uri\nHeading code' },
+        { string: '[foo `bar](/uri)\n  \nText with `code`.', expected: 'foo `bar\n  \nText with code.', url: '/uri\n  \nText with code.' },
+        // A code span can still continue onto the next line of the same paragraph.
+        { string: '[foo `a\nb]` bar](/uri)', expected: 'foo `a\nb]` bar', url: '/uri' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+        expect(removeMd(test.string, { replaceLinksWithURL: true })).to.equal(test.url);
+      });
+    });
+
+    it('should not count square brackets inside code spans outside link text', function () {
+      const tests = [
+        { string: 'Use `[` and [link](u) after `code`.', expected: 'Use [ and link after code.', url: 'Use [ and u after code.' },
+        { string: 'Use `]` and [link](u).', expected: 'Use ] and link.', url: 'Use ] and u.' },
+        { string: '`[a](b)` and [c](d)', expected: '[a](b) and c', url: '[a](b) and d' },
+        { string: 'a `b\n\nc` d [l](u)', expected: 'a `b\n\nc` d l', url: 'a `b\n\nc` d u' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+        expect(removeMd(test.string, { replaceLinksWithURL: true })).to.equal(test.url);
+      });
+    });
+
     it('should keep url instead of text when replaceLinksWithURL is enabled', function () {
       const string = 'This is a [link](http://www.disney.com/).';
       const expected = 'This is a http://www.disney.com/.';

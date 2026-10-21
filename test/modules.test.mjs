@@ -31,6 +31,8 @@ test('the portable ESM implementation matches the CommonJS implementation', () =
     ['import { A, B as C, } from "pkg"; \t\r\n \r\n# Text', { stripMdxImports: true }],
     ['import A from "pkg";\n\n- import "data"', { stripMdxImports: true }],
     ['import { A, B } from "pkg";\n\n# Text', { stripMdxImports: false }],
+    ['[foo `bar](/uri)\n\nText with `code`.', undefined],
+    ['Use `[` and [link](u) after `code`.', { replaceLinksWithURL: true }],
   ];
 
   for (const [markdown, options] of cases) {
@@ -38,6 +40,21 @@ test('the portable ESM implementation matches the CommonJS implementation', () =
       removeMdFromPortableEsm(markdown, options),
       commonJs(markdown, options),
     );
+  }
+});
+
+test('CommonJS and portable ESM scope code spans to a block and to a link', () => {
+  const commonJs = require('remove-markdown');
+  const cases = [
+    ['[foo `bar](/uri)\n\nText with `code`.', undefined, 'foo `bar\n\nText with code.'],
+    ['[foo `bar](/uri)\n\nText with `code`.', { replaceLinksWithURL: true }, '/uri\n\nText with code.'],
+    ['Use `[` and [link](u) after `code`.', undefined, 'Use [ and link after code.'],
+    ['Use `[` and [link](u) after `code`.', { replaceLinksWithURL: true }, 'Use [ and u after code.'],
+  ];
+
+  for (const [markdown, options, expected] of cases) {
+    assert.equal(commonJs(markdown, options && { ...options }), expected);
+    assert.equal(removeMdFromPortableEsm(markdown, options && { ...options }), expected);
   }
 });
 
