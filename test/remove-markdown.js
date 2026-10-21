@@ -298,120 +298,143 @@ import 'a'`, expected: '' },
       expect(removeMd(paragraph)).to.equal(expected);
     });
 
-    it('should remove links', function () {
-      const string = 'This is a [link](http://www.disney.com/).';
-      const expected = 'This is a link.';
-      expect(removeMd(string)).to.equal(expected);
-    });
+    describe('acceptance: links, brackets and code spans', function () {
+      // Every case is checked for the default output ('text') and for replaceLinksWithURL ('url').
+      // 'same' stands for a string that has to come back unchanged in both modes.
+      function expectBoth(cases) {
+        cases.forEach(function (test) {
+          const text = test.same !== undefined ? test.same : test.text;
+          const url = test.same !== undefined ? test.same : test.url;
+          expect(removeMd(test.string), JSON.stringify(test.string)).to.equal(text);
+          expect(removeMd(test.string, { replaceLinksWithURL: true }), JSON.stringify(test.string) + ' (url)').to.equal(url);
+        });
+      }
 
-    it('should remove links with square brackets', function () {
-      const string = 'This is a [link [with brackets]](http://www.disney.com/).';
-      const expected = 'This is a link [with brackets].';
-      expect(removeMd(string)).to.equal(expected);
-    });
-
-    it('should not let bracketed text that is not a link swallow text up to a later link', function () {
-      const tests = [
-        { string: 'see [1] and [link](http://x.y) end', expected: 'see [1] and link end' },
-        { string: 'Press [Enter] then [docs](http://d.e)', expected: 'Press [Enter] then docs' },
-        { string: '[x]\n\nSome text\n\n[link](u)', expected: '[x]\n\nSome text\n\nlink' },
-        { string: 'to the west.[15] Ashgabat is the capital.[16] See [docs](http://d.e).', expected: 'to the west.[15] Ashgabat is the capital.[16] See docs.' },
-      ];
-      tests.forEach(function (test) {
-        expect(removeMd(test.string)).to.equal(test.expected);
+      it('should remove links', function () {
+        expectBoth([
+          { string: 'This is a [link](http://www.disney.com/).', text: 'This is a link.', url: 'This is a http://www.disney.com/.' },
+          { string: 'a [text][ref] b', text: 'a text b', url: 'a ref b' },
+        ]);
       });
-    });
 
-    it('should not treat bracketed text followed by whitespace and parentheses as a link', function () {
-      const string = 'Smith et al. [12] (see appendix) and [Jones] (2020)';
-      expect(removeMd(string)).to.equal(string);
-    });
-
-    it('should keep the url of a link after a bracketed footnote marker', function () {
-      const string = 'see [1] and [link](http://x.y) end';
-      const expected = 'see [1] and http://x.y end';
-      expect(removeMd(string, { replaceLinksWithURL: true })).to.equal(expected);
-    });
-
-    it('should still remove reference-style links and images next to bracketed text', function () {
-      const tests = [
-        { string: 'a [text][ref] b', expected: 'a text b' },
-        { string: 'a [1] ![alt](http://i.png) b [text][ref]', expected: 'a [1] alt b text' },
-      ];
-      tests.forEach(function (test) {
-        expect(removeMd(test.string)).to.equal(test.expected);
+      it('should remove links whose text has nested square brackets', function () {
+        expectBoth([
+          { string: 'This is a [link [with brackets]](http://www.disney.com/).', text: 'This is a link [with brackets].', url: 'This is a http://www.disney.com/.' },
+          { string: '[link [foo [bar]]](/uri)', text: 'link [foo [bar]]', url: '/uri' },
+          { string: '[a [b [c [d]]]](u)', text: 'a [b [c [d]]]', url: 'u' },
+          { string: 'x [link [foo [bar]]](/uri) y [z](w)', text: 'x link [foo [bar]] y z', url: 'x /uri y w' },
+          { string: '[x] and [link [nested]](u)', text: '[x] and link [nested]', url: '[x] and u' },
+        ]);
       });
-    });
 
-    it('should remove links whose text has nested square brackets', function () {
-      const tests = [
-        { string: '[link [foo [bar]]](/uri)', expected: 'link [foo [bar]]', url: '/uri' },
-        { string: '[a [b [c [d]]]](u)', expected: 'a [b [c [d]]]', url: 'u' },
-        { string: 'x [link [foo [bar]]](/uri) y [z](w)', expected: 'x link [foo [bar]] y z', url: 'x /uri y w' },
-        { string: '[x] and [link [nested]](u)', expected: '[x] and link [nested]', url: '[x] and u' },
-      ];
-      tests.forEach(function (test) {
-        expect(removeMd(test.string)).to.equal(test.expected);
-        expect(removeMd(test.string, { replaceLinksWithURL: true })).to.equal(test.url);
+      it('should respect escaped square brackets in link text', function () {
+        expectBoth([
+          { string: '[link \\[bar](/uri)', text: 'link \\[bar', url: '/uri' },
+          { string: '[a \\] b](/u)', text: 'a \\] b', url: '/u' },
+          { string: '[a \\\\](u) z', text: 'a \\\\ z', url: 'u z' },
+        ]);
       });
-    });
 
-    it('should respect escaped square brackets in link text', function () {
-      const tests = [
-        { string: '[link \\[bar](/uri)', expected: 'link \\[bar', url: '/uri' },
-        { string: '[a \\] b](/u)', expected: 'a \\] b', url: '/u' },
-        { string: '[a \\\\](u) z', expected: 'a \\\\ z', url: 'u z' },
-      ];
-      tests.forEach(function (test) {
-        expect(removeMd(test.string)).to.equal(test.expected);
-        expect(removeMd(test.string, { replaceLinksWithURL: true })).to.equal(test.url);
+      it('should not count square brackets inside code spans, inside or outside link text', function () {
+        expectBoth([
+          { string: '[foo `]` bar](/uri)', text: 'foo ] bar', url: '/uri' },
+          { string: '[foo `[` bar](/uri)', text: 'foo [ bar', url: '/uri' },
+          { string: '[foo ``]`` bar](/uri)', text: 'foo `]` bar', url: '/uri' },
+          { string: 'use `a[0]` and [link](u)', text: 'use a[0] and link', url: 'use a[0] and u' },
+          { string: 'Use `[` and [link](u) after `code`.', text: 'Use [ and link after code.', url: 'Use [ and u after code.' },
+          { string: 'Use `]` and [link](u).', text: 'Use ] and link.', url: 'Use ] and u.' },
+          // Brackets in a code span are never a link.
+          { string: '`[a](b)` and [c](d)', text: '[a](b) and c', url: '[a](b) and d' },
+        ]);
       });
-    });
 
-    it('should not count square brackets inside code spans in link text', function () {
-      const tests = [
-        { string: '[foo `]` bar](/uri)', expected: 'foo ] bar', url: '/uri' },
-        { string: '[foo `[` bar](/uri)', expected: 'foo [ bar', url: '/uri' },
-        { string: '[foo ``]`` bar](/uri)', expected: 'foo `]` bar', url: '/uri' },
-        { string: 'use `a[0]` and [link](u)', expected: 'use a[0] and link', url: 'use a[0] and u' },
-      ];
-      tests.forEach(function (test) {
-        expect(removeMd(test.string)).to.equal(test.expected);
-        expect(removeMd(test.string, { replaceLinksWithURL: true })).to.equal(test.url);
+      it('should keep bracketed text that is not a link, and not let it swallow a later link', function () {
+        expectBoth([
+          { string: 'see [1] and [link](http://x.y) end', text: 'see [1] and link end', url: 'see [1] and http://x.y end' },
+          { string: 'Press [Enter] then [docs](http://d.e)', text: 'Press [Enter] then docs', url: 'Press [Enter] then http://d.e' },
+          { string: '[x]\n\nSome text\n\n[link](u)', text: '[x]\n\nSome text\n\nlink', url: '[x]\n\nSome text\n\nu' },
+          {
+            string: 'to the west.[15] Ashgabat is the capital.[16] See [docs](http://d.e).',
+            text: 'to the west.[15] Ashgabat is the capital.[16] See docs.',
+            url: 'to the west.[15] Ashgabat is the capital.[16] See http://d.e.',
+          },
+          { string: 'a [1] ![alt](http://i.png) b [text][ref]', text: 'a [1] alt b text', url: 'a [1] alt b ref' },
+        ]);
       });
-    });
 
-    it('should not let a backtick in link text close a code span in a later block', function () {
-      const tests = [
-        { string: '[foo `bar](/uri)\n\nText with `code`.', expected: 'foo `bar\n\nText with code.', url: '/uri\n\nText with code.' },
-        { string: '[foo `bar](/uri)\n# Heading `code`', expected: 'foo `bar\nHeading code', url: '/uri\nHeading code' },
-        { string: '[foo `bar](/uri)\n  \nText with `code`.', expected: 'foo `bar\n  \nText with code.', url: '/uri\n  \nText with code.' },
-        // A code span can still continue onto the next line of the same paragraph.
-        { string: '[foo `a\nb]` bar](/uri)', expected: 'foo `a\nb]` bar', url: '/uri' },
-      ];
-      tests.forEach(function (test) {
-        expect(removeMd(test.string)).to.equal(test.expected);
-        expect(removeMd(test.string, { replaceLinksWithURL: true })).to.equal(test.url);
+      it('should only treat a destination that follows the closing bracket immediately as a link', function () {
+        expectBoth([
+          { string: 'Smith et al. [12] (see appendix) and [Jones] (2020)', same: 'Smith et al. [12] (see appendix) and [Jones] (2020)' },
+          { string: '[text] [ref]', same: '[text] [ref]' },
+          { string: 'Smith [12](see appendix)', text: 'Smith 12', url: 'Smith see appendix' },
+        ]);
       });
-    });
 
-    it('should not count square brackets inside code spans outside link text', function () {
-      const tests = [
-        { string: 'Use `[` and [link](u) after `code`.', expected: 'Use [ and link after code.', url: 'Use [ and u after code.' },
-        { string: 'Use `]` and [link](u).', expected: 'Use ] and link.', url: 'Use ] and u.' },
-        { string: '`[a](b)` and [c](d)', expected: '[a](b) and c', url: '[a](b) and d' },
-        { string: 'a `b\n\nc` d [l](u)', expected: 'a `b\n\nc` d l', url: 'a `b\n\nc` d u' },
-      ];
-      tests.forEach(function (test) {
-        expect(removeMd(test.string)).to.equal(test.expected);
-        expect(removeMd(test.string, { replaceLinksWithURL: true })).to.equal(test.url);
+      describe('a backtick never closes a code span in another block', function () {
+        // The first line holds a lone backtick inside the link text, the later block another one.
+        const link = '[foo `bar](/uri)';
+
+        it('should stop at blank lines (LF, CRLF and CR)', function () {
+          expectBoth([
+            { string: link + '\n\nText with `code`.', text: 'foo `bar\n\nText with code.', url: '/uri\n\nText with code.' },
+            { string: link + '\n  \nText with `code`.', text: 'foo `bar\n  \nText with code.', url: '/uri\n  \nText with code.' },
+            { string: link + '\r\n\r\nText with `code`.', text: 'foo `bar\r\n\r\nText with code.', url: '/uri\r\n\r\nText with code.' },
+            { string: link + '\r\rText with `code`.', text: 'foo `bar\r\rText with code.', url: '/uri\r\rText with code.' },
+          ]);
+        });
+
+        it('should stop at headings', function () {
+          expectBoth([
+            { string: link + '\n# Heading `code`', text: 'foo `bar\nHeading code', url: '/uri\nHeading code' },
+            { string: link + '\r# Heading `code`', text: 'foo `bar\rHeading code', url: '/uri\rHeading code' },
+            { string: link + '\r\n# Heading `code`', text: 'foo `bar\r\nHeading code', url: '/uri\r\nHeading code' },
+          ]);
+        });
+
+        it('should stop at blockquotes', function () {
+          expectBoth([
+            { string: link + '\n> quote `code`', text: 'foo `bar\nquote code', url: '/uri\nquote code' },
+            { string: link + '\r\n> quote `code`', text: 'foo `bar\r\nquote code', url: '/uri\r\nquote code' },
+          ]);
+        });
+
+        it('should stop at list items', function () {
+          expectBoth([
+            { string: link + '\n- list `code`', text: 'foo `bar\nlist code', url: '/uri\nlist code' },
+            { string: link + '\n* list `code`', text: 'foo `bar\nlist code', url: '/uri\nlist code' },
+            { string: link + '\n1. list `code`', text: 'foo `bar\nlist code', url: '/uri\nlist code' },
+            { string: link + '\r- list `code`', text: 'foo `bar\rlist code', url: '/uri\rlist code' },
+            { string: '- [foo `bar](/uri)\n- item `code`', text: 'foo `bar\nitem code', url: '/uri\nitem code' },
+            { string: 'Intro\n\n- one [a `b](u)\n- two `c`', text: 'Intro\n\none a `b\ntwo c', url: 'Intro\n\none u\ntwo c' },
+          ]);
+        });
+
+        it('should stop at thematic breaks and after fenced code, which are removed before links', function () {
+          expectBoth([
+            { string: link + '\n---\nText `code`', text: 'foo `bar\nText code', url: '/uri\nText code' },
+            { string: '```js\nx\n```\n' + link + '\n- list `code`', text: 'x\nfoo `bar\nlist code', url: 'x\n/uri\nlist code' },
+          ]);
+        });
       });
-    });
 
-    it('should keep url instead of text when replaceLinksWithURL is enabled', function () {
-      const string = 'This is a [link](http://www.disney.com/).';
-      const expected = 'This is a http://www.disney.com/.';
-      expect(removeMd(string, { replaceLinksWithURL: true })).to.equal(expected);
+      describe('a code span can still continue within one paragraph', function () {
+        it('should keep a code span that spans lines (LF, CRLF and CR)', function () {
+          expectBoth([
+            { string: '[foo `a\nb]` bar](/uri)', text: 'foo `a\nb]` bar', url: '/uri' },
+            { string: '[foo `a\r\nb]` bar](/uri)', text: 'foo `a\r\nb]` bar', url: '/uri' },
+            { string: '[foo `a\rb]` bar](/uri)', text: 'foo `a\rb]` bar', url: '/uri' },
+          ]);
+        });
+
+        // A lazy continuation line and the lines of one quoted paragraph belong to the same
+        // paragraph, as in CommonMark, so a backtick can still pair across them.
+        it('should treat the lines of one paragraph as one block, quoted or not', function () {
+          expectBoth([
+            { string: '[foo `bar](/uri)\ntext `code`', same: '[foo `bar](/uri)\ntext code' },
+            { string: '> [foo `bar](/uri)\n> text `code`', same: '[foo `bar](/uri)\ntext code' },
+          ]);
+        });
+      });
     });
 
     it('should not strip paragraphs without content', function() {
