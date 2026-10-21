@@ -57,6 +57,18 @@ describe('remove Markdown', function () {
       });
     });
 
+    it('should resolve asterisk emphasis inside an underscore span before the span closes', function () {
+      const tests = [
+        { string: '_***hello**_', expected: '*hello' },
+        { string: '__***hello**__', expected: '*hello' },
+        { string: '_a ***hello** b_', expected: 'a *hello b' },
+        { string: '_**a*_', expected: '*a' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
     it('should leave asterisk runs that do not pair as literal text', function () {
       const tests = [
         { string: '**a*b*', expected: '**ab' },

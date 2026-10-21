@@ -1,9 +1,10 @@
 // Generated from index.js by scripts/build-esm.mjs. Do not edit directly.
 
 // Pairs runs of `*` and `_` (one line) like a delimiter stack and leaves the number of delimiters
-// still unpaired in `left`. Closers are visited once, left to right, so the work is linear. A pair
-// makes every run between its two delimiters literal (`dead`) so it cannot pair again; this is
-// how an `*` inside a `__strong__` span can no longer pair with an `*` outside of it. Only the
+// still unpaired in `left`. Closers are visited once, left to right, so the work is linear. When
+// a pair forms, the runs between its two delimiters are first resolved among themselves (they may
+// split runs), and what stays unpaired is literal (`dead`) so it cannot pair again; this is how
+// an `*` inside a `__strong__` span can no longer pair with an `*` outside of it. Only the
 // asterisks are removed afterwards: the `_` emphasis itself is still stripped by its own rule.
 function pairEmphasisRuns(runs, splitOpeners) {
   const openers = [];
@@ -34,8 +35,14 @@ function pairEmphasisRuns(runs, splitOpeners) {
       }
       if (!opener) break;
 
-      while (openers[openers.length - 1] !== opener) openers.pop().dead = true;
-      while (loose.length > 0 && loose[loose.length - 1].order > opener.order) loose.pop().dead = true;
+      // Whatever this pair encloses is resolved first, and may now split runs (so `_***hello**_`
+      // still loses its `**`). Only the delimiters that stay unpaired are literal for good.
+      const enclosed = [];
+      while (openers[openers.length - 1] !== opener) enclosed.push(openers.pop());
+      while (loose.length > 0 && loose[loose.length - 1].order > opener.order) enclosed.push(loose.pop());
+      enclosed.sort(function(a, b) { return a.order - b.order; });
+      pairEmphasisRuns(enclosed, true);
+      enclosed.forEach(function(run) { run.dead = true; });
       const used = Math.min(opener.left, closer.left);
       opener.left -= used;
       closer.left -= used;
