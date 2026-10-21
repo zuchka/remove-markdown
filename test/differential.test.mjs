@@ -125,6 +125,29 @@ test('omitted and empty overrides preserve the pre-feature contract', () => {
   }
 });
 
+test('legacy option getters retain their preparation order', () => {
+  function options(rules) {
+    let reads = 0;
+    return {
+      rules,
+      htmlTagsToSkip: ['b'],
+      get separateLinksAndTexts() {
+        if (++reads > 1) this.htmlTagsToSkip = [];
+        return ': ';
+      },
+      set separateLinksAndTexts(value) {},
+    };
+  }
+  const input = '[<b>label</b>](url)';
+  const expected = preOverrides(input, options());
+  assert.equal(expected, '<b>label</b>: url');
+  for (const convert of [candidateCommonJs, candidateEsm]) {
+    for (const rules of [undefined, {}, { html: undefined }]) {
+      assert.equal(convert(input, options(rules)), expected);
+    }
+  }
+});
+
 test('the candidate matches published 0.6.4 behavior', () => {
   const temporaryDirectory = mkdtempSync(join(tmpdir(), 'remove-markdown-differential-'));
 

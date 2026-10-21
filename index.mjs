@@ -32,12 +32,16 @@ function runRule(name, text, overrides, options, defaultRule) {
   return result;
 }
 
-function stripHtml(text, options) {
+function htmlRegex(options) {
   let regex = /<[^>]*>/g;
   if (options.htmlTagsToSkip && options.htmlTagsToSkip.length > 0) {
     const tags = options.htmlTagsToSkip.join('|');
     regex = new RegExp('<(?!\\/?(' + tags + ')(?=>|\\s[^>]*>))[^>]*>', 'g');
   }
+  return regex;
+}
+
+function stripHtml(text, regex) {
   return text.replace(regex, '');
 }
 
@@ -119,13 +123,15 @@ export default function removeMarkdown(md, options) {
       output = output.replace(/\*\[.*\]:.*\n/, '');
     }
 
+    // Preserve the legacy preparation order, including option getter behavior.
+    const htmlPattern = !overrides || overrides.html === undefined ? htmlRegex(options) : undefined;
     // The legacy separator pass runs early. An explicit link override replaces
     // both link paths and runs once at the usual inline-link position below.
     if (options.separateLinksAndTexts && (!overrides || overrides.inlineLinks === undefined)) {
       output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
     }
 
-    output = runRule('html', output, overrides, options, stripHtml)
+    output = runRule('html', output, overrides, htmlPattern, stripHtml)
       // Remove setext-style headers
       .replace(/^[=\-]{2,}\s*$/g, '')
       // Remove footnotes?
