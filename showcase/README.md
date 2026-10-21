@@ -12,7 +12,7 @@ The demo uses a browser worker, a 200,000-character editor limit, and a 2.5-seco
 
 Examples intentionally change relevant settings so the initial comparison shows a useful difference. Reset restores the library defaults without replacing the user's text. The two output panels compare default and selected settings; bounded token diffs highlight changes. Mobile exposes one panel at a time with explicit buttons.
 
-All ten current options are represented. The option inventory and generated snippet are checked against the package API. GFM copy describes actual limited transformations. HTML tag entry accepts names rather than regex syntax. Error handling is advanced because `throwError` does not change successful output. The UI catches failures and disables stale copy actions.
+The ten basic options are represented by form controls. Callback-based rule overrides are configured in application code; see the [rule override API](../README.md#rule-overrides). The inventory checks both groups against the package API, and generated snippets are checked against the selected form settings. GFM copy describes actual limited transformations. HTML tag entry accepts names rather than regex syntax. Error handling is advanced because `throwError` does not change successful output. The UI catches failures and disables stale copy actions.
 
 The benchmark page reads static JSON produced by `bench/`; it never runs timing workloads in a visitor's browser. Its first results are explicitly exploratory. See `bench/README.md` for methodology and publication review requirements.
 

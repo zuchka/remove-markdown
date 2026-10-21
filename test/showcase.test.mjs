@@ -3,15 +3,15 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import removeMd from '../index.node.mjs';
-import { defaults, changedOptions, parseTags, usageSnippet } from '../showcase/options.mjs';
+import { defaults, programmaticOptions, changedOptions, parseTags, usageSnippet } from '../showcase/options.mjs';
 import { diffText } from '../showcase/diff.mjs';
 import { examples, cases, timingDocument, normalizeContent } from '../fixtures/corpus.mjs';
 import { percentile, shuffled, summarize } from '../bench/statistics.mjs';
 
-test('option inventory covers every published option', async () => {
+test('interactive and programmatic option inventory covers every published option', async () => {
   const declarations = await readFile(new URL('../index.d.ts', import.meta.url), 'utf8');
   const keys = [...declarations.matchAll(/^  (\w+)\?:/gm)].map((match) => match[1]).sort();
-  assert.deepEqual(Object.keys(defaults).sort(), keys);
+  assert.deepEqual(Object.keys(defaults).concat(programmaticOptions).sort(), keys);
   assert.deepEqual(changedOptions(structuredClone(defaults)), {});
 });
 
