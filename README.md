@@ -162,6 +162,19 @@ and promises are errors. Errors from overrides follow `throwError`: by
 default the error is logged and the original input is returned; with
 `throwError: true`, it is thrown. Custom callbacks are synchronous.
 
+## Tests and coverage
+
+Run `npm test` for the unit tests and `npm run test:coverage` for the
+coverage gate. The latter runs the unit, compatibility, and module suites with
+a fresh coverage directory. It requires 100% lines, statements, functions, and
+branches in each runtime file: `index.js`, `index.mjs`, and
+`index.node.mjs`. Files that are not loaded count as uncovered.
+
+CI enforces the same gate on Node.js 24. Text results appear in the job log;
+JSON summaries and LCOV reports are written to the ignored `coverage/`
+directory. Coverage measures executed code paths; application-specific
+callbacks still need their own matching and behavior tests.
+
 ## Showcase and benchmarks
 
 Run `npm run dev:site` for the local interactive showcase. It demonstrates all
