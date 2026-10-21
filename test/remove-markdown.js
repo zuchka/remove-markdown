@@ -112,6 +112,55 @@ describe('remove Markdown', function () {
       });
     });
 
+    it('should take linear time through the whole conversion on kept text with many "[" characters', function () {
+      // "<![CDATA[x>" and the others are kept as text when they are not complete HTML, so their "["
+      // reach the reference, image and link patterns. Each size runs in its own process, so a
+      // quadratic slowdown shows up as a timeout.
+      const { spawnSync } = require('child_process');
+      const entry = require.resolve('../');
+      const inputs = [
+        { unit: '<![CDATA[x>', sizes: [8000, 16000, 32000] },
+        { unit: '<![CDATA[x]>', sizes: [32000] },
+        { unit: '<!--[x>', sizes: [64000] },
+        { unit: '<?[x>', sizes: [64000] },
+        { unit: '<[x>', sizes: [64000] },
+        { unit: '![a', sizes: [64000] },
+      ];
+      inputs.forEach(function (input) {
+        input.sizes.forEach(function (size) {
+          const code = [
+            'const removeMd = require(' + JSON.stringify(entry) + ');',
+            "removeMd('warmup');",
+            'const input = ' + JSON.stringify(input.unit) + '.repeat(' + size + ');',
+            'const start = Date.now();',
+            'const output = removeMd(input);',
+            'console.log(JSON.stringify([Date.now() - start, output.length]));',
+          ].join('\n');
+          const result = spawnSync(process.execPath, ['-e', code], { encoding: 'utf8', timeout: 10000 });
+          const label = JSON.stringify(input.unit) + ' x ' + size;
+          expect(result.error && result.error.code, label).to.equal(undefined);
+          expect(result.status, label + ' ' + result.stderr).to.equal(0);
+          expect(JSON.parse(result.stdout)[0], label).to.be.below(2500);
+        });
+      });
+    });
+
+    it('should still remove valid links and images next to stray square brackets', function () {
+      const stray = String.fromCharCode(0xE000);
+      const tests = [
+        { string: 'x [a](b) y [ [ [', expected: 'x a y [ [ [' },
+        { string: '![i](p.png) [ [ [ and [ ref ] [l](u)', expected: 'i  [ [ and [ ref (u)' },
+        { string: 'note[^1] [ [ [\n\n[^1]: the note', expected: 'note [ [ [\n\n' },
+        { string: 'a\n[ref]: http://r\n[ [ [', expected: 'a\n[ref]: http://r\n[ [ [' },
+        { string: 'a\n\n[ref]: http://r', expected: 'a' },
+        // Text that happens to hold a character used internally must come back unchanged.
+        { string: stray + ' [a](b) ' + stray, expected: stray + ' a ' + stray },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
     it('should take linear time on repeated unterminated HTML constructs', function () {
       // Each of these used to rescan the rest of the text from every opener (quadratic): the first
       // three took seconds at this size. They are left as text, and must finish in well under a second.

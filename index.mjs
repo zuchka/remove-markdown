@@ -4,6 +4,39 @@ const uriAutolink = /<[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\s<>]*>/y;
 const emailAutolink = /<[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*>/y;
 const htmlTagName = /<\/?[A-Za-z][A-Za-z0-9-]*/y;
 
+// Runs `output.replace(regex, replacement)` for one of the patterns that start at a "[" and scan
+// ahead for a closing "]...". Such a pattern rescans the rest of its line (or text) from every "["
+// that has nothing to close it, which is quadratic when there are many of them (for example after
+// text like "<![CDATA[x>" is kept as it is). `tail` matches what every match of `regex` must
+// contain after its "["; a "[" at or after the end of the last such tail can neither start a match
+// nor lie inside one, so it is hidden from the pattern and put back afterwards. The result is the
+// same as without hiding. `lines` applies this per line (true), or to the last line only ('last'),
+// for patterns that cannot cross a line break; otherwise it applies to the whole text.
+function replaceLiveBrackets(text, regex, replacement, tail, lines) {
+  if (text.indexOf('[') === -1) return text;
+  let hidden = '';
+  for (let code = 0xE000; code <= 0xF8FF && !hidden; code++) {
+    if (text.indexOf(String.fromCharCode(code)) === -1) hidden = String.fromCharCode(code);
+  }
+  if (!hidden) return text.replace(regex, replacement);
+
+  const hideDeadBrackets = function(part, offset) {
+    // Only the last line can match a pattern that has to reach the end of the text.
+    let end = lines === 'last' && offset + part.length !== text.length ? 0 : -1;
+    if (end === -1) {
+      let match;
+      tail.lastIndex = 0;
+      while ((match = tail.exec(part))) {
+        end = match.index + match[0].length;
+        tail.lastIndex = match.index + 1;
+      }
+    }
+    return end === -1 ? part.split('[').join(hidden) : part.slice(0, end) + part.slice(end).split('[').join(hidden);
+  };
+  const visible = lines ? text.replace(/.+/g, hideDeadBrackets) : hideDeadBrackets(text, 0);
+  return visible.replace(regex, replacement).split(hidden).join('[');
+}
+
 // Removes HTML, treating "<" as HTML only when it can start an HTML construct (as in CommonMark),
 // so plain text such as "2 < 3 and 3 > 1" is left alone. The text is scanned once from left to
 // right, and the position of a missing terminator is remembered, so many unterminated comments,
@@ -154,14 +187,16 @@ export default function removeMarkdown(md, options) {
 
     output = output
       // Remove setext-style headers
-      .replace(/^[=\-]{2,}\s*$/g, '')
-      // Remove footnotes?
-      .replace(/\[\^.+?\](\: .*?$)?/g, '')
-      .replace(/\s{0,2}\[.*?\]: .*?$/g, '')
-      // Remove images
-      .replace(/\!\[(.*?)\][\[\(].*?[\]\)]/g, options.useImgAltText ? '$1' : '')
-      // Remove inline links
-      .replace(/\[([\s\S]*?)\]\s*[\(\[](.*?)[\)\]]/g, options.replaceLinksWithURL ? '$2' : '$1')
+      .replace(/^[=\-]{2,}\s*$/g, '');
+    // Remove footnotes?
+    output = replaceLiveBrackets(output, /\[\^.+?\](\: .*?$)?/g, '', /\]/g, true);
+    output = replaceLiveBrackets(output, /\s{0,2}\[.*?\]: .*?$/g, '', /\]: /g, 'last');
+    // Remove images
+    output = replaceLiveBrackets(output, /\!\[(.*?)\][\[\(].*?[\]\)]/g, options.useImgAltText ? '$1' : '', /\][\[\(].*?[\]\)]/g, true);
+    // Remove inline links
+    output = replaceLiveBrackets(output, /\[([\s\S]*?)\]\s*[\(\[](.*?)[\)\]]/g, options.replaceLinksWithURL ? '$2' : '$1', /\]\s*[\(\[].*?[\)\]]/g, false);
+
+    output = output
       // Remove blockquotes
       .replace(/^(\n)?\s{0,3}>\s?/gm, '$1')
       // .replace(/(^|\n)\s{0,3}>\s?/g, '\n\n')
