@@ -7,7 +7,7 @@ function readRuleOverrides(rules) {
   }
   const overrides = Object.create(null);
   Object.getOwnPropertyNames(rules).forEach(function(name) {
-    if (['html', 'images', 'inlineLinks'].indexOf(name) === -1) {
+    if (['html', 'images', 'inlineLinks', 'emphasis'].indexOf(name) === -1) {
       throw new TypeError('Unknown rule: ' + name);
     }
     const rule = rules[name];
@@ -140,7 +140,7 @@ export default function removeMarkdown(md, options) {
       .replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')
       // Remove atx-style headers
       .replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6');
-    output = stripEmphasis(output)
+    output = runRule('emphasis', output, overrides, options, stripEmphasis)
       // Remove single-line code blocks (already handled multiline above in gfm section)
       .replace(/(`{3,})(.*?)\1/gm, '$2')
       // Remove inline code

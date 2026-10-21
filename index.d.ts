@@ -84,6 +84,8 @@ declare function removeMd(md: string, options?: {
     images?: false | ((text: string) => string);
     /** Skip or replace link occurrences, superseding both link output options. */
     inlineLinks?: false | ((text: string) => string);
+    /** Skip or replace both asterisk and underscore emphasis removal. */
+    emphasis?: false | ((text: string) => string);
   };
 
   /**

@@ -101,6 +101,42 @@ describe('rule overrides', function () {
         }), '[label](url)');
       });
 
+      it('skips both emphasis passes while other formatting is still removed', function () {
+        assert.equal(convert('# **bold** _italic_', { rules: { emphasis: false } }),
+          '**bold** _italic_');
+        assert.equal(convert('- *item*', { rules: { emphasis: false } }), '*item*');
+      });
+
+      it('runs custom emphasis once without reapplying built-in emphasis', function () {
+        const seen = [];
+        assert.equal(convert('# **bold** _italic_', { rules: { emphasis(text) {
+          seen.push(text);
+          return '__custom__';
+        } } }), '__custom__');
+        assert.deepEqual(seen, ['**bold** _italic_']);
+      });
+
+      it('runs frozen override maps in the existing operation order', function () {
+        const seen = [];
+        const rules = Object.freeze({
+          emphasis(text) { seen.push('emphasis'); return text.replace('**bold**', 'bold'); },
+          inlineLinks(text) { seen.push('inlineLinks'); return text.replace('[label](url)', 'link'); },
+          images(text) { seen.push('images'); return text.replace('![alt](image.png)', 'image'); },
+          html(text) { seen.push('html'); return text.replace(/<\/?b>/g, ''); },
+        });
+        assert.equal(convert('<b>![alt](image.png) [label](url) **bold**</b>', { rules }),
+          'image link bold');
+        assert.deepEqual(seen, ['html', 'images', 'inlineLinks', 'emphasis']);
+      });
+
+      it('validates the full map before invoking any callback', function () {
+        let calls = 0;
+        assert.throws(() => convert('text', {
+          rules: { html() { calls++; return ''; }, emphasis: true }, throwError: true,
+        }), TypeError);
+        assert.equal(calls, 0);
+      });
+
       it('uses only explicitly supplied rules and own rule entries', function () {
         assert.equal(convert('<b>text</b>', Object.create({ rules: { html: false } })), 'text');
         assert.equal(convert('<b>text</b>', { rules: Object.create({ html: false }) }), 'text');
