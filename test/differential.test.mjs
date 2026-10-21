@@ -4,8 +4,7 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-
-import candidateEsm from '../index.mjs';
+import { pathToFileURL } from 'node:url';
 
 import {
   installPackedPackage,
@@ -57,6 +56,50 @@ const optionSets = [
   },
 ];
 
+for (const replacement of ['$$', '$5', '$&', '$`', "$'", '$10', '$99', '$0', '$3']) {
+  optionSets.push(
+    { separateLinksAndTexts: ` ${replacement} ` },
+    { listUnicodeChar: replacement },
+  );
+}
+
+function blockPairs() {
+  // Combine complete constructs, including syntax removed before inline links.
+  // Ambiguous/nested parsing fixes need their own explicit expected-output cases;
+  // the published baseline here checks behavior that is intended to stay stable.
+  const blocks = [
+    '',
+    'Plain text',
+    'Price: $5, $$10 and $&',
+    'Unicode: café 😀 漢字',
+    '# Heading',
+    '## Heading with #hashtag',
+    '- list item',
+    '1. numbered item',
+    '> quoted text',
+    '**bold** and _italic_',
+    '`inline code`',
+    '[label](https://example.com)',
+    '![alt text](image.png)',
+    '<em>HTML</em>',
+    '~~strike~~',
+    '---',
+    '*[HTML]: Hyper Text Markup Language\nHTML',
+    '```js\nconst answer = 42;\n```',
+    '\\*escaped\\*',
+    '  indented text',
+  ];
+  const inputs = [];
+  for (const before of blocks) {
+    for (const after of blocks) {
+      for (const lineEnding of ['\n', '\r\n', '\r']) {
+        inputs.push([before, after].join('\n').replace(/\n/g, lineEnding));
+      }
+    }
+  }
+  return inputs;
+}
+
 function generatedInputs(count) {
   const tokens = [
     'text', ' ', '\n', '# ', '*bold*', '_italic_', '`code`',
@@ -82,7 +125,7 @@ function cloneOptions(options) {
   return options === undefined ? undefined : JSON.parse(JSON.stringify(options));
 }
 
-test('the candidate matches published 0.6.4 behavior', () => {
+test('the packed entry points match unaffected published 0.6.4 behavior', async (t) => {
   const temporaryDirectory = mkdtempSync(join(tmpdir(), 'remove-markdown-differential-'));
 
   try {
@@ -100,25 +143,30 @@ test('the candidate matches published 0.6.4 behavior', () => {
 
     const consumerRequire = createRequire(join(consumer, 'consumer.cjs'));
     const baseline = consumerRequire('remove-markdown-baseline');
-    const candidate = consumerRequire('remove-markdown');
-    const inputs = representativeInputs.concat(generatedInputs(1000));
+    const implementations = [
+      ['CommonJS', consumerRequire('remove-markdown')],
+      ['portable ESM', (await import(pathToFileURL(consumerRequire.resolve('remove-markdown/index.mjs')))).default],
+    ];
+    const inputs = representativeInputs.concat(generatedInputs(1000), blockPairs());
 
     for (const input of inputs) {
       for (const options of optionSets) {
-        const expected = baseline(input, cloneOptions(options));
-
-        assert.equal(
-          candidate(input, cloneOptions(options)),
-          expected,
-          `CommonJS output differed for ${JSON.stringify({ input, options })}`,
-        );
-        assert.equal(
-          candidateEsm(input, cloneOptions(options)),
-          expected,
-          `ESM output differed for ${JSON.stringify({ input, options })}`,
-        );
+        const expectedOptions = cloneOptions(options);
+        const expected = baseline(input, expectedOptions);
+        // This option was added after 0.6.4. Account for its released default
+        // explicitly while preserving the normalization of all legacy options.
+        if (expectedOptions && !Object.hasOwn(expectedOptions, 'stripMdxImports')) {
+          expectedOptions.stripMdxImports = false;
+        }
+        for (const [name, convert] of implementations) {
+          const actualOptions = cloneOptions(options);
+          const context = `${name}: ${JSON.stringify({ input, options })}`;
+          assert.equal(convert(input, actualOptions), expected, context);
+          assert.deepEqual(actualOptions, expectedOptions, `option normalization changed for ${context}`);
+        }
       }
     }
+    t.diagnostic(`${inputs.length} inputs × ${optionSets.length} option sets × ${implementations.length} packed entry points`);
   } finally {
     rmSync(temporaryDirectory, { recursive: true, force: true });
   }
