@@ -82,6 +82,8 @@ declare function removeMd(md: string, options?: {
     html?: false | ((text: string) => string);
     /** Skip or replace image handling, superseding useImgAltText. Later rules still run. */
     images?: false | ((text: string) => string);
+    /** Skip or replace link occurrences, superseding both link output options. */
+    inlineLinks?: false | ((text: string) => string);
   };
 
   /**

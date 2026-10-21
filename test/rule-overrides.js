@@ -63,6 +63,44 @@ describe('rule overrides', function () {
         assert.equal(convert('![alt](image.png)'), 'alt');
       });
 
+      it('skips both link paths when inlineLinks is false', function () {
+        assert.equal(convert('[label](url) and [other][ref]', {
+          separateLinksAndTexts: ': ', replaceLinksWithURL: true,
+          rules: { inlineLinks: false },
+        }), '[label](url) and [other][ref]');
+      });
+
+      it('runs the inline-link callback once after HTML and images', function () {
+        const seen = [];
+        assert.equal(convert('<b>[label](url)</b> ![alt](image.png)', {
+          separateLinksAndTexts: ': ', replaceLinksWithURL: true,
+          rules: { inlineLinks(text) {
+            seen.push(text);
+            return text.replace('[label](url)', '**custom**');
+          } },
+        }), 'custom alt');
+        assert.deepEqual(seen, ['[label](url) alt']);
+      });
+
+      it('preserves image syntax when both image and link operations are skipped', function () {
+        assert.equal(convert('![alt](image.png)', {
+          separateLinksAndTexts: ': ',
+          rules: { images: false, inlineLinks: false },
+        }), '![alt](image.png)');
+      });
+
+      it('keeps the legacy separator pass when only another rule is overridden', function () {
+        assert.equal(convert('[<b>label</b>](url)', {
+          separateLinksAndTexts: ': ', rules: { html: false },
+        }), '<b>label</b>: url');
+      });
+
+      it('leaves link-definition cleanup independent of inline-link overrides', function () {
+        assert.equal(convert('[label](url)\n\n[ref]: target', {
+          rules: { inlineLinks: false },
+        }), '[label](url)');
+      });
+
       it('uses only explicitly supplied rules and own rule entries', function () {
         assert.equal(convert('<b>text</b>', Object.create({ rules: { html: false } })), 'text');
         assert.equal(convert('<b>text</b>', { rules: Object.create({ html: false }) }), 'text');

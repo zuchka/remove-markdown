@@ -57,7 +57,7 @@ const indexJsOutput: string = removeMdFromIndexJs('_italic_');
 void output;
 void indexOutput;
 void indexJsOutput;
-removeMd('<b>text</b>', { rules: { html: false, images: text => text } });
+removeMd('<b>text</b>', { rules: { html: false, images: text => text, inlineLinks: false } });
 removeMd('<b>text</b>', { rules: { html: text => text.toUpperCase() } });
 // @ts-expect-error Rule callbacks must return strings synchronously.
 removeMd('text', { rules: { html: async text => text } });
@@ -111,7 +111,7 @@ const indexMjsOutput: string = removeMdFromIndexMjs('~~struck~~');
 void output;
 void indexOutput;
 void indexJsOutput;
-removeMd('<b>text</b>', { rules: { html: false, images: text => text } });
+removeMd('<b>text</b>', { rules: { html: false, images: text => text, inlineLinks: false } });
 removeMd('<b>text</b>', { rules: { html: text => text.toUpperCase() } });
 // @ts-expect-error Rule callbacks must return strings synchronously.
 removeMd('text', { rules: { html: async text => text } });

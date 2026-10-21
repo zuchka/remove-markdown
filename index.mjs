@@ -7,7 +7,7 @@ function readRuleOverrides(rules) {
   }
   const overrides = Object.create(null);
   Object.getOwnPropertyNames(rules).forEach(function(name) {
-    if (['html', 'images'].indexOf(name) === -1) {
+    if (['html', 'images', 'inlineLinks'].indexOf(name) === -1) {
       throw new TypeError('Unknown rule: ' + name);
     }
     const rule = rules[name];
@@ -119,7 +119,9 @@ export default function removeMarkdown(md, options) {
       output = output.replace(/\*\[.*\]:.*\n/, '');
     }
 
-    if (options.separateLinksAndTexts) {
+    // The legacy separator pass runs early. An explicit link override replaces
+    // both link paths and runs once at the usual inline-link position below.
+    if (options.separateLinksAndTexts && (!overrides || overrides.inlineLinks === undefined)) {
       output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
     }
 
@@ -130,7 +132,7 @@ export default function removeMarkdown(md, options) {
       .replace(/\[\^.+?\](\: .*?$)?/g, '')
       .replace(/\s{0,2}\[.*?\]: .*?$/g, '');
     output = runRule('images', output, overrides, options, stripImages);
-    output = stripInlineLinks(output, options)
+    output = runRule('inlineLinks', output, overrides, options, stripInlineLinks)
       // Remove blockquotes
       .replace(/^(\n)?\s{0,3}>\s?/gm, '$1')
       // .replace(/(^|\n)\s{0,3}>\s?/g, '\n\n')

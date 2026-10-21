@@ -102,7 +102,7 @@ test('omitted and empty overrides preserve the pre-feature contract', () => {
     { separateLinksAndTexts: ': ', replaceLinksWithURL: true, htmlTagsToSkip: ['b'] },
   ]);
   const emptyRules = [undefined, {}, {
-    html: undefined, images: undefined,
+    html: undefined, images: undefined, inlineLinks: undefined,
   }];
 
   for (const convert of [candidateCommonJs, candidateEsm]) {
