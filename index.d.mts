@@ -76,7 +76,11 @@ declare function removeMd(md: string, options?: {
    */
   htmlTagsToSkip?: string[];
 
-  /** Per-call replacements for built-in operations. Omit an entry for normal behavior. */
+  /**
+   * Per-call replacements for built-in operations. Omit an entry for normal behavior.
+   * Each callback receives the current text once and returns a string synchronously.
+   * Output continues through later operations. Errors follow throwError.
+   */
   rules?: {
     /** Skip HTML stripping with false, or replace it with a synchronous string transform. */
     html?: false | ((text: string) => string);

@@ -90,6 +90,78 @@ syntax, such as comments or import attributes. Imports after headings or other
 content remain in the output. Imports in lists and code blocks retain the usual
 Markdown-stripping behavior. This option defaults to false.
 
+## Rule overrides
+
+The optional `rules` object lets a call skip or replace specific operations.
+Existing calls keep their current behavior and output. Omitting `rules`,
+setting it to `undefined`, or passing `{}` uses the built-in operations.
+
+For example, keep emphasis markers while stripping other formatting:
+
+```js
+removeMd('# **bold** and _italic_', {
+  rules: { emphasis: false },
+}); // '**bold** and _italic_'
+```
+
+Each entry can be `false` to skip the operation, or a synchronous function
+that replaces it. An omitted entry or `undefined` uses the built-in operation
+with the existing options.
+
+| Rule | Built-in operation replaced | Options superseded by an override |
+| --- | --- | --- |
+| `html` | HTML stripping | `htmlTagsToSkip` |
+| `images` | Image removal or replacement with alt text | `useImgAltText` |
+| `inlineLinks` | Replacement of link occurrences in the text | `replaceLinksWithURL`, `separateLinksAndTexts` |
+| `emphasis` | Both asterisk and underscore emphasis removal | None |
+
+A custom function receives the entire text at that operation's position and
+must return a string. For example, this simple application-specific link
+transform keeps both the label and URL:
+
+```js
+removeMd('[docs](https://example.com)', {
+  rules: {
+    inlineLinks: text => text.replace(
+      /\[([^\]]+)\]\(([^)]+)\)/g,
+      '$1 <$2>',
+    ),
+  },
+}); // 'docs <https://example.com>'
+```
+
+Callbacks run once per conversion, in the order HTML, images, inline links,
+then emphasis, regardless of the order of keys in the object. The input to a
+callback reflects earlier operations; its result continues through later
+operations. In the example above, the newly added angle brackets survive
+because HTML stripping has already run. Link overrides replace both the early
+separator pass and the normal link pass, and run once at the normal link
+position after images.
+
+Skipping an operation leaves other operations active. For example, the built-in
+link operation can also consume image syntax. To preserve an image, skip both:
+
+```js
+removeMd('![alt](image.png)', {
+  rules: { images: false, inlineLinks: false },
+}); // '![alt](image.png)'
+```
+
+List markers, headings, code markers, footnotes, and reference definitions have
+their own operations. An emphasis override still allows list bullets to be
+removed, and an inline-link override still allows reference definitions to be
+removed.
+
+Overrides belong to the individual call. The library snapshots the supplied
+rule entries before running callbacks and does not mutate the rule map. Only
+own properties are used. Functions can capture application settings in a
+closure; their matching behavior and runtime are controlled by the caller.
+
+Unknown rule names, invalid values (including `true`), non-string results,
+and promises are errors. Errors from overrides follow `throwError`: by
+default the error is logged and the original input is returned; with
+`throwError: true`, it is thrown. Custom callbacks are synchronous.
+
 ## Showcase and benchmarks
 
 Run `npm run dev:site` for the local interactive showcase. It demonstrates all
@@ -105,7 +177,7 @@ publication review checklist. The first snapshots are exploratory local results.
 ## TODO
 PRs are very much welcome. Here are some ideas for future enhancements:
 
-* Allow the RegEx expressions to be customized per rule
+* Extend rule overrides to additional operations as needed
 * Make the rules more robust, support more edge cases
 * Add more (comprehensive) tests
 
