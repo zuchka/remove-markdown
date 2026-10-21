@@ -41,6 +41,34 @@ describe('remove Markdown', function () {
       });
     });
 
+    it('should not pair an asterisk inside an underscore span with one outside of it', function () {
+      const tests = [
+        { string: '*foo __bar *baz bim__ bam*', expected: 'foo bar *baz bim bam' },
+        { string: '*a __b *c d__ e* f', expected: 'a b *c d e f' },
+        { string: '__a *b__ c*', expected: 'a *b c*' },
+        // Nested and adjacent mixed emphasis is still stripped.
+        { string: '*a __b__ c*', expected: 'a b c' },
+        { string: '_*foo*_ x', expected: 'foo x' },
+        { string: '**bold with _under_ inside** t', expected: 'bold with under inside t' },
+        { string: '*a* and __b__ and *c _d_ e*', expected: 'a and b and c d e' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
+    it('should leave asterisk runs that do not pair as literal text', function () {
+      const tests = [
+        { string: '**a*b*', expected: '**ab' },
+        { string: '**a*b', expected: '*ab' },
+        { string: '2 * 3 * 4 and a*b', expected: '2 * 3 * 4 and a*b' },
+        { string: '*a **b', expected: '*a **b' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
     it('should leave non-matching markdown markdown', function () {
       const string = '*Javascript* developers* are the _best_.';
       const expected = 'Javascript developers* are the best.';
