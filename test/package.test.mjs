@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import {
   expectedPackageFiles,
@@ -108,6 +109,42 @@ assert.equal(removeMd('# Native **ESM**'), 'Native ESM');
 `,
     );
     runNode('consumer.mjs', nativeUrlConsumer);
+  } finally {
+    rmSync(temporaryDirectory, { recursive: true, force: true });
+  }
+});
+
+test('packed entry points handle growing ordinary documents without errors', async (t) => {
+  const temporaryDirectory = mkdtempSync(join(tmpdir(), 'remove-markdown-large-input-'));
+
+  try {
+    const { tarball } = packProject(temporaryDirectory);
+    const consumer = installPackedPackage(temporaryDirectory, 'large-input-consumer', tarball, 'commonjs');
+    const child = fileURLToPath(new URL('./helpers/large-input-child.mjs', import.meta.url));
+    const families = [
+      ['headings', [16_000, 32_000, 64_000]],
+      ['paragraphs', [32_000, 64_000, 128_000]],
+      ['lists', [32_000, 64_000, 128_000]],
+    ];
+
+    for (const format of ['commonjs', 'portable-esm']) {
+      for (const [family, sizes] of families) {
+        for (const size of sizes) {
+          for (const mode of ['default', 'catch', 'throw']) {
+            await t.test(`${format}: ${family} × ${size}, ${mode}`, () => {
+              // A fresh process bounds hangs and keeps a crash from aborting the
+              // other cases. Assert completion, not machine-specific timings.
+              execFileSync(process.execPath, [child, format, family, String(size), mode], {
+                cwd: consumer,
+                timeout: 5_000,
+                stdio: 'pipe',
+                maxBuffer: 64 * 1024,
+              });
+            });
+          }
+        }
+      }
+    }
   } finally {
     rmSync(temporaryDirectory, { recursive: true, force: true });
   }
