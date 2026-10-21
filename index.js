@@ -1,3 +1,35 @@
+function readRuleOverrides(rules) {
+  if (rules === undefined) return undefined;
+  if (rules === null || typeof rules !== 'object' || Array.isArray(rules)) {
+    throw new TypeError('rules must be an object');
+  }
+  const overrides = Object.create(null);
+  Object.getOwnPropertyNames(rules).forEach(function(name) {
+    if (['html'].indexOf(name) === -1) {
+      throw new TypeError('Unknown rule: ' + name);
+    }
+    const rule = rules[name];
+    if (rule !== undefined && rule !== false && typeof rule !== 'function') {
+      throw new TypeError('Rule ' + name + ' must be false or a function');
+    }
+    overrides[name] = rule;
+  });
+  return overrides;
+}
+
+function runRule(name, text, overrides, options, defaultRule) {
+  const override = overrides && overrides[name];
+  if (override === undefined) return defaultRule(text, options);
+  if (override === false) return text;
+  const result = override(text);
+  if (typeof result !== 'string') {
+    // Consume rejected promises from unsupported async callbacks as well.
+    if (result && typeof result.then === 'function') Promise.resolve(result).catch(function() {});
+    throw new TypeError('Rule ' + name + ' must return a string');
+  }
+  return result;
+}
+
 function stripHtml(text, options) {
   let regex = /<[^>]*>/g;
   if (options.htmlTagsToSkip && options.htmlTagsToSkip.length > 0) {
@@ -61,6 +93,8 @@ module.exports = function(md, options) {
   output = output.replace(/^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/gm, '');
 
   try {
+    const overrides = Object.prototype.hasOwnProperty.call(options, 'rules')
+      ? readRuleOverrides(options.rules) : undefined;
     if (options.stripListLeaders) {
       if (options.listUnicodeChar)
         output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, options.listUnicodeChar + ' $1');
@@ -87,7 +121,7 @@ module.exports = function(md, options) {
       output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
     }
 
-    output = stripHtml(output, options)
+    output = runRule('html', output, overrides, options, stripHtml)
       // Remove setext-style headers
       .replace(/^[=\-]{2,}\s*$/g, '')
       // Remove footnotes?

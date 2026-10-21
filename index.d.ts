@@ -76,6 +76,12 @@ declare function removeMd(md: string, options?: {
    */
   htmlTagsToSkip?: string[];
 
+  /** Per-call replacements for built-in operations. Omit an entry for normal behavior. */
+  rules?: {
+    /** Skip HTML stripping with false, or replace it with a synchronous string transform. */
+    html?: false | ((text: string) => string);
+  };
+
   /**
    * Throw errors encountered while processing instead of catching them,
    * logging via `console.error`, and returning the original input.

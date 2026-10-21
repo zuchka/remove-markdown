@@ -1,0 +1,91 @@
+'use strict';
+
+const assert = require('node:assert/strict');
+const commonJs = require('../index.js');
+let portableEsm;
+
+describe('rule overrides', function () {
+  before(async function () {
+    portableEsm = (await import('../index.mjs')).default;
+  });
+
+  for (const [format, convert] of [
+    ['CommonJS', commonJs],
+    ['portable ESM', (...args) => portableEsm(...args)],
+  ]) {
+    describe(format, function () {
+      it('skips only HTML stripping when html is false', function () {
+        assert.equal(convert('<b>**bold**</b>', { rules: { html: false } }), '<b>bold</b>');
+      });
+
+      it('runs custom HTML handling once and continues processing its output', function () {
+        const seen = [];
+        const rules = Object.freeze({ html(text) {
+          seen.push(text);
+          return text.replace(/<[^>]*>/g, '') + ' **added**';
+        } });
+        assert.equal(convert('- <b>text</b>', { rules }), 'text added');
+        assert.deepEqual(seen, ['<b>text</b>']);
+        assert.equal(convert('<b>text</b>'), 'text');
+      });
+
+      it('lets the HTML override supersede htmlTagsToSkip', function () {
+        assert.equal(convert('<b>text</b>', {
+          htmlTagsToSkip: ['b'], rules: { html: text => text.replace(/<[^>]*>/g, '') },
+        }), 'text');
+        assert.equal(convert('<b>text</b>', {
+          htmlTagsToSkip: ['['], rules: { html: false },
+        }), '<b>text</b>');
+      });
+
+      it('uses only explicitly supplied rules and own rule entries', function () {
+        assert.equal(convert('<b>text</b>', Object.create({ rules: { html: false } })), 'text');
+        assert.equal(convert('<b>text</b>', { rules: Object.create({ html: false }) }), 'text');
+        assert.equal(convert('<b>text</b>', {
+          rules: Object.assign(Object.create(null), { html: false }),
+        }), '<b>text</b>');
+      });
+
+      it('rejects invalid configurations when throwError is enabled', function () {
+        for (const rules of [null, false, [], 'html', () => '', { typo: false },
+          { toString: false }, { html: true }, { html: /html/g }]) {
+          assert.throws(() => convert('text', { rules, throwError: true }), TypeError);
+        }
+      });
+
+      it('rejects non-string results and propagates callback errors', function () {
+        for (const result of [undefined, null, 42, {}, Promise.resolve('text')]) {
+          assert.throws(() => convert('text', {
+            rules: { html: () => result }, throwError: true,
+          }), /Rule html must return a string/);
+        }
+        const error = new Error('custom rule failed');
+        assert.throws(() => convert('text', {
+          rules: { html: () => { throw error; } }, throwError: true,
+        }), error);
+      });
+
+      it('logs errors and returns the original input by default', function () {
+        const input = '- <b>text</b>';
+        const logs = [];
+        const original = console.error;
+        console.error = (...args) => logs.push(args);
+        try {
+          assert.equal(convert(input, { rules: { html: () => 42 } }), input);
+          assert.equal(convert(input, { rules: { typo: false } }), input);
+          assert.equal(logs.length, 2);
+        } finally {
+          console.error = original;
+        }
+      });
+
+      it('handles rejected async results without an unhandled rejection', async function () {
+        assert.throws(() => convert('text', {
+          rules: { html: async () => { throw new Error('async failure'); } },
+          throwError: true,
+        }), /Rule html must return a string/);
+        await new Promise(resolve => setImmediate(resolve));
+      });
+    });
+  }
+});

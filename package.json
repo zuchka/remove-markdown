@@ -50,7 +50,7 @@
     "bench:sizes": "npm --prefix bench run sizes",
     "build:esm": "node scripts/build-esm.mjs",
     "check:esm": "node scripts/build-esm.mjs --check",
-    "test": "mocha -R spec test/remove-markdown.js",
+    "test": "mocha -R spec test/remove-markdown.js test/rule-overrides.js",
     "test:modules": "node --test test/modules.test.mjs",
     "test:package": "node --test test/package.test.mjs",
     "test:types": "node --test test/types.test.mjs",
