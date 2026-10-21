@@ -36,6 +36,12 @@ const actual = removeMd('# Bundled **output**');
 if (actual !== 'Bundled output') {
   throw new Error(\`Unexpected bundled output: \${JSON.stringify(actual)}\`);
 }
+if (removeMd('# **kept**', { rules: { emphasis: false } }) !== '**kept**') {
+  throw new Error('Bundled override returned unexpected output');
+}
+if (removeMd('<b>text</b>', { rules: { html: text => text.toUpperCase() } }) !== '<B>TEXT</B>') {
+  throw new Error('Bundled callback returned unexpected output');
+}
 `,
     );
 

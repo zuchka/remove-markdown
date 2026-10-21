@@ -185,6 +185,28 @@ describe('rule overrides', function () {
         }), /Rule html must return a string/);
         await new Promise(resolve => setImmediate(resolve));
       });
+
+      for (const name of ['html', 'images', 'inlineLinks', 'emphasis']) {
+        it('validates results and recovers from errors in ' + name, function () {
+          assert.equal(convert('text', { rules: { [name]: () => '' } }), '');
+          assert.throws(() => convert('text', {
+            rules: { [name]: () => false }, throwError: true,
+          }), new RegExp('Rule ' + name + ' must return a string'));
+          const error = new Error(name + ' failed');
+          const log = console.error;
+          const logs = [];
+          console.error = (...args) => logs.push(args);
+          try {
+            assert.equal(convert('- **original**', {
+              rules: { [name]: () => { throw error; } },
+            }), '- **original**');
+            assert.equal(logs.length, 1);
+            assert.strictEqual(logs[0][1], error);
+          } finally {
+            console.error = log;
+          }
+        });
+      }
     });
   }
 });

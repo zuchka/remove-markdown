@@ -43,6 +43,10 @@ assert.deepEqual(packageMetadata.exports['./index.mjs'], {
   default: './index.mjs',
 });
 assert.equal(removeMd('# Heading'), 'Heading');
+assert.equal(removeMd('# **kept**', { rules: { emphasis: false } }), '**kept**');
+assert.equal(removeMd('<b>text</b>', {
+  rules: { html: text => text.replace(/<[^>]*>/g, '').toUpperCase() },
+}), 'TEXT');
 assert.equal(
   removeMd('[link](https://example.com)', { separateLinksAndTexts: ': ' }),
   'link: https://example.com',
@@ -80,6 +84,9 @@ assert.strictEqual(removeMdFromIndex, commonJs);
 assert.strictEqual(removeMdFromIndexJs, commonJs);
 assert.equal(removeMd('**bold**'), 'bold');
 assert.equal(removeMdFromIndexMjs('**bold**'), 'bold');
+for (const convert of [removeMd, removeMdFromIndex, removeMdFromIndexJs, removeMdFromIndexMjs]) {
+  assert.equal(convert('# **kept**', { rules: { emphasis: false } }), '**kept**');
+}
 assert.equal(removeMd('![alt](image.png)', { useImgAltText: false }), '');
 `,
     );
@@ -102,6 +109,7 @@ assert.equal(removeMd('![alt](image.png)', { useImgAltText: false }), '');
 import removeMd from './index.mjs';
 
 assert.equal(removeMd('# Native **ESM**'), 'Native ESM');
+assert.equal(removeMd('# **kept**', { rules: { emphasis: false } }), '**kept**');
 `,
     );
     runNode('consumer.mjs', nativeUrlConsumer);
