@@ -5,7 +5,7 @@ function readRuleOverrides(rules) {
   }
   const overrides = Object.create(null);
   Object.getOwnPropertyNames(rules).forEach(function(name) {
-    if (['html'].indexOf(name) === -1) {
+    if (['html', 'images'].indexOf(name) === -1) {
       throw new TypeError('Unknown rule: ' + name);
     }
     const rule = rules[name];
@@ -127,7 +127,7 @@ module.exports = function(md, options) {
       // Remove footnotes?
       .replace(/\[\^.+?\](\: .*?$)?/g, '')
       .replace(/\s{0,2}\[.*?\]: .*?$/g, '');
-    output = stripImages(output, options);
+    output = runRule('images', output, overrides, options, stripImages);
     output = stripInlineLinks(output, options)
       // Remove blockquotes
       .replace(/^(\n)?\s{0,3}>\s?/gm, '$1')

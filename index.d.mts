@@ -80,6 +80,8 @@ declare function removeMd(md: string, options?: {
   rules?: {
     /** Skip HTML stripping with false, or replace it with a synchronous string transform. */
     html?: false | ((text: string) => string);
+    /** Skip or replace image handling, superseding useImgAltText. Later rules still run. */
+    images?: false | ((text: string) => string);
   };
 
   /**

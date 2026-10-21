@@ -38,6 +38,31 @@ describe('rule overrides', function () {
         }), '<b>text</b>');
       });
 
+      it('skips the image operation while later link handling still runs', function () {
+        assert.equal(convert('![alt](image.png)', { rules: { images: false } }), '!alt');
+      });
+
+      it('replaces image handling once, superseding useImgAltText', function () {
+        const seen = [];
+        assert.equal(convert('<b>![alt](image.png)</b>', {
+          useImgAltText: false,
+          rules: { images(text) {
+            seen.push(text);
+            return text.replace('![alt](image.png)', '**custom image**');
+          } },
+        }), 'custom image');
+        assert.deepEqual(seen, ['![alt](image.png)']);
+        assert.equal(convert('![alt](image.png)', { rules: { images: () => '' } }), '');
+      });
+
+      it('snapshots entries so a callback cannot replace a later rule in the current call', function () {
+        const imageRule = () => 'original';
+        const rules = { html(text) { rules.images = () => 'changed'; return text; }, images: imageRule };
+        assert.equal(convert('text', { rules }), 'original');
+        assert.equal(convert('text', { rules }), 'changed');
+        assert.equal(convert('![alt](image.png)'), 'alt');
+      });
+
       it('uses only explicitly supplied rules and own rule entries', function () {
         assert.equal(convert('<b>text</b>', Object.create({ rules: { html: false } })), 'text');
         assert.equal(convert('<b>text</b>', { rules: Object.create({ html: false }) }), 'text');
