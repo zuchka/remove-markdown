@@ -33,6 +33,168 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    describe('acceptance: angle brackets, HTML and bounded runtime', function () {
+      describe('ordinary text is preserved', function () {
+        it('should not strip plain-text angle brackets that do not form HTML', function () {
+          const tests = [
+            { string: 'The equations 2 < 3 and 3 > 1 are both true', expected: 'The equations 2 < 3 and 3 > 1 are both true' },
+            { string: 'Cost: $5 < $10 and $20 > $15, so choose.', expected: 'Cost: $5 < $10 and $20 > $15, so choose.' },
+            { string: 'You can write to John Doe <john.doe AT example DOT com>', expected: 'You can write to John Doe <john.doe AT example DOT com>' },
+            { string: '1 < 100 and 100 > 0', expected: '1 < 100 and 100 > 0' },
+            { string: '2 << 3 >> 1', expected: '2 << 3 >> 1' },
+            { string: 'x <-> y <=> z', expected: 'x <-> y <=> z' },
+            { string: 'a <! word > b', expected: 'a <! word > b' },
+            { string: 'if x < 3 then say "hi" > y', expected: 'if x < 3 then say "hi" > y' },
+          ];
+          tests.forEach(function (test) {
+            expect(removeMd(test.string)).to.equal(test.expected);
+            expect(removeMd(test.string, { htmlTagsToSkip: ['b'] })).to.equal(test.expected);
+          });
+        });
+
+        it('should not treat a "<" outside a quoted attribute value as part of a tag', function () {
+          expect(removeMd('<a title=1 < 2>x</a>')).to.equal('<a title=1 < 2>x');
+        });
+
+        it('should still remove valid links and images next to stray square brackets', function () {
+          const stray = String.fromCharCode(0xE000);
+          const escape = String.fromCharCode(0xE001);
+          const allPrivateUse = Array.from({ length: 6400 }, function (_, i) { return String.fromCharCode(0xE000 + i); }).join('');
+          const tests = [
+            { string: 'x [a](b) y [ [ [', expected: 'x a y [ [ [' },
+            { string: '![i](p.png) [ [ [ and [ ref ] [l](u)', expected: 'i  [ [ and [ ref (u)' },
+            { string: 'note[^1] [ [ [\n\n[^1]: the note', expected: 'note [ [ [\n\n' },
+            { string: 'a\n[ref]: http://r\n[ [ [', expected: 'a\n[ref]: http://r\n[ [ [' },
+            { string: 'a\n\n[ref]: http://r', expected: 'a' },
+            // Text that happens to hold a character used internally must come back unchanged.
+            { string: stray + ' [a](b) ' + stray, expected: stray + ' a ' + stray },
+            { string: escape + '1 [a](b) ' + stray + '2 [ ' + escape + escape + '2', expected: escape + '1 a ' + stray + '2 [ ' + escape + escape + '2' },
+            { string: allPrivateUse + ' [a](b) [ [ [ ![i](p) ' + allPrivateUse, expected: allPrivateUse + ' a [ [ [ i ' + allPrivateUse },
+          ];
+          tests.forEach(function (test) {
+            expect(removeMd(test.string)).to.equal(test.expected);
+          });
+        });
+      });
+
+      describe('HTML constructs are stripped', function () {
+        it('should strip HTML comments, declarations, CDATA, processing instructions and autolinks', function () {
+          const tests = [
+            { string: '<p>Hello <b>World</b><br/><img src="a.png" alt="x"></p>', expected: 'Hello World' },
+            { string: 'a <!-- comment > still a comment --> b', expected: 'a  b' },
+            { string: 'a <![CDATA[ x > y ]]> b', expected: 'a  b' },
+            { string: 'a <?php echo 1; ?> b', expected: 'a  b' },
+            { string: '<!DOCTYPE html><html><body>hi</body></html>', expected: 'hi' },
+            { string: 'visit <https://example.com/x> or <me@example.com>', expected: 'visit  or ' },
+            { string: '<div\nclass="x">multi</div>', expected: 'multi' },
+          ];
+          tests.forEach(function (test) {
+            expect(removeMd(test.string)).to.equal(test.expected);
+          });
+        });
+
+        it('should leave unterminated comments, CDATA sections and processing instructions as text', function () {
+          const tests = [
+            { string: 'a <!-- b', expected: 'a <!-- b' },
+            { string: 'a <![CDATA[ b > c', expected: 'a <![CDATA[ b > c' },
+            { string: 'a <?php b > c', expected: 'a <?php b > c' },
+            { string: 'a <!-- b --> c <!-- d <!-- e', expected: 'a  c <!-- d <!-- e' },
+            { string: 'a <![CDATA[ b ]]> c <![CDATA[ d <![CDATA[ e', expected: 'a  c <![CDATA[ d <![CDATA[ e' },
+            { string: 'a <?p b ?> c <?q d <?r e', expected: 'a  c <?q d <?r e' },
+          ];
+          tests.forEach(function (test) {
+            expect(removeMd(test.string)).to.equal(test.expected);
+          });
+        });
+      });
+
+      describe('quoted attribute values may contain angle brackets', function () {
+        it('should strip such tags with default options and with htmlTagsToSkip', function () {
+          const tests = [
+            { string: '<span title="1 < 2">hello</span>', expected: 'hello' },
+            { string: "<span title='1 < 2'>hello</span>", expected: 'hello' },
+            { string: '<img src=x onerror="alert(1)" data-note="<">', expected: '' },
+            { string: "<img src=x onerror='alert(1)' data-note='<'>", expected: '' },
+            { string: "<a href='x' title=\"a<b\">t</a>", expected: 't' },
+          ];
+          tests.forEach(function (test) {
+            expect(removeMd(test.string)).to.equal(test.expected);
+            expect(removeMd(test.string, { htmlTagsToSkip: ['b'] })).to.equal(test.expected);
+          });
+        });
+      });
+
+      describe('htmlTagsToSkip', function () {
+        it('should keep listed tags and still strip the others', function () {
+          expect(removeMd('<p>Hello <b>World</b> 2 < 3 > 1</p>', { htmlTagsToSkip: ['b'] })).to.equal('Hello <b>World</b> 2 < 3 > 1');
+        });
+
+        it('should keep listed tags whose quoted attribute values contain angle brackets', function () {
+          const options = { htmlTagsToSkip: ['b'] };
+          expect(removeMd('<b title="1 < 2">x</b> <i title=\'a<b\'>y</i>', options)).to.equal('<b title="1 < 2">x</b> y');
+        });
+      });
+
+      describe('runtime stays bounded (each probe runs in its own process)', function () {
+        const { spawnSync } = require('child_process');
+        const entry = require.resolve('../');
+        const allPrivateUse = "Array.from({ length: 6400 }, (_, i) => String.fromCharCode(0xE000 + i)).join('')";
+
+        // Converts `prefix + unit.repeat(size)` in a fresh process: returns the time of the call and
+        // whether the output equals the input (these inputs hold nothing to strip).
+        function probe(unit, size, prefix) {
+          const code = [
+            'const removeMd = require(' + JSON.stringify(entry) + ');',
+            "removeMd('warmup');",
+            'const input = ' + (prefix || "''") + ' + ' + JSON.stringify(unit) + '.repeat(' + size + ');',
+            'const start = Date.now();',
+            'const output = removeMd(input);',
+            'console.log(JSON.stringify([Date.now() - start, output === input]));',
+          ].join('\n');
+          const result = spawnSync(process.execPath, ['-e', code], { encoding: 'utf8', timeout: 10000 });
+          const label = JSON.stringify(unit) + ' x ' + size + (prefix ? ' after U+E000..U+F8FF' : '');
+          expect(result.error && result.error.code, label).to.equal(undefined);
+          expect(result.status, label + ' ' + result.stderr).to.equal(0);
+          const measured = JSON.parse(result.stdout);
+          expect(measured[1], label + ' output').to.equal(true);
+          return measured[0];
+        }
+
+        // A linear conversion takes about 4 times as long for 4 times the input, a quadratic one
+        // about 16 times as long. The absolute bound is generous; the ratio is only checked when
+        // the small run is long enough to measure.
+        function expectLinear(unit, prefix) {
+          const small = probe(unit, 16000, prefix);
+          const large = probe(unit, 64000, prefix);
+          const label = JSON.stringify(unit) + (prefix ? ' after U+E000..U+F8FF' : '') + ': ' + small + ' ms, then ' + large + ' ms for 4x the input';
+          expect(large, label).to.be.below(3000);
+          if (small >= 25) expect(large / small, label).to.be.below(10);
+        }
+
+        [
+          ['unterminated comments', '<!--x>'],
+          ['unterminated CDATA sections', '<![CDATA[x>'],
+          ['unterminated CDATA sections with "]"', '<![CDATA[x]>'],
+          ['unterminated processing instructions', '<?x>'],
+          ['unterminated declarations', '<!a'],
+          ['comments holding "["', '<!--[x>'],
+          ['processing instructions holding "["', '<?[x>'],
+          ['"<" followed by "["', '<[x>'],
+          ['a repeated "!["', '![a'],
+        ].forEach(function (probeCase) {
+          it('should take linear time on ' + probeCase[0], function () {
+            expectLinear(probeCase[1]);
+          });
+        });
+
+        it('should take linear time on unterminated CDATA sections and plain "<[" text after every character from U+E000 to U+F8FF', function () {
+          expectLinear('<![CDATA[x>', allPrivateUse);
+          expectLinear('<[x>', allPrivateUse);
+          expectLinear('<!--x>', allPrivateUse);
+        });
+      });
+    });
+
     it('should strip MDX import statements', function () {
       const tests = [
         { string: 'import page404 from "@/assets/images/404.png"\n\nHere is some text', expected: 'Here is some text' },
