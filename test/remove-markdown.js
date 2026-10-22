@@ -15,6 +15,72 @@ describe('remove Markdown', function () {
       expect(removeMd(string)).to.equal(expected);
     });
 
+    it('should strip emphasis nested inside other emphasis', function () {
+      const tests = [
+        { string: '**a *b* c**', expected: 'a b c' },
+        { string: '*a **b** c*', expected: 'a b c' },
+        { string: 'Use **bold with *italic* inside** here', expected: 'Use bold with italic inside here' },
+        { string: 'A *b **c** d* e', expected: 'A b c d e' },
+        { string: '**a *b **c** d* e**', expected: 'a b c d e' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
+    it('should not pair literal asterisks left behind by separate emphasis spans', function () {
+      const tests = [
+        { string: '**2*3** and **4*5**', expected: '2*3 and 4*5' },
+        { string: '**x*y** + **z*w**', expected: 'x*y + z*w' },
+        { string: '**a*b** c*', expected: 'a*b c*' },
+        { string: '**a*b**\n**c*d**', expected: 'a*b\nc*d' },
+        { string: '**2*3** and *4*', expected: '2*3 and 4' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
+    it('should not pair an asterisk inside an underscore span with one outside of it', function () {
+      const tests = [
+        { string: '*foo __bar *baz bim__ bam*', expected: 'foo bar *baz bim bam' },
+        { string: '*a __b *c d__ e* f', expected: 'a b *c d e f' },
+        { string: '__a *b__ c*', expected: 'a *b c*' },
+        // Nested and adjacent mixed emphasis is still stripped.
+        { string: '*a __b__ c*', expected: 'a b c' },
+        { string: '_*foo*_ x', expected: 'foo x' },
+        { string: '**bold with _under_ inside** t', expected: 'bold with under inside t' },
+        { string: '*a* and __b__ and *c _d_ e*', expected: 'a and b and c d e' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
+    it('should resolve asterisk emphasis inside an underscore span before the span closes', function () {
+      const tests = [
+        { string: '_***hello**_', expected: '*hello' },
+        { string: '__***hello**__', expected: '*hello' },
+        { string: '_a ***hello** b_', expected: 'a *hello b' },
+        { string: '_**a*_', expected: '*a' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
+    it('should leave asterisk runs that do not pair as literal text', function () {
+      const tests = [
+        { string: '**a*b*', expected: '**ab' },
+        { string: '**a*b', expected: '*ab' },
+        { string: '2 * 3 * 4 and a*b', expected: '2 * 3 * 4 and a*b' },
+        { string: '*a **b', expected: '*a **b' },
+      ];
+      tests.forEach(function (test) {
+        expect(removeMd(test.string)).to.equal(test.expected);
+      });
+    });
+
     it('should leave non-matching markdown markdown', function () {
       const string = '*Javascript* developers* are the _best_.';
       const expected = 'Javascript developers* are the best.';
