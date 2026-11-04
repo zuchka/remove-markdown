@@ -41,6 +41,21 @@ test('the portable ESM implementation matches the CommonJS implementation', () =
   }
 });
 
+test('CommonJS and portable ESM resolve asterisk emphasis inside underscore spans', () => {
+  const commonJs = require('remove-markdown');
+  const cases = [
+    ['_***hello**_', '*hello'],
+    ['__***hello**__', '*hello'],
+    ['*foo __bar *baz bim__ bam*', 'foo bar *baz bim bam'],
+    ['**2*3** and **4*5**', '2*3 and 4*5'],
+  ];
+
+  for (const [markdown, expected] of cases) {
+    assert.equal(commonJs(markdown), expected);
+    assert.equal(removeMdFromPortableEsm(markdown), expected);
+  }
+});
+
 test('the generated ESM implementation is synchronized with index.js', () => {
   run(process.execPath, ['scripts/build-esm.mjs', '--check'], projectRoot);
 });

@@ -1,3 +1,105 @@
+// Pairs runs of `*` and `_` (one line) like a delimiter stack and leaves the number of delimiters
+// still unpaired in `left`. Closers are visited once, left to right, so the work is linear. When
+// a pair forms, the runs between its two delimiters are first resolved among themselves (they may
+// split runs), and what stays unpaired is literal (`dead`) so it cannot pair again; this is how
+// an `*` inside a `__strong__` span can no longer pair with an `*` outside of it. Only the
+// asterisks are removed afterwards: the `_` emphasis itself is still stripped by its own rule.
+function pairEmphasisRuns(runs, splitOpeners) {
+  const openers = [];
+  const loose = [];
+  const openersByKey = {};
+  const remember = function(run) {
+    const key = run.character + run.left;
+    (openersByKey[key] = openersByKey[key] || []).push(run);
+  };
+  // The nearest live entry of a list kept in stack order, dropping stale ones from its end.
+  const nearestIn = function(list, isStale) {
+    while (list && list.length > 0 && isStale(list[list.length - 1])) list.pop();
+    return list && list.length > 0 ? list[list.length - 1] : undefined;
+  };
+
+  runs.forEach(function(closer) {
+    while (closer.canClose && closer.left > 0) {
+      // Prefer the nearest opener with exactly as many delimiters left, so that in **2*3** the
+      // closing ** pairs with the opening ** instead of the single * taking one of its asterisks.
+      let opener = nearestIn(openersByKey[closer.character + closer.left], function(run) {
+        return run.dead || run.left !== closer.left;
+      });
+      if (!opener) {
+        const nearest = nearestIn(openersByKey[closer.character + 'any'], function(run) {
+          return run.dead || run.left === 0;
+        });
+        if (nearest && (splitOpeners || nearest.left <= closer.left)) opener = nearest;
+      }
+      if (!opener) break;
+
+      // Whatever this pair encloses is resolved first, and may now split runs (so `_***hello**_`
+      // still loses its `**`). Only the delimiters that stay unpaired are literal for good.
+      const enclosed = [];
+      while (openers[openers.length - 1] !== opener) enclosed.push(openers.pop());
+      while (loose.length > 0 && loose[loose.length - 1].order > opener.order) enclosed.push(loose.pop());
+      enclosed.sort(function(a, b) { return a.order - b.order; });
+      pairEmphasisRuns(enclosed, true);
+      enclosed.forEach(function(run) { run.dead = true; });
+      const used = Math.min(opener.left, closer.left);
+      opener.left -= used;
+      closer.left -= used;
+      if (opener.left > 0) remember(opener);
+      else openers.pop();
+    }
+
+    if (closer.left === 0) return;
+    if (closer.canOpen) {
+      openers.push(closer);
+      remember(closer);
+      (openersByKey[closer.character + 'any'] = openersByKey[closer.character + 'any'] || []).push(closer);
+    } else {
+      loose.push(closer);
+    }
+  });
+}
+
+// Strips `*` emphasis by pairing the delimiter runs once, in the original text, so emphasis nested
+// inside other emphasis is removed without re-reading the stripped output (which would turn
+// literal asterisks from separate spans into new pairs). Like the previous regex, a `*` opens
+// only before a non-space and closes only after a non-space, and pairs stay on one line. The `_`
+// runs are paired too, with the rule of the `_` emphasis replacement, but only so that they bound
+// the asterisks inside them; they are left in the text.
+function stripAsteriskEmphasis(text) {
+  return text.replace(/.+/g, function(line) {
+    const runs = [];
+    const runRegex = /\*+|_+/g;
+    let match;
+    while ((match = runRegex.exec(line))) {
+      const before = line.charAt(match.index - 1);
+      const after = line.charAt(match.index + match[0].length);
+      const asterisk = match[0].charAt(0) === '*';
+      runs.push({
+        order: runs.length,
+        character: match[0].charAt(0),
+        start: match.index,
+        length: match[0].length,
+        left: match[0].length,
+        dead: false,
+        canOpen: after !== '' && !/\s/.test(after) && (asterisk || before === '' || !/\w/.test(before)),
+        canClose: before !== '' && !/\s/.test(before) && (asterisk || after === '' || !/\w/.test(after)),
+      });
+    }
+
+    // First pair without splitting an opener run, then pair what is left over (which may).
+    pairEmphasisRuns(runs, false);
+    pairEmphasisRuns(runs.filter(function(run) { return !run.dead && run.left > 0; }), true);
+
+    let result = '';
+    let position = 0;
+    runs.forEach(function(run) {
+      result += line.slice(position, run.start) + run.character.repeat(run.character === '*' ? run.left : run.length);
+      position = run.start + run.length;
+    });
+    return result + line.slice(position);
+  });
+}
+
 module.exports = function(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
@@ -92,9 +194,12 @@ module.exports = function(md, options) {
       // Remove reference-style links?
       .replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')
       // Remove atx-style headers
-      .replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6')
-      // Remove * emphasis
-      .replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3')
+      .replace(/^(\n)?\s{0,}#{1,6}\s*( (.+))? +#+$|^(\n)?\s{0,}#{1,6}\s*( (.+))?$/gm, '$1$3$4$6');
+
+    // Remove * emphasis
+    output = stripAsteriskEmphasis(output);
+
+    output = output
       // Remove _ emphasis. Unlike *, _ emphasis gets rendered only if
       //   1. Either there is a whitespace character before opening _ and after closing _.
       //   2. Or _ is at the start/end of the string.
