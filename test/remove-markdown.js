@@ -274,6 +274,37 @@ import 'a'`, expected: '' },
       });
     });
 
+    describe('angle brackets in prose and HTML', function () {
+      // The third column gives the expected output when <sub> is kept.
+      const cases = [
+        ['5 < 10 and 10 > 5', '5 < 10 and 10 > 5'],
+        ['low <= limit and high >= limit', 'low <= limit and high >= limit'],
+        ['x\t<\ty and y > z', 'x\t<\ty and y > z'],
+        ['x <\r\ny and y > z', 'x <\r\ny and y > z'],
+        ['1 < 2 < 3 > 0', '1 < 2 < 3 > 0'],
+        ['> 2 < 3 and **4** > 1', '2 < 3 and 4 > 1'],
+        ['[2 < 3](url) and ![4 > 1](image)', '2 < 3 and 4 > 1'],
+        ['2 < 3 <br/> 4 > 1 <sub>ok</sub>', '2 < 3  4 > 1 ok', '2 < 3  4 > 1 <sub>ok</sub>'],
+        ['<div title="1 < 2">x < y</div>', 'x < y'],
+        ['<sub title="1 < 2">x</sub>', 'x', '<sub title="1 < 2">x</sub>'],
+        ['<x-note\nclass="a">ok</x-note><hr />', 'ok'],
+        ['<!DOCTYPE html><!-- x < y --><?pi?><![CDATA[x < y]]>ok', 'ok'],
+        ['Visit <https://example.com> or <1@example.com>.', 'Visit  or .'],
+        ['x < y > z. Visit <https://example.com>. Try `<b>x</b>`.', 'x < y > z. Visit . Try x.'],
+        ['List<T> and <placeholder>', 'List and '],
+        ['< a><\nfoo><>', ''],
+        ['Keep < label > here', 'Keep < label > here'],
+        ['5<10 and 10>5', '55'],
+      ];
+
+      for (const [input, expected, withSub = expected] of cases) {
+        it(JSON.stringify(input), function () {
+          expect(removeMd(input)).to.equal(expected);
+          expect(removeMd(input, { htmlTagsToSkip: ['sub'] })).to.equal(withSub);
+        });
+      }
+    });
+
     it('should strip unordered list leaders', function () {
       const string = 'Some text on a line\n\n* A list Item\n* Another list item';
       const expected = 'Some text on a line\n\nA list Item\nAnother list item';
