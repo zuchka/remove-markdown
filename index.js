@@ -74,9 +74,16 @@ module.exports = function(md, options) {
       output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
     }
 
+    const spacedComparison = /[ \t]<=?(?=\s)/;
+    if (spacedComparison.test(output)) {
+      // Match the operator from its leading whitespace, before < can start an HTML match.
+      const htmlOrComparison = new RegExp(spacedComparison.source + '|' + htmlReplaceRegex.source, 'g');
+      output = output.replace(htmlOrComparison, match => match[0] === '<' ? '' : match);
+    } else {
+      output = output.replace(htmlReplaceRegex, '');
+    }
+
     output = output
-      // Remove HTML tags
-      .replace(htmlReplaceRegex, '')
       // Remove setext-style headers
       .replace(/^[=\-]{2,}\s*$/g, '')
       // Remove footnotes?
