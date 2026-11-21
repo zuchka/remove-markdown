@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.1](.github/release-notes/0.8.1.md)
+
+### Fixed
+
+- Preserve spaced comparisons such as `5 < 10 and 10 > 5` when stripping HTML, including when `htmlTagsToSkip` is set. [PR #144](https://github.com/zuchka/remove-markdown/pull/144)
+
 ## [0.7.1] - 2026-09-28
 
 ### Fixed
