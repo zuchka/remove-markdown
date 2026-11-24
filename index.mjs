@@ -6,17 +6,53 @@ const autolinkTokens = new RegExp([
   /\\\\/,
   /(?:\\|\][(:][ \t\r\n]*)?<(https?:\/\/[^\s<>/?#\x00-\x1f\x7f][^\s<>\x00-\x1f\x7f]*)>/,
   // A backtick in the info string rules out a backtick fence, but is valid in a tilde fence.
-  /(?:^|\n)[ \t]{0,3}(?<fence>`{3,}(?![^\n]*`)|~{3,})[^\n]*[\s\S]*?(?:\n[ \t]{0,3}(?=\k<fence>)(?:`+|~+)[ \t]*\r?(?=\n|$)|$)/,
+  /(?:^|\n) {0,3}(?<fence>`{3,}(?![^\n]*`)|~{3,})[^\n]*[\s\S]*?(?:\n {0,3}(?=\k<fence>)(?:`+|~+)[ \t]*\r?(?=\n|$)|$)/,
   // Inline code closes on a whole backtick run of the opening length, within the paragraph.
   /(?<ticks>`+)(?!`)(?:[^`\n]|\n(?![ \t]*\r?\n)|`+(?!`))*?\k<ticks>(?!`)|`+/,
   /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<\?[\s\S]*?(?:\?>|$)/,
   /<(?:\/?[a-z][a-z0-9-]*(?=[\s/>])|![a-z])(?:[^"'>]|"[^"]*(?:"|$)|'[^']*(?:'|$))*>?/,
-  /[ \t]<=?(?=\s)|<[^>]*(?:>|$)|\uE000/,
+  /[ \t]<=?(?=\s)|<[^>]*(?:>|$)|\uE000+/,
 ].map(pattern => pattern.source).join('|'), 'gi');
+
+const horizontalRule = /^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/gm;
 
 // Double literal marker characters so even caller-provided replacement text round-trips.
 function escapeMarker(text) {
   return text.replace(/\uE000/g, '\uE000\uE000');
+}
+
+function afterIndent(whitespace, column) {
+  for (const char of whitespace) column += char === '\t' ? 4 - column % 4 : 1;
+  return column;
+}
+
+// Four columns start a code block only where a new paragraph could start.
+// Inside a list item, count those columns from the item's content margin.
+function maskIndentedCode(text) {
+  if (!/^(?: {4}| {0,3}\t)/m.test(text)) return text;
+
+  let paragraph = false;
+  const margins = [0];
+  return text.replace(/([ \t]*)([^\r\n]*)(\r\n|[\r\n]|$)/g, (line, indent, content, ending) => {
+    if (!content) {
+      paragraph = false;
+      return line;
+    }
+    const column = afterIndent(indent, 0);
+    while (column < margins[margins.length - 1]) margins.pop();
+    if (!paragraph && column >= margins[margins.length - 1] + 4) {
+      // Keep source offsets while hiding both apparent URLs and delimiters in this code line.
+      return '\uE000'.repeat(indent.length + content.length) + ending;
+    }
+    paragraph = content.search(horizontalRule) < 0 && !/^(?:#{1,6}(?:\s|$)|`{3,}[^`]*$|~{3,}|(?:=+|-+)\s*$)/.test(content);
+    const marker = paragraph && /^([-+*]|\d{1,9}[.)])([ \t]+)/.exec(content);
+    if (marker) {
+      const markerEnd = column + marker[1].length;
+      const margin = afterIndent(marker[2], markerEnd);
+      margins.push(margin - markerEnd > 4 ? markerEnd + 1 : margin);
+    }
+    return line;
+  });
 }
 
 export default function removeMarkdown(md, options) {
@@ -56,15 +92,19 @@ export default function removeMarkdown(md, options) {
   }
 
   // Remove horizontal rules (stripListHeaders conflict with this rule, which is why it has been moved to the top)
-  output = output.replace(/^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/gm, '');
+  const beforeRules = output;
+  output = output.replace(horizontalRule, '');
 
   try {
     // Keep URL punctuation out of the list, link, emphasis and code replacements.
     let urls;
     if (/<https?:\/\//i.test(output)) {
       urls = [];
-      output = output.replace(autolinkTokens, (match, url) => {
-        if (!url || match[0] !== '<') return escapeMarker(match);
+      // A removed rule can separate a paragraph from indented code. Classify the original lines.
+      const masked = maskIndentedCode(beforeRules);
+      const scan = masked === beforeRules ? output : masked.replace(horizontalRule, '');
+      output = scan.replace(autolinkTokens, (match, url, fence, ticks, offset) => {
+        if (!url || match[0] !== '<') return escapeMarker(output.slice(offset, offset + match.length));
         urls.push(url);
         return '\uE000' + (urls.length - 1) + '\uE001';
       });
