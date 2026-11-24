@@ -289,8 +289,8 @@ import 'a'`, expected: '' },
         ['<sub title="1 < 2">x</sub>', 'x', '<sub title="1 < 2">x</sub>'],
         ['<x-note\nclass="a">ok</x-note><hr />', 'ok'],
         ['<!DOCTYPE html><!-- x < y --><?pi?><![CDATA[x < y]]>ok', 'ok'],
-        ['Visit <https://example.com> or <1@example.com>.', 'Visit  or .'],
-        ['x < y > z. Visit <https://example.com>. Try `<b>x</b>`.', 'x < y > z. Visit . Try x.'],
+        ['Visit <https://example.com> or <1@example.com>.', 'Visit https://example.com or .'],
+        ['x < y > z. Visit <https://example.com>. Try `<b>x</b>`.', 'x < y > z. Visit https://example.com. Try x.'],
         ['List<T> and <placeholder>', 'List and '],
         ['< a><\nfoo><>', ''],
         ['Keep < label > here', 'Keep < label > here'],
@@ -303,6 +303,64 @@ import 'a'`, expected: '' },
           expect(removeMd(input, { htmlTagsToSkip: ['sub'] })).to.equal(withSub);
         });
       }
+    });
+
+    describe('angle-bracketed HTTP and HTTPS autolinks', function () {
+      const url = 'https://example.com';
+      const cases = [
+        [`<${url}>`, url],
+        [`Visit <${url}>.`, `Visit ${url}.`],
+        [`(<${url}><${url}>), <HTTP://Example.COM:8080/a>!`, `(${url}${url}), HTTP://Example.COM:8080/a!`],
+        ['<https://[::1]:8080/a_(b)?x=1&y=2#here>', 'https://[::1]:8080/a_(b)?x=1&y=2#here'],
+        ['<https://h/~~x~~/*a*/_b_/`q`/[a](b)?q=$&>', 'https://h/~~x~~/*a*/_b_/`q`/[a](b)?q=$&'],
+        [`**<${url}>** and [notes](dest) ![lake](img)`, `${url} and notes lake`],
+        [`2 < 3 and 3 > 2. <div><sub><${url}></sub><br/><my-tag x="1"/></div>`, `2 < 3 and 3 > 2. ${url}`, `2 < 3 and 3 > 2. <sub>${url}</sub>`],
+        [`<a href="${url}">label</a> <${url}>`, `label ${url}`],
+        [`<sub title="${url}">label</sub> <${url}>`, `label ${url}`, `<sub title="${url}">label</sub> ${url}`],
+        [`<p title="before > <https://inside>">ok</p> <${url}>`, ` ">ok ${url}`],
+        [`<p title=<https://inside>>ok</p> <${url}>`, `ok ${url}`],
+        [`<sub title='before > <https://inside>'>ok</sub> <${url}>`, ` '>ok ${url}`, `<sub title='before > '>ok</sub> ${url}`],
+        [`<!-- before > <https://inside> -->outside <${url}>`, `  -->outside ${url}`],
+        [`<![CDATA[a > <https://inside>]]><?pi > <https://inside>?> <${url}>`, ` ]]> ?> ${url}`],
+        [`<${url}> <mailto:hi@example.com> <hi@example.com> <ftp://h> ${url}`, `${url}    ${url}`],
+        [`<https://> <https://a b> <https://a\nb> <https://a\x01b> <${url}`, `    <${url}`],
+        [`<<${url}>> tail`, 'tail'],
+        [`\\<${url}> <${url}>`, `\\ ${url}`],
+        [`\\\\<${url}>`, `\\\\${url}`],
+        [`Try \`<${url}>\`. Visit <${url}>.`, `Try \`\`. Visit ${url}.`],
+        [`\`line\n<https://inside>\`. Visit <${url}>.`, `\`line\n\`. Visit ${url}.`],
+        [`\`<https://foo.bar.\`baz>\`\n`, '\`\`\n'],
+        ['```txt\n<https://inside>\n```\nSee <https://outside>', '\nSee https://outside'],
+        ['~~~\n<https://inside>\n~~~\nSee <https://outside>', '\nSee https://outside'],
+        ['````md\n```\n<https://inside>\n```\n````\nSee <https://outside>', '\n\n`\nSee https://outside'],
+        [`\uE000<b></b>0\uE001 <${url}/\uE000> \uE0001\uE001`, `\uE0000\uE001 ${url}/\uE000 \uE0001\uE001`],
+      ];
+      for (const [input, expected, withSub = expected] of cases) {
+        it(JSON.stringify(input), function () {
+          expect(removeMd(input)).to.equal(expected);
+          expect(removeMd(input, { htmlTagsToSkip: ['sub'] })).to.equal(withSub);
+        });
+      }
+
+      it('keeps autolinks literal while applying the configured link and image options', function () {
+        const input = `[label](dest) <${url}/[a](b)> ![alt](image)`;
+        expect(removeMd(input, { replaceLinksWithURL: true, useImgAltText: false })).to.equal(`dest ${url}/[a](b) `);
+        expect(removeMd(input, { separateLinksAndTexts: ': ' })).to.equal(`label: dest ${url}/[a](b) !alt: image`);
+      });
+
+      it('distinguishes an autolink from an angle-delimited Markdown link destination', function () {
+        const input = `[label](<${url}>) <${url}>\n\n[ref]: <${url}>`;
+        expect(removeMd(input)).to.equal(`label ${url}`);
+        expect(removeMd(input, { replaceLinksWithURL: true })).to.equal(` ${url}`);
+        expect(removeMd(input, { separateLinksAndTexts: ': ' })).to.equal(`label:  ${url}`);
+      });
+
+      it('preserves literal marker characters supplied by list and link options', function () {
+        const literal = '\uE0000\uE001';
+        const input = `- [label](dest) <${url}>`;
+        expect(removeMd(input, { listUnicodeChar: literal, separateLinksAndTexts: literal }))
+          .to.equal(`${literal} label${literal}dest ${url}`);
+      });
     });
 
     it('should strip unordered list leaders', function () {

@@ -1,5 +1,22 @@
 // Generated from index.js by scripts/build-esm.mjs. Do not edit directly.
 
+// Skip code, HTML and angle-delimited link destinations when looking for a web autolink.
+// The final alternative follows the existing comparison and HTML matching boundaries.
+const autolinkTokens = new RegExp([
+  /\\\\/,
+  /(?:\\|\][(:][ \t\r\n]*)?<(https?:\/\/[^\s<>/?#\x00-\x1f\x7f][^\s<>\x00-\x1f\x7f]*)>/,
+  /(?:^|\n)[ \t]{0,3}(?<fence>`{3,}|~{3,})[^\n]*[\s\S]*?(?:\n[ \t]{0,3}(?=\k<fence>)(?:`+|~+)[ \t]*\r?(?=\n|$)|$)/,
+  /``(?:[^\n]|\n(?![ \t]*\r?\n))*?``|`(?:[^`\n]|\n(?![ \t]*\r?\n))+`/,
+  /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<\?[\s\S]*?(?:\?>|$)/,
+  /<(?:\/?[a-z][a-z0-9-]*(?=[\s/>])|![a-z])(?:[^"'>]|"[^"]*(?:"|$)|'[^']*(?:'|$))*>?/,
+  /[ \t]<=?(?=\s)|<[^>]*(?:>|$)|\uE000/,
+].map(pattern => pattern.source).join('|'), 'gi');
+
+// Double literal marker characters so even caller-provided replacement text round-trips.
+function escapeMarker(text) {
+  return text.replace(/\uE000/g, '\uE000\uE000');
+}
+
 export default function removeMarkdown(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
@@ -40,10 +57,21 @@ export default function removeMarkdown(md, options) {
   output = output.replace(/^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/gm, '');
 
   try {
+    // Keep URL punctuation out of the list, link, emphasis and code replacements.
+    let urls;
+    if (/<https?:\/\//i.test(output)) {
+      urls = [];
+      output = output.replace(autolinkTokens, (match, url) => {
+        if (!url || match[0] !== '<') return escapeMarker(match);
+        urls.push(url);
+        return '\uE000' + (urls.length - 1) + '\uE001';
+      });
+    }
     if (options.stripListLeaders) {
-      if (options.listUnicodeChar)
-        output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, options.listUnicodeChar + ' $1');
-      else
+      if (options.listUnicodeChar) {
+        const replacement = options.listUnicodeChar + ' $1';
+        output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, urls ? escapeMarker(replacement) : replacement);
+      } else
         output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, '$1');
     }
     if (options.gfm) {
@@ -73,7 +101,8 @@ export default function removeMarkdown(md, options) {
     }
 
     if (options.separateLinksAndTexts) {
-      output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
+      const replacement = '$1' + options.separateLinksAndTexts + '$2';
+      output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, urls ? escapeMarker(replacement) : replacement);
     }
 
     const spacedComparison = /[ \t]<=?(?=\s)/;
@@ -118,6 +147,9 @@ export default function removeMarkdown(md, options) {
       // .replace(/(\S+)\n\s*(\S+)/g, '$1 $2')
       // Replace strike through
       .replace(/~(.*?)~/g, '$1');
+    if (urls) {
+      output = output.replace(/\uE000(?:\uE000|(\d+)\uE001)/g, (_, index) => index === undefined ? '\uE000' : urls[index]);
+    }
   } catch(e) {
     if (options.throwError) throw e;
 
