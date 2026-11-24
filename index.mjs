@@ -5,8 +5,10 @@
 const autolinkTokens = new RegExp([
   /\\\\/,
   /(?:\\|\][(:][ \t\r\n]*)?<(https?:\/\/[^\s<>/?#\x00-\x1f\x7f][^\s<>\x00-\x1f\x7f]*)>/,
-  /(?:^|\n)[ \t]{0,3}(?<fence>`{3,}|~{3,})[^\n]*[\s\S]*?(?:\n[ \t]{0,3}(?=\k<fence>)(?:`+|~+)[ \t]*\r?(?=\n|$)|$)/,
-  /``(?:[^\n]|\n(?![ \t]*\r?\n))*?``|`(?:[^`\n]|\n(?![ \t]*\r?\n))+`/,
+  // A backtick in the info string rules out a backtick fence, but is valid in a tilde fence.
+  /(?:^|\n)[ \t]{0,3}(?<fence>`{3,}(?![^\n]*`)|~{3,})[^\n]*[\s\S]*?(?:\n[ \t]{0,3}(?=\k<fence>)(?:`+|~+)[ \t]*\r?(?=\n|$)|$)/,
+  // Inline code closes on a whole backtick run of the opening length, within the paragraph.
+  /(?<ticks>`+)(?!`)(?:[^`\n]|\n(?![ \t]*\r?\n)|`+(?!`))*?\k<ticks>(?!`)|`+/,
   /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<\?[\s\S]*?(?:\?>|$)/,
   /<(?:\/?[a-z][a-z0-9-]*(?=[\s/>])|![a-z])(?:[^"'>]|"[^"]*(?:"|$)|'[^']*(?:'|$))*>?/,
   /[ \t]<=?(?=\s)|<[^>]*(?:>|$)|\uE000/,
