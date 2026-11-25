@@ -171,7 +171,10 @@ function protectAutolinks(text, beforeRules, urls) {
           cursor = end;
           break;
         }
-        if (/\n(?: {4}| {0,3}\t)/.test(match)) {
+        // For a code span, comment or generic <...> range, masking its interior
+        // leaves its closing delimiter intact. HTML attributes can also hide quotes.
+        if (/\n(?: {4}| {0,3}\t)/.test(match) &&
+            (/^<(?:\/?[a-z]|![a-z])/i.test(match) || codeLine(autolinkTokens.lastIndex - 1) >= 0)) {
           scan = autolinkContext(beforeRules, text);
           codeLine = null;
           break;
