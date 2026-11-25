@@ -289,8 +289,8 @@ import 'a'`, expected: '' },
         ['<sub title="1 < 2">x</sub>', 'x', '<sub title="1 < 2">x</sub>'],
         ['<x-note\nclass="a">ok</x-note><hr />', 'ok'],
         ['<!DOCTYPE html><!-- x < y --><?pi?><![CDATA[x < y]]>ok', 'ok'],
-        ['Visit <https://example.com> or <1@example.com>.', 'Visit  or .'],
-        ['x < y > z. Visit <https://example.com>. Try `<b>x</b>`.', 'x < y > z. Visit . Try x.'],
+        ['Visit <https://example.com> or <1@example.com>.', 'Visit https://example.com or .'],
+        ['x < y > z. Visit <https://example.com>. Try `<b>x</b>`.', 'x < y > z. Visit https://example.com. Try x.'],
         ['List<T> and <placeholder>', 'List and '],
         ['< a><\nfoo><>', ''],
         ['Keep < label > here', 'Keep < label > here'],
@@ -303,6 +303,99 @@ import 'a'`, expected: '' },
           expect(removeMd(input, { htmlTagsToSkip: ['sub'] })).to.equal(withSub);
         });
       }
+    });
+
+    describe('angle-bracketed HTTP and HTTPS autolinks', function () {
+      const url = 'https://example.com';
+      const cases = [
+        [`<${url}>`, url],
+        [`Visit <${url}>.`, `Visit ${url}.`],
+        [`(<${url}><${url}>), <HTTP://Example.COM:8080/a>!`, `(${url}${url}), HTTP://Example.COM:8080/a!`],
+        ['<https://[::1]:8080/a_(b)?x=1&y=2#here>', 'https://[::1]:8080/a_(b)?x=1&y=2#here'],
+        ['<https://h/~~x~~/*a*/_b_/`q`/[a](b)?q=$&>', 'https://h/~~x~~/*a*/_b_/`q`/[a](b)?q=$&'],
+        [`**<${url}>** and [notes](dest) ![lake](img)`, `${url} and notes lake`],
+        [`2 < 3 and 3 > 2. <div><sub><${url}></sub><br/><my-tag x="1"/></div>`, `2 < 3 and 3 > 2. ${url}`, `2 < 3 and 3 > 2. <sub>${url}</sub>`],
+        [`<a href="${url}">label</a> <${url}>`, `label ${url}`],
+        [`<sub title="${url}">label</sub> <${url}>`, `label ${url}`, `<sub title="${url}">label</sub> ${url}`],
+        [`<p title="before > <https://inside>">ok</p> <${url}>`, ` ">ok ${url}`],
+        [`<p title=<https://inside>>ok</p> <${url}>`, `ok ${url}`],
+        [`<sub title='before > <https://inside>'>ok</sub> <${url}>`, ` '>ok ${url}`, `<sub title='before > '>ok</sub> ${url}`],
+        [`<!-- before > <https://inside> -->outside <${url}>`, `  -->outside ${url}`],
+        [`<![CDATA[a > <https://inside>]]><?pi > <https://inside>?> <${url}>`, ` ]]> ?> ${url}`],
+        [`<${url}> <mailto:hi@example.com> <hi@example.com> <ftp://h> ${url}`, `${url}    ${url}`],
+        [`<https://> <https://a b> <https://a\nb> <https://a\x01b> <${url}`, `    <${url}`],
+        [`<<${url}>> tail`, 'tail'],
+        [`\\<${url}> <${url}>`, `\\ ${url}`],
+        [`\\\\<${url}>`, `\\\\${url}`],
+        [`Try \`<${url}>\`. Visit <${url}>.`, `Try \`\`. Visit ${url}.`],
+        [`\`line\n<https://inside>\`. Visit <${url}>.`, `\`line\n\`. Visit ${url}.`],
+        [`\`<https://foo.bar.\`baz>\`\n`, '\`\`\n'],
+        ['```txt\n<https://inside>\n```\nSee <https://outside>', '\nSee https://outside'],
+        ['```code```\n\nVisit <https://example.com>.', 'code\n\nVisit https://example.com.'],
+        ['```<https://inside>```\r\n\r\nSee <https://outside>', '\r\n\r\nSee https://outside'],
+        ['````<https://inside>```` See <https://outside> and `other`.', ' See https://outside and other.'],
+        ['   ```a ` b``` See <https://outside>', '   a ` b See https://outside'],
+        ['```doc\n<https://inside>\nSee <https://other>', '`doc\n\nSee '],
+        ['~~~lang`id\n<https://inside>\n~~~\nSee <https://outside>', '\nSee https://outside'],
+        [`    <${url}>`, '    '],
+        ['    <b>code</b> <https://inside>\nSee <https://outside>', '    code \nSee https://outside'],
+        ['\n    <https://inside>', '\n    '],
+        ['\t<https://first>\n     <https://second>\n\n    <https://third>\nSee <https://outside>', '\t\n     \n\n    \nSee https://outside'],
+        ['lead\r\n \t\r\n   \t<https://inside>\r\n\r\nVisit <https://outside>.', 'lead\r\n \t\r\n   \t\r\n\r\nVisit https://outside.'],
+        [`   <${url}>`, `   ${url}`],
+        [`See\n    <${url}>`, `See\n    ${url}`],
+        [`See\r\n    <${url}>`, `See\r\n    ${url}`],
+        [`- item\n\n    <${url}>`, `item\n\n    ${url}`],
+        [`-\titem\n\n    <${url}>`, `item\n\n    ${url}`],
+        ['- item\n\n      <https://inside>\n\nSee <https://outside>', 'item\n\n      \n\nSee https://outside'],
+        ['before\n***\n    <https://inside>\nSee <https://outside>', 'before\n    \nSee https://outside'],
+        ['    code\u2028---\n\nVisit <https://example.com>.', '    code\u2028Visit https://example.com.'],
+        ['    code\u2029***\n\nVisit <https://example.com>!', '    code\u2029Visit https://example.com!'],
+        ['# Heading\n    <https://inside>', 'Heading\n    '],
+        ['\t```txt\nSee <https://outside>', '\t`txt\nSee https://outside'],
+        ['    `\nSee <https://outside> `', '    `\nSee https://outside `'],
+        ['    <https://in>\n\nVisit <https://out> then <https://bad <https://nested>>.', '    \n\nVisit https://out then >.'],
+        ['before <!--\n\n    -->\n\n<https://inside>\n-->\nVisit <https://out>.', 'before \n\n\n-->\nVisit https://out.'],
+        ['node <10\n\n    example\n\nSee <https://hidden>. Then <https://out>.', 'node . Then https://out.'],
+        ['node <10\n\n    >\n\nSee <https://hidden>. Then <https://out>.', 'node \n\nSee . Then https://out.'],
+        ['<span title="a\n\n    ">b\n\n<https://inside>\n\n">See <https://out>.', 'b\n\n\n\n">See https://out.'],
+        ['- item\n\n    first <https://one> and <https://two>\n\n      <https://in>\n\nEnd <https://end>.', 'item\n\n    first https://one and https://two\n\n      \n\nEnd https://end.'],
+        ['\r    <https://in>\r\rSee <https://out>.', '\r    \r\rSee https://out.'],
+        ['    \uE0000\uE001\x00 <https://inside>\nSee <https://outside>', '    \uE0000\uE001\x00 \nSee https://outside'],
+        ['~~~\n<https://inside>\n~~~\nSee <https://outside>', '\nSee https://outside'],
+        ['First <https://one>.\n\n<!-- open\n\n<https://inside> -->\n\nSee <https://two>.', 'First https://one.\n\n -->\n\nSee https://two.'],
+        ['Before <https://one>.\r\n\r\n[label](\r\n\r\n<https://inside>)\r\n\r\nAfter <https://two>.', 'Before https://one.\r\n\r\n[label](\r\n\r\n)\r\n\r\nAfter https://two.'],
+        ['Before <https://one>.\n\n```md\n\n<https://inside>\n\n```\n\nAfter <https://two>.', 'Before https://one.\n\n\n\nAfter https://two.'],
+        ['\uE0000\uE001\n\nordinary\n\nVisit <https://x>.\n\n\uE0001\uE001', '\uE0000\uE001\n\nordinary\n\nVisit https://x.\n\n\uE0001\uE001'],
+        ['````md\n```\n<https://inside>\n```\n````\nSee <https://outside>', '\n\n`\nSee https://outside'],
+        [`\uE000<b></b>0\uE001 <${url}/\uE000> \uE0001\uE001`, `\uE0000\uE001 ${url}/\uE000 \uE0001\uE001`],
+      ];
+      for (const [input, expected, withSub = expected] of cases) {
+        it(JSON.stringify(input), function () {
+          expect(removeMd(input)).to.equal(expected);
+          expect(removeMd(input, { htmlTagsToSkip: ['sub'] })).to.equal(withSub);
+        });
+      }
+
+      it('keeps autolinks literal while applying the configured link and image options', function () {
+        const input = `[label](dest) <${url}/[a](b)> ![alt](image)`;
+        expect(removeMd(input, { replaceLinksWithURL: true, useImgAltText: false })).to.equal(`dest ${url}/[a](b) `);
+        expect(removeMd(input, { separateLinksAndTexts: ': ' })).to.equal(`label: dest ${url}/[a](b) !alt: image`);
+      });
+
+      it('distinguishes an autolink from an angle-delimited Markdown link destination', function () {
+        const input = `[label](<${url}>) <${url}>\n\n[ref]: <${url}>`;
+        expect(removeMd(input)).to.equal(`label ${url}`);
+        expect(removeMd(input, { replaceLinksWithURL: true })).to.equal(` ${url}`);
+        expect(removeMd(input, { separateLinksAndTexts: ': ' })).to.equal(`label:  ${url}`);
+      });
+
+      it('preserves literal marker characters supplied by list and link options', function () {
+        const literal = '\uE0000\uE001';
+        const input = `- [label](dest) <${url}>`;
+        expect(removeMd(input, { listUnicodeChar: literal, separateLinksAndTexts: literal }))
+          .to.equal(`${literal} label${literal}dest ${url}`);
+      });
     });
 
     it('should strip unordered list leaders', function () {

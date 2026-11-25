@@ -1,3 +1,190 @@
+// Skip code, HTML and angle-delimited link destinations when looking for a web autolink.
+// The final alternative follows the existing comparison and HTML matching boundaries.
+const webAutolink = /(?:\\|\][(:][ \t\r\n]*)?<(https?:\/\/[^\s<>/?#\x00-\x1f\x7f][^\s<>\x00-\x1f\x7f]*)>/;
+const autolinkTokens = new RegExp([
+  /\\\\/,
+  webAutolink,
+  // A backtick in the info string rules out a backtick fence, but is valid in a tilde fence.
+  /(?:^|\n) {0,3}(?<fence>`{3,}(?![^\n]*`)|~{3,})[^\n]*[\s\S]*?(?:\n {0,3}(?=\k<fence>)(?:`+|~+)[ \t]*\r?(?=\n|$)|$)/,
+  // Inline code closes on a whole backtick run of the opening length, within the paragraph.
+  /(?<ticks>`+)(?!`)(?:[^`\n]|\n(?![ \t]*\r?\n)|`+(?!`))*?\k<ticks>(?!`)|`+/,
+  /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<\?[\s\S]*?(?:\?>|$)/,
+  /<(?:\/?[a-z][a-z0-9-]*(?=[\s/>])|![a-z])(?:[^"'>]|"[^"]*(?:"|$)|'[^']*(?:'|$))*>?/,
+  /[ \t]<=?(?=\s)|<[^>]*(?:>|$)/,
+].map(pattern => pattern.source).join('|'), 'gi');
+
+const horizontalRule = /^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/gm;
+
+// Double literal marker characters so even caller-provided replacement text round-trips.
+function escapeMarker(text) {
+  return text.replace(/\uE000/g, '\uE000\uE000');
+}
+
+function afterIndent(whitespace, column) {
+  for (const char of whitespace) column += char === '\t' ? 4 - column % 4 : 1;
+  return column;
+}
+
+// Four columns start a code block only where a new paragraph could start.
+// Inside a list item, count those columns from the item's content margin.
+function maskIndentedCode(text) {
+  if (!/^(?: {4}| {0,3}\t)/m.test(text)) return text;
+
+  let paragraph = false;
+  const margins = [0];
+  return text.replace(/([ \t]*)([^\r\n]*)(\r\n|[\r\n]|$)/g, (line, indent, content, ending) => {
+    if (!content) {
+      paragraph = false;
+      return line;
+    }
+    const column = afterIndent(indent, 0);
+    while (column < margins[margins.length - 1]) margins.pop();
+    if (!paragraph && column >= margins[margins.length - 1] + 4) {
+      // Keep source offsets while hiding both apparent URLs and delimiters in this code line.
+      return '\uE000'.repeat(indent.length + content.length) + ending;
+    }
+    paragraph = content.search(horizontalRule) < 0 && !/^(?:#{1,6}(?:\s|$)|`{3,}[^`]*$|~{3,}|(?:=+|-+)\s*$)/.test(content);
+    const marker = paragraph && /^([-+*]|\d{1,9}[.)])([ \t]+)/.exec(content);
+    if (marker) {
+      const markerEnd = column + marker[1].length;
+      const margin = afterIndent(marker[2], markerEnd);
+      margins.push(margin - markerEnd > 4 ? markerEnd + 1 : margin);
+    }
+    return line;
+  });
+}
+
+function autolinkContext(beforeRules, output) {
+  const masked = maskIndentedCode(beforeRules);
+  if (masked === beforeRules) return output;
+  if (beforeRules === output) return masked;
+
+  // Remove exactly the source ranges removed from output, even if a mask hid a rule.
+  let start = 0;
+  let scan = '';
+  for (const rule of beforeRules.matchAll(horizontalRule)) {
+    scan += masked.slice(start, rule.index);
+    start = rule.index + rule[0].length;
+  }
+  return scan + masked.slice(start);
+}
+
+// Check only the list or paragraph around an indented line. A flush-left
+// nonblank line resets the list margins, so adjacent blocks are independent.
+function codeLineLookup(text) {
+  const nextFlushLeft = /\n[^ \t\r\n]/g;
+  let blockStart = 0;
+  let mask = '';
+  let start = -1;
+  let end = -1;
+  let isCode = false;
+  return function (offset) {
+    if (offset >= start && offset < end) return isCode ? end : -1;
+    start = text.lastIndexOf('\n', offset - 1) + 1;
+    end = text.indexOf('\n', offset);
+    if (end < 0) end = text.length;
+    isCode = false;
+    if (/^(?: {4}| {0,3}\t)/.test(text.slice(start, start + 4))) {
+      if (start < blockStart || start >= blockStart + mask.length) {
+        blockStart = start;
+        while (blockStart > 0 && /[ \t\r\n]/.test(text[blockStart])) {
+          blockStart = blockStart < 2 ? 0 : text.lastIndexOf('\n', blockStart - 2) + 1;
+        }
+        nextFlushLeft.lastIndex = start;
+        const next = nextFlushLeft.exec(text);
+        mask = maskIndentedCode(text.slice(blockStart, next ? next.index : text.length));
+      }
+      isCode = mask[start - blockStart] === '\uE000';
+    }
+    return isCode ? end : -1;
+  };
+}
+
+// Inline code cannot cross a blank line. Fences, HTML and angle-delimited
+// Markdown destinations can, so visit their possible openers before each URL.
+const contextStart = /<|`{3}|~{3}|\][(:](?=[ \t\r\n]*<https?:\/\/)/gi;
+
+const plainAngles = new RegExp(webAutolink.source + '|' + /<[^>]*(?:>|$)/.source, 'gi');
+const needsTokenContext = /[`\\]|~{3}|\][(:]|<(?!https?:\/\/)/i;
+
+function protectAutolinks(text, beforeRules, urls) {
+  let copied = 0;
+  let result = '';
+  const hasMarker = text.includes('\uE000');
+  function literal(end) {
+    const part = text.slice(copied, end);
+    return hasMarker ? escapeMarker(part) : part;
+  }
+  function keep(at, url) {
+    result += literal(at) + '\uE000' + urls.length + '\uE001';
+    urls.push(url);
+    copied = at + url.length + 2;
+  }
+
+  // With no backticks, fences, escapes, HTML or link destinations, recognize
+  // angles in bulk. The second alternative consumes malformed angle ranges.
+  if (!needsTokenContext.test(text)) {
+    const scan = autolinkContext(beforeRules, text);
+    plainAngles.lastIndex = 0;
+    let token;
+    while ((token = plainAngles.exec(scan))) {
+      if (token[1]) keep(token.index, token[1]);
+    }
+    return result + literal();
+  }
+
+  const candidates = /<https?:\/\//gi;
+  const loneCR = /\r(?!\n)/.test(beforeRules);
+  let codeLine = loneCR ? null : codeLineLookup(beforeRules);
+  let lastCandidate = -1;
+  let candidate;
+  while ((candidate = candidates.exec(beforeRules))) {
+    if (!codeLine || codeLine(candidate.index) < 0) lastCandidate = candidate.index;
+  }
+  if (lastCandidate < 0) return literal();
+
+  let scan = text;
+  if (text !== beforeRules || loneCR) {
+    scan = autolinkContext(beforeRules, text);
+    codeLine = null;
+  }
+  const blank = scan.includes('\r\n') ? '\n\r\n' : '\n\n';
+  let cursor = 0;
+  while (cursor <= lastCandidate) {
+    contextStart.lastIndex = cursor;
+    const event = contextStart.exec(scan);
+    if (!event || event.index > lastCandidate) break;
+    const boundary = scan.slice(cursor, event.index).lastIndexOf(blank);
+    if (boundary >= 0) cursor += boundary + blank.length - 1;
+    autolinkTokens.lastIndex = cursor;
+    do {
+      const token = autolinkTokens.exec(scan);
+      if (!token) return result + literal();
+      const [match, url, fence] = token;
+      // Fences close on at most three spaces of indentation. Other multiline
+      // tokens can change length if an indented line hides their closing delimiter.
+      if (codeLine && !fence) {
+        const end = codeLine(token.index);
+        if (end >= 0) {
+          cursor = end;
+          break;
+        }
+        // For a code span, comment or generic <...> range, masking its interior
+        // leaves its closing delimiter intact. HTML attributes can also hide quotes.
+        if (/\n(?: {4}| {0,3}\t)/.test(match) &&
+            (/^<(?:\/?[a-z]|![a-z])/i.test(match) || codeLine(autolinkTokens.lastIndex - 1) >= 0)) {
+          scan = autolinkContext(beforeRules, text);
+          codeLine = null;
+          break;
+        }
+      }
+      if (url && match[0] === '<') keep(token.index, url);
+      cursor = autolinkTokens.lastIndex;
+    } while (cursor <= event.index);
+  }
+  return result + literal();
+}
+
 module.exports = function(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
@@ -35,13 +222,21 @@ module.exports = function(md, options) {
   }
 
   // Remove horizontal rules (stripListHeaders conflict with this rule, which is why it has been moved to the top)
-  output = output.replace(/^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/gm, '');
+  const beforeRules = output;
+  output = output.replace(horizontalRule, '');
 
   try {
+    // Keep URL punctuation out of the list, link, emphasis and code replacements.
+    let urls;
+    if (/<https?:\/\//i.test(output)) {
+      urls = [];
+      output = protectAutolinks(output, beforeRules, urls);
+    }
     if (options.stripListLeaders) {
-      if (options.listUnicodeChar)
-        output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, options.listUnicodeChar + ' $1');
-      else
+      if (options.listUnicodeChar) {
+        const replacement = options.listUnicodeChar + ' $1';
+        output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, urls ? escapeMarker(replacement) : replacement);
+      } else
         output = output.replace(/^([\s\t]*)([\*\-\+]|\d+\.)\s+/gm, '$1');
     }
     if (options.gfm) {
@@ -71,7 +266,8 @@ module.exports = function(md, options) {
     }
 
     if (options.separateLinksAndTexts) {
-      output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1' + options.separateLinksAndTexts + '$2');
+      const replacement = '$1' + options.separateLinksAndTexts + '$2';
+      output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, urls ? escapeMarker(replacement) : replacement);
     }
 
     const spacedComparison = /[ \t]<=?(?=\s)/;
@@ -116,6 +312,9 @@ module.exports = function(md, options) {
       // .replace(/(\S+)\n\s*(\S+)/g, '$1 $2')
       // Replace strike through
       .replace(/~(.*?)~/g, '$1');
+    if (urls) {
+      output = output.replace(/\uE000(?:\uE000|(\d+)\uE001)/g, (_, index) => index === undefined ? '\uE000' : urls[index]);
+    }
   } catch(e) {
     if (options.throwError) throw e;
 
