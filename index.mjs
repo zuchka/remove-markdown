@@ -55,6 +55,21 @@ function maskIndentedCode(text) {
   });
 }
 
+function autolinkContext(beforeRules, output) {
+  const masked = maskIndentedCode(beforeRules);
+  if (masked === beforeRules) return output;
+  if (beforeRules === output) return masked;
+
+  // Remove exactly the source ranges removed from output, even if a mask hid a rule.
+  let start = 0;
+  let scan = '';
+  for (const rule of beforeRules.matchAll(horizontalRule)) {
+    scan += masked.slice(start, rule.index);
+    start = rule.index + rule[0].length;
+  }
+  return scan + masked.slice(start);
+}
+
 export default function removeMarkdown(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
@@ -101,8 +116,7 @@ export default function removeMarkdown(md, options) {
     if (/<https?:\/\//i.test(output)) {
       urls = [];
       // A removed rule can separate a paragraph from indented code. Classify the original lines.
-      const masked = maskIndentedCode(beforeRules);
-      const scan = masked === beforeRules ? output : masked.replace(horizontalRule, '');
+      const scan = autolinkContext(beforeRules, output);
       output = scan.replace(autolinkTokens, (match, url, fence, ticks, offset) => {
         if (!url || match[0] !== '<') return escapeMarker(output.slice(offset, offset + match.length));
         urls.push(url);
