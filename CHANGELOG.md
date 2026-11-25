@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.2](.github/release-notes/0.8.2.md)
+
+### Fixed
+
+- Preserve angle-bracketed HTTP and HTTPS URLs in prose. `Visit <https://example.com>.` now becomes `Visit https://example.com.`. [PR #146](https://github.com/zuchka/remove-markdown/pull/146)
+
 ## [0.8.1](.github/release-notes/0.8.1.md)
 
 ### Fixed
