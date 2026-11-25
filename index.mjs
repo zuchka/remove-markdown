@@ -2,9 +2,10 @@
 
 // Skip code, HTML and angle-delimited link destinations when looking for a web autolink.
 // The final alternative follows the existing comparison and HTML matching boundaries.
+const webAutolink = /(?:\\|\][(:][ \t\r\n]*)?<(https?:\/\/[^\s<>/?#\x00-\x1f\x7f][^\s<>\x00-\x1f\x7f]*)>/;
 const autolinkTokens = new RegExp([
   /\\\\/,
-  /(?:\\|\][(:][ \t\r\n]*)?<(https?:\/\/[^\s<>/?#\x00-\x1f\x7f][^\s<>\x00-\x1f\x7f]*)>/,
+  webAutolink,
   // A backtick in the info string rules out a backtick fence, but is valid in a tilde fence.
   /(?:^|\n) {0,3}(?<fence>`{3,}(?![^\n]*`)|~{3,})[^\n]*[\s\S]*?(?:\n {0,3}(?=\k<fence>)(?:`+|~+)[ \t]*\r?(?=\n|$)|$)/,
   // Inline code closes on a whole backtick run of the opening length, within the paragraph.
@@ -70,38 +71,117 @@ function autolinkContext(beforeRules, output) {
   return scan + masked.slice(start);
 }
 
+// Check only the list or paragraph around an indented line. A flush-left
+// nonblank line resets the list margins, so adjacent blocks are independent.
+function codeLineLookup(text) {
+  const nextFlushLeft = /\n[^ \t\r\n]/g;
+  let blockStart = 0;
+  let mask = '';
+  let start = -1;
+  let end = -1;
+  let isCode = false;
+  return function (offset) {
+    if (offset >= start && offset < end) return isCode ? end : -1;
+    start = text.lastIndexOf('\n', offset - 1) + 1;
+    end = text.indexOf('\n', offset);
+    if (end < 0) end = text.length;
+    isCode = false;
+    if (/^(?: {4}| {0,3}\t)/.test(text.slice(start, start + 4))) {
+      if (start < blockStart || start >= blockStart + mask.length) {
+        blockStart = start;
+        while (blockStart > 0 && /[ \t\r\n]/.test(text[blockStart])) {
+          blockStart = blockStart < 2 ? 0 : text.lastIndexOf('\n', blockStart - 2) + 1;
+        }
+        nextFlushLeft.lastIndex = start;
+        const next = nextFlushLeft.exec(text);
+        mask = maskIndentedCode(text.slice(blockStart, next ? next.index : text.length));
+      }
+      isCode = mask[start - blockStart] === '\uE000';
+    }
+    return isCode ? end : -1;
+  };
+}
+
 // Inline code cannot cross a blank line. Fences, HTML and angle-delimited
 // Markdown destinations can, so visit their possible openers before each URL.
 const contextStart = /<|`{3}|~{3}|\][(:](?=[ \t\r\n]*<https?:\/\/)/gi;
 
-function protectAutolinks(text, scan, urls) {
-  const candidates = /<https?:\/\//gi;
-  const blank = scan.includes('\r\n') ? '\n\r\n' : '\n\n';
-  let cursor = 0;
+const plainAngles = new RegExp(webAutolink.source + '|' + /<[^>]*(?:>|$)/.source, 'gi');
+const needsTokenContext = /[`\\]|~{3}|\][(:]|<(?!https?:\/\/)/i;
+
+function protectAutolinks(text, beforeRules, urls) {
   let copied = 0;
   let result = '';
-  let candidate;
-  while ((candidate = candidates.exec(scan))) {
-    while (cursor <= candidate.index) {
-      contextStart.lastIndex = cursor;
-      const event = contextStart.exec(scan);
-      const gap = scan.slice(cursor, event.index);
-      const boundary = gap.lastIndexOf(blank);
-      if (boundary >= 0) cursor += boundary + blank.length - 1;
-      autolinkTokens.lastIndex = cursor;
-      do {
-        const token = autolinkTokens.exec(scan);
-        const [match, url] = token;
-        cursor = autolinkTokens.lastIndex;
-        if (url && match[0] === '<') {
-          result += escapeMarker(text.slice(copied, token.index)) + '\uE000' + urls.length + '\uE001';
-          urls.push(url);
-          copied = cursor;
-        }
-      } while (cursor <= event.index);
-    }
+  const hasMarker = text.includes('\uE000');
+  function literal(end) {
+    const part = text.slice(copied, end);
+    return hasMarker ? escapeMarker(part) : part;
   }
-  return result + escapeMarker(text.slice(copied));
+  function keep(at, url) {
+    result += literal(at) + '\uE000' + urls.length + '\uE001';
+    urls.push(url);
+    copied = at + url.length + 2;
+  }
+
+  // With no backticks, fences, escapes, HTML or link destinations, recognize
+  // angles in bulk. The second alternative consumes malformed angle ranges.
+  if (!needsTokenContext.test(text)) {
+    const scan = autolinkContext(beforeRules, text);
+    plainAngles.lastIndex = 0;
+    let token;
+    while ((token = plainAngles.exec(scan))) {
+      if (token[1]) keep(token.index, token[1]);
+    }
+    return result + literal();
+  }
+
+  const candidates = /<https?:\/\//gi;
+  const loneCR = /\r(?!\n)/.test(beforeRules);
+  let codeLine = loneCR ? null : codeLineLookup(beforeRules);
+  let lastCandidate = -1;
+  let candidate;
+  while ((candidate = candidates.exec(beforeRules))) {
+    if (!codeLine || codeLine(candidate.index) < 0) lastCandidate = candidate.index;
+  }
+  if (lastCandidate < 0) return literal();
+
+  let scan = text;
+  if (text !== beforeRules || loneCR) {
+    scan = autolinkContext(beforeRules, text);
+    codeLine = null;
+  }
+  const blank = scan.includes('\r\n') ? '\n\r\n' : '\n\n';
+  let cursor = 0;
+  while (cursor <= lastCandidate) {
+    contextStart.lastIndex = cursor;
+    const event = contextStart.exec(scan);
+    if (!event || event.index > lastCandidate) break;
+    const boundary = scan.slice(cursor, event.index).lastIndexOf(blank);
+    if (boundary >= 0) cursor += boundary + blank.length - 1;
+    autolinkTokens.lastIndex = cursor;
+    do {
+      const token = autolinkTokens.exec(scan);
+      if (!token) return result + literal();
+      const [match, url, fence] = token;
+      // Fences close on at most three spaces of indentation. Other multiline
+      // tokens can change length if an indented line hides their closing delimiter.
+      if (codeLine && !fence) {
+        const end = codeLine(token.index);
+        if (end >= 0) {
+          cursor = end;
+          break;
+        }
+        if (/\n(?: {4}| {0,3}\t)/.test(match)) {
+          scan = autolinkContext(beforeRules, text);
+          codeLine = null;
+          break;
+        }
+      }
+      if (url && match[0] === '<') keep(token.index, url);
+      cursor = autolinkTokens.lastIndex;
+    } while (cursor <= event.index);
+  }
+  return result + literal();
 }
 
 export default function removeMarkdown(md, options) {
@@ -149,9 +229,7 @@ export default function removeMarkdown(md, options) {
     let urls;
     if (/<https?:\/\//i.test(output)) {
       urls = [];
-      // A removed rule can separate a paragraph from indented code. Classify the original lines.
-      const scan = autolinkContext(beforeRules, output);
-      output = protectAutolinks(output, scan, urls);
+      output = protectAutolinks(output, beforeRules, urls);
     }
     if (options.stripListLeaders) {
       if (options.listUnicodeChar) {
