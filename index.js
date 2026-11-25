@@ -9,7 +9,7 @@ const autolinkTokens = new RegExp([
   /(?<ticks>`+)(?!`)(?:[^`\n]|\n(?![ \t]*\r?\n)|`+(?!`))*?\k<ticks>(?!`)|`+/,
   /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<\?[\s\S]*?(?:\?>|$)/,
   /<(?:\/?[a-z][a-z0-9-]*(?=[\s/>])|![a-z])(?:[^"'>]|"[^"]*(?:"|$)|'[^']*(?:'|$))*>?/,
-  /[ \t]<=?(?=\s)|<[^>]*(?:>|$)|\uE000+/,
+  /[ \t]<=?(?=\s)|<[^>]*(?:>|$)/,
 ].map(pattern => pattern.source).join('|'), 'gi');
 
 const horizontalRule = /^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/gm;
@@ -68,6 +68,40 @@ function autolinkContext(beforeRules, output) {
   return scan + masked.slice(start);
 }
 
+// Inline code cannot cross a blank line. Fences, HTML and angle-delimited
+// Markdown destinations can, so visit their possible openers before each URL.
+const contextStart = /<|`{3}|~{3}|\][(:](?=[ \t\r\n]*<https?:\/\/)/gi;
+
+function protectAutolinks(text, scan, urls) {
+  const candidates = /<https?:\/\//gi;
+  const blank = scan.includes('\r\n') ? '\n\r\n' : '\n\n';
+  let cursor = 0;
+  let copied = 0;
+  let result = '';
+  let candidate;
+  while ((candidate = candidates.exec(scan))) {
+    while (cursor <= candidate.index) {
+      contextStart.lastIndex = cursor;
+      const event = contextStart.exec(scan);
+      const gap = scan.slice(cursor, event.index);
+      const boundary = gap.lastIndexOf(blank);
+      if (boundary >= 0) cursor += boundary + blank.length - 1;
+      autolinkTokens.lastIndex = cursor;
+      do {
+        const token = autolinkTokens.exec(scan);
+        const [match, url] = token;
+        cursor = autolinkTokens.lastIndex;
+        if (url && match[0] === '<') {
+          result += escapeMarker(text.slice(copied, token.index)) + '\uE000' + urls.length + '\uE001';
+          urls.push(url);
+          copied = cursor;
+        }
+      } while (cursor <= event.index);
+    }
+  }
+  return result + escapeMarker(text.slice(copied));
+}
+
 module.exports = function(md, options) {
   options = options || {};
   options.listUnicodeChar = options.hasOwnProperty('listUnicodeChar') ? options.listUnicodeChar : false;
@@ -115,11 +149,7 @@ module.exports = function(md, options) {
       urls = [];
       // A removed rule can separate a paragraph from indented code. Classify the original lines.
       const scan = autolinkContext(beforeRules, output);
-      output = scan.replace(autolinkTokens, (match, url, fence, ticks, offset) => {
-        if (!url || match[0] !== '<') return escapeMarker(output.slice(offset, offset + match.length));
-        urls.push(url);
-        return '\uE000' + (urls.length - 1) + '\uE001';
-      });
+      output = protectAutolinks(output, scan, urls);
     }
     if (options.stripListLeaders) {
       if (options.listUnicodeChar) {
